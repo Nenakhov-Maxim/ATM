@@ -72,7 +72,22 @@ class DatabaseWork:
   # Приостановить выполнение задачи (мастер, рабочий)
   def paused_task(self, user_name, user_position, id_task):
     # now = datetime.datetime.now()
-    task = Tasks.objects.get(id=id_task)
+    task = Tasks.objects.get(id=id_task) 
+    profile_amount = task.profile_amount_now          
+    profile_index = 0
+    my_str = task.worker_accepted_task
+    arr_str = my_str.split(', ')
+    worker_now = ''
+    for value in arr_str:      
+      start_i = value.find('(')
+      end_i = value.find(')')
+      try:
+        int_data = int(value[start_i + 1:end_i])
+        profile_index = profile_index + int_data           
+      except Exception as e:
+        int_data = int(profile_amount) - int(profile_index)        
+        worker_now = task.worker_accepted_task + f'({int_data} - {self.now})'
+        
     history_task = Task_history.objects.get(id=task.task_history_id)
     new_event = history_task.history_name
     max_key = max(new_event, key=new_event.get)
@@ -87,8 +102,9 @@ class DatabaseWork:
     
     if history_check[0] ==  True:      
       try:
+        task.worker_accepted_task = worker_now
         task.task_status_id = 6
-        task.save(update_fields=['task_status_id'])
+        task.save(update_fields=['task_status_id', 'worker_accepted_task'])
         return  True
       except Exception as e:
         return f'Ошибка изменения статуса задачи: {e}'
@@ -205,6 +221,7 @@ class DatabaseWork:
     if history_check[0] ==  True:      
       try:
         task.task_status_id = 5
+        task.worker_accepted_task = ''
         task.save(update_fields=['task_status_id'])
         return  True
       except Exception as e:
@@ -250,11 +267,12 @@ class DatabaseWork:
           start_i = value.find('(')
           end_i = value.find(')')
           try:
-            int_data = int(value[start_i + 1:end_i])
+            int_data = value[start_i + 1:end_i]
+            int_data = int(int_data.split(' - ')[0])
             profile_index = profile_index + int_data           
           except Exception as e:
             int_data = total_profile_amout - profile_index
-            worker_now = task.worker_accepted_task + f'({int_data})'
+            worker_now = task.worker_accepted_task + f'({int_data} - {self.now})'
             # print(f'{value[0:start_i]} изготовил {int_data} ед. профиля')
           
         task.worker_accepted_task = worker_now
@@ -418,7 +436,7 @@ class DatabaseWork:
         profile_index = profile_index + int_data           
       except Exception as e:
         int_data = int(profile_amount) - int(profile_index)        
-        worker_now = task.worker_accepted_task + f'({int_data})'        
+        worker_now = task.worker_accepted_task + f'({int_data} - {self.now})'        
     history_task = Task_history.objects.get(id=task.task_history_id)
     new_event = history_task.history_name
     max_key = max(new_event, key=new_event.get)
