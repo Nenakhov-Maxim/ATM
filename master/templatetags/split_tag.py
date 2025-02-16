@@ -35,8 +35,7 @@ def dates_to_time(date1, date2):
     minutes_string = f'0{minutes}'
   else:
     minutes_string = f'{minutes}'    
-  seconds = abs(int(minutes_sum[0] * 60) ) 
-  print(seconds)
+  seconds = abs(int(minutes_sum[0] * 60) )   
   if seconds  < 10:
     seconds_string = f'0{seconds}'
   else:

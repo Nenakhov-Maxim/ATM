@@ -33,11 +33,11 @@ class VideoConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):        
         data = json.loads(text_data)                
         if data['isFs'] ==  1:  
-            print('Первая отправка сообщения')          
+            #print('Первая отправка сообщения')          
             self.task_id = data['task_id']
             self.amount_profile = await self.get_start_profile_amount()
         elif data['chgVal'] ==  1:
-            print('Изменение количества профиля')
+            #print('Изменение количества профиля')
             self.amount_profile = data['value']
             await self.change_profile_amount_in_db()            
         else:                 
@@ -91,7 +91,7 @@ class VideoConsumer(AsyncWebsocketConsumer):
     def change_profile_amount_in_db(self):
         data_task = DatabaseWork({'id_task':self.task_id})    
         result = data_task.change_profile_amount(self.task_id, self.amount_profile)
-        print(result)
+        #print(result)
 
 task_list = []
 
@@ -120,7 +120,7 @@ class TaskTransferConsumer(AsyncWebsocketConsumer):
             await asyncio.sleep(10)
             db_task = await self.get_all_task()                        
             if len(db_task) > 0:
-                print('Нашли задачи') 
+                #print('Нашли задачи') 
                 for task in db_task:                                                
                     task_list[str(task['id'])] = str(task['task_status_id'])                    
                     await self.send(text_data=json.dumps({

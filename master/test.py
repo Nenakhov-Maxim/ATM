@@ -8,9 +8,9 @@ for value in arr_str:
   try:
     int_data = int(value[start_i + 1:end_i])
     profile_index = profile_index + int_data
-    print(f'{value[0:start_i]} изготовил {int_data} ед. профиля')
+    #print(f'{value[0:start_i]} изготовил {int_data} ед. профиля')
   except Exception as e:
     int_data = total_profile_amout - profile_index
-    print(f'{value[0:start_i]} изготовил {int_data} ед. профиля')
+    #print(f'{value[0:start_i]} изготовил {int_data} ед. профиля')
    
     
