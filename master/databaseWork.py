@@ -241,7 +241,7 @@ class DatabaseWork:
     if history_check[0] ==  True:      
       try:
          # Кашапов Салават(55), Кашапов Салават(0), Кашапов Салават(55), Кашапов Салават(351)
-        total_profile_amout = task.task_profile_amount
+        total_profile_amout = task.profile_amount_now
         profile_index = 0
         my_str = task.worker_accepted_task
         arr_str = my_str.split(', ')
