@@ -266,10 +266,10 @@ class DatabaseWork:
         for value in arr_str:
           start_i = value.find('(')
           end_i = value.find(')')
-          try:
+          try:            
             int_data = value[start_i + 1:end_i]
             int_data = int(int_data.split(' - ')[0])
-            profile_index = profile_index + int_data           
+            profile_index = profile_index + int_data                      
           except Exception as e:
             int_data = total_profile_amout - profile_index
             worker_now = task.worker_accepted_task + f'({int_data} - {self.now})'
@@ -432,7 +432,8 @@ class DatabaseWork:
       start_i = value.find('(')
       end_i = value.find(')')
       try:
-        int_data = int(value[start_i + 1:end_i])
+        int_data = value[start_i + 1:end_i]
+        int_data = int(int_data.split(' - ')[0])
         profile_index = profile_index + int_data           
       except Exception as e:
         int_data = int(profile_amount) - int(profile_index)        
