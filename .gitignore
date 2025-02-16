@@ -12,3 +12,4 @@ master/migrations/__pycache__
 master/templatetags/__pycache__
 login/migrations/__pycache__
 analytics/migrations/__pycache__
+excel_files/

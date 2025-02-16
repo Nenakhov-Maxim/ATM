@@ -147,21 +147,34 @@ def new_report(request):
     report_form = ReportForm(request.POST)
     if report_form.is_valid():
       data = report_form.cleaned_data
-      start_date = data['date_start']
-      end_date = data['date_end']
+      start_date = data['date_start'] + datetime.timedelta(hours=5)
+      end_date = data['date_end'] + datetime.timedelta(hours=5)
+      print(start_date)
+      print(end_date)
       tasks = Tasks.objects.all().filter(task_timedate_end_fact__range=(start_date, end_date))
       dict_list = []
       for task in tasks:
         profile_index = 0
         my_str = task.worker_accepted_task
         arr_str = my_str.split(', ')
+        old_date = ''
         for value in arr_str:
           start_i = value.find('(')
           end_i = value.find(')')         
-          int_data = int(value[start_i + 1:end_i])
+          int_data_summary = value[start_i + 1:end_i]
+          int_data = int(int_data_summary.split(' - ')[0])
+          date_end_data = int_data_summary.split(' - ')[1]    
+          print(f'Время окончания: {date_end_data}')             
           profile_index = profile_index + int_data
           total_length = round(float(task.task_profile_length) * int(int_data), 2) 
-          total_time = dates_to_time(task.task_timedate_start_fact, task.task_timedate_end_fact)         
+          if old_date == '':            
+            date_start_data = task.task_timedate_start_fact
+            print(f'Время начала для первого захода: {date_start_data}')
+          else:                        
+            date_start_data = datetime.datetime.strptime(str(old_date), '%Y-%m-%d %H:%M:%S.%f%z')
+            print(f'Время начала для остальных заходов: {date_start_data}')
+          total_time = dates_to_time(date_start_data, datetime.datetime.strptime(str(date_end_data), '%Y-%m-%d %H:%M:%S.%f%z'))
+          old_date = date_end_data        
           new_row = {'Ф.И.О': value[0:start_i], 'Номер линии': task.task_workplace_id, 'Марка изделия': task.task_profile_type.profile_name, 'Общее кол-во п/м': total_length,
                                                         'Отработанные часы':total_time, 'Ср. ед.':'0', 'Хоз. работы':'Да', 'Подпись работника':''}
           dict_list.append(new_row)
