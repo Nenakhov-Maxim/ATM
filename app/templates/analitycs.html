@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+{% load static %}
+{% load split_tag %}
+{% if user.is_authenticated %}
+<html lang="ru">
+<head>  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{% static "css/normalize.css" %}">
+  <link rel="stylesheet" href="{% static "css/style.css" %}">  
+  <link rel="stylesheet" href="{% static "css/analytics.css" %}">
+  <title>AT-Manager (Аналитика)</title>
+</head>
+<body>
+<header class="header">
+  <div class="wrapper">
+    <div class="header-content">
+      <div class="header__lef-side">
+        <div class="header-logo">
+          <span class="logo-title">AT-Manager <br>Analitics</span>
+        </div>       
+      </div>     
+      <div class="header__right__side">
+        <div class="person-info">
+          <span class="person-info__name">{{ user.last_name }} {{ user.first_name }}</span>
+          <span class="person-info__department">{{user.position}}</span>
+          <span class="person-info__department">{{user.production_area}}</span>
+        </div>
+        <div class="logout">
+          <a href="{% url 'users:logout' %}" class="logout-link">Выход</a>
+        </div>
+      </div>           
+    </div>   
+  </div>
+</header>
+<section class="main">
+  <div class="wrapper">    
+    <div class="current-work__wrapper">
+      <div class="current-work__title">
+        <h2>Текущая работа</h2>
+      </div>      
+      <div class="current-work">
+        <div class="current-work__profile">
+          <select name="choices">
+            <option value="1">По рабочим</option>
+            <option value="2">По видам профиля</option>
+            <option value="3">По рабочим местам</option>
+          </select>
+          <canvas id="chart-current-work__profile"></canvas>
+        </div>
+        <div class="current-work__loading-equipment">
+          <div class="loading-equipment__item">
+            <img class="loading-equipment-icon" src="{% static "img/device-electronic-machine.svg" %}" alt="machine-icon">
+            <div class="loading-equipment__status-bar"></div>
+            <div class="loading-equipment__task-status-block">
+              <div class="task-status-block__now">
+                <h3>Текущее задание:</h3>
+                <span>Задание 1,  Т-профиль, требуется: 100 шт, текущее количество: 80 шт. </span>
+              </div>
+              <div class="task-status-block__future">
+                <h3>Поток заданий:</h3>
+                <div class="block__future__item">                
+                  <span>Задание 2,  Т-профиль, требуется: 200 шт</span>
+                </div>
+                <div class="block__future__item">                
+                  <span>Задание 3,  Т-профиль, требуется: 50 шт</span>
+                </div>             
+              </div>
+            </div>
+          </div>
+          <div class="loading-equipment__item">
+            <img class="loading-equipment-icon" src="{% static "img/device-electronic-machine.svg" %}" alt="machine-icon">
+            <div class="loading-equipment__status-bar"></div>
+            <div class="loading-equipment__task-status-block">
+              <div class="task-status-block__now">
+                <h3>Текущее задание:</h3>
+                <span>Задание 1,  Т-профиль, требуется: 100 шт, текущее количество: 80 шт. </span>
+              </div>
+              <div class="task-status-block__future">
+                <h3>Поток заданий:</h3>
+                <div class="block__future__item">                
+                  <span>Задание 2,  Т-профиль, требуется: 200 шт</span>
+                </div>
+                <div class="block__future__item">                
+                  <span>Задание 3,  Т-профиль, требуется: 50 шт</span>
+                </div>             
+              </div>
+            </div>
+          </div>
+          <div class="loading-equipment__item">
+            <img class="loading-equipment-icon" src="{% static "img/device-electronic-machine.svg" %}" alt="machine-icon">
+            <div class="loading-equipment__status-bar"></div>
+            <div class="loading-equipment__task-status-block">
+              <div class="task-status-block__now">
+                <h3>Текущее задание:</h3>
+                <span>Задание 1,  Т-профиль, требуется: 100 шт, текущее количество: 80 шт. </span>
+              </div>
+              <div class="task-status-block__future">
+                <h3>Поток заданий:</h3>
+                <div class="block__future__item">                
+                  <span>Задание 2,  Т-профиль, требуется: 200 шт</span>
+                </div>
+                <div class="block__future__item">                
+                  <span>Задание 3,  Т-профиль, требуется: 50 шт</span>
+                </div>             
+              </div>
+            </div>
+          </div>
+          <div class="loading-equipment__item">
+            <img class="loading-equipment-icon" src="{% static "img/device-electronic-machine.svg" %}" alt="machine-icon">
+            <div class="loading-equipment__status-bar"></div>
+            <div class="loading-equipment__task-status-block">
+              <div class="task-status-block__now">
+                <h3>Текущее задание:</h3>
+                <span>Задание 1,  Т-профиль, требуется: 100 шт, текущее количество: 80 шт. </span>
+              </div>
+              <div class="task-status-block__future">
+                <h3>Поток заданий:</h3>
+                <div class="block__future__item">                
+                  <span>Задание 2,  Т-профиль, требуется: 200 шт</span>
+                </div>
+                <div class="block__future__item">                
+                  <span>Задание 3,  Т-профиль, требуется: 50 шт</span>
+                </div>             
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>      
+      
+    </div>
+    <div class="planned-work_wrapper">
+      <div class="planned-work__title">
+        <h2>Плановая работа</h2>
+      </div>
+      <div class="planned-work">
+        <div class="planned-work__performance">            
+          <canvas id="chart-planned-work__performance"></canvas>
+        </div>
+        <div class="planned-work__load">            
+          <canvas id="chart-planned-work__load"></canvas>
+        </div>          
+      </div>            
+    </div>
+    <div class="analysis-of-workers__wrapper">
+      <div class="analysis-of-workers__title">
+        <h2>Рабочая загрузка</h2>
+      </div>
+      <select name="analysis-of-workers__filter__date">
+        <option value="1">Сегодня</option>
+        <option value="2">Последние 7 дней</option>
+        <option value="3">Последний месяц</option>
+        <option value="4">Пол года</option>
+        <option value="5">Последний год</option>        
+        <option value="6">За все время</option>
+      </select>
+      <div class="analysis-of-workers">
+        <div class="setup-speed__wrapper">
+          <canvas id="chart__setup-speed"></canvas> 
+        </div>
+        <div class="profile-amount__wrapper">
+          <canvas id="chart__profile-amount"></canvas> 
+        </div>
+        <div class="hours-worked__wrapper">
+          <canvas id="chart__hours-worked"></canvas> 
+        </div>
+        <div class="effectiveness__wrapper">
+          <canvas id="chart__effectiveness"></canvas> 
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<footer class="footer">
+  <div class="wrapper">
+    <div class="footer-content">     
+    </div>
+  </div>
+</footer>
+<script src="{% static "js/jquery/jquery-3.7.1.min.js" %}"></script>
+<script src="{% static "js/chart/chart.js" %}"></script> 
+<script src="{% static "js/analitics.js" %}"></script>   
+</body>
+</html>
+{% endif %}

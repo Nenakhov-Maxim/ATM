@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{% static "css/normalize.css" %}">
+  <link rel="stylesheet" href="{% static "css/style.css" %}">  
+  <link rel="stylesheet" href="{% static "css/lg-style.css" %}"> 
+  <link rel="stylesheet" href="{% static "css/media-login.css" %}"> 
+  <title>AT-Manager</title>
+</head>
+<body>
+<header class="header"></header>
+<section class="content">
+  <div class="content__wrapper">
+    <div class="content__inner-block">
+      <div class="left-side">
+        <div class="left-side__wrapper">
+          <div class="title">
+            <div class="title__program-name">
+              <h1 class="program-name__text">AT-Manager</h1>
+            </div>
+            <div class="title__quote">
+              <h3 class="quote__text">Цифровая трансформация - это фундоментальная реальность для бизнеса сегодня</h3>
+            </div>
+          </div>
+          <div class="logo">
+            <img src="{% static "/img/logo.png" %}" alt="Логотип компании Альтернатива">  
+          </div>  
+        </div>
+      </div>
+      <div class="right-side">
+        <form class="right-side__wrapper" method="post">           
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}" />             
+          <div class="welcome-text">
+            <div class="welcome-text__title">
+              <h2 class="title__text">Добро пожаловать!</h2>
+            </div>
+            <div class="welcome-text__sub-title">
+              <span class="sub-title__text">Начать работу</span>              
+            </div>        
+          </div>
+          <div class="textbox-list">
+            <div class="textbox-id">              
+              {{ form.username }}              
+            </div>
+            
+            <div class="textbox-password">              
+              {{ form.password }}
+            </div>
+          </div>
+          <div class="buttons-list"> 
+            <button class="button__enter-app" type="submit">Вход</button>
+            <button class="button__qr-code">Вход по QR-коду</button> 
+            {{ form.non_field_errors.as_text }}
+          </div>  
+        </form>
+      </div>
+    </div>
+  </div>  
+</section>
+<footer class="footer"></footer> 
+<script src="{% static "/js/login.js" %}"></script> 
+</body>
+</html>

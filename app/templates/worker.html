@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+{% load static %}
+{% load split_tag %}
+{% if user.is_authenticated %}
+<html lang="ru">
+<head>  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{% static "css/normalize.css" %}">
+  <link rel="stylesheet" href="{% static "css/style.css" %}">  
+  <link rel="stylesheet" href="{% static "css/master.css" %}">
+  <link rel="stylesheet" href="{% static "css/worker.css" %}">
+  <link rel="stylesheet" href="{% static "css/media-worker.css" %}"> 
+  <title>AT-Manager (Рабочий)</title>
+</head>
+<body>
+<header class="header">
+  <div class="wrapper">
+    <div class="header-content">
+      <div class="header__lef-side">
+        <div class="header-logo">
+          <span class="logo-title">AT-Manager</span>
+        </div>
+        <div class="header-menu-wrapper">
+          <ul class="header-menu-list">
+            {%if filter == 'all'%}
+            <li class="header-menu-item active"><a href="/worker">Мой поток</a></li>
+            <li class="header-menu-item"><a href="/worker/now">Сегодня</a></li>
+            <li class="header-menu-item"><a href="/worker/week">На этой неделе</a></li>
+            <li class="header-menu-item"><a href="/worker/month">В этом месяце</a></li>
+            {%elif filter == 'now'%}
+            <li class="header-menu-item"><a href="/worker">Мой поток</a></li>
+            <li class="header-menu-item active"><a href="/worker/now">Сегодня</a></li>
+            <li class="header-menu-item"><a href="/worker/week">На этой неделе</a></li>
+            <li class="header-menu-item"><a href="/worker/month">В этом месяце</a></li>
+            {%elif filter == 'week'%}
+            <li class="header-menu-item"><a href="/worker">Мой поток</a></li>
+            <li class="header-menu-item"><a href="/worker/now">Сегодня</a></li>
+            <li class="header-menu-item active"><a href="/worker/week">На этой неделе</a></li>
+            <li class="header-menu-item"><a href="/worker/month">В этом месяце</a></li>
+            {%elif filter == 'month'%}
+            <li class="header-menu-item"><a href="/worker">Мой поток</a></li>
+            <li class="header-menu-item"><a href="/worker/now">Сегодня</a></li>
+            <li class="header-menu-item"><a href="/worker/week">На этой неделе</a></li>
+            <li class="header-menu-item active"><a href="/worker/month">В этом месяце</a></li>
+            {%endif%}
+          </ul>          
+        </div>
+      </div>
+      <div class="header__center">
+        <div class="header-stats">
+          <span class="stats-info__text">Ожидают начала/в работе:</span>
+          <span class="stats-info__num">{{task_to_start}}/{{task_start}}</span>
+        </div>
+      </div>
+      <div class="header__right__side">
+        <div class="person-info">
+          <span class="person-info__name">{{user_info.1}} {{user_info.0}}</span>
+          <span class="person-info__department">{{user_info.2}}</span>
+          <span class="person-info__department" data-line={{line_id}}>{{user_info.3}}</span>
+          <!-- <span class="person-info__department">{{ request.get_host }}</span> -->
+        </div>
+        <div class="logout">
+          <a href="{% url 'users:logout' %}" class="logout-link">Выход</a>
+        </div>
+      </div>      
+    </div>
+    <div class="header-border"></div>
+  </div>
+</header> 
+<section class="main">
+  <div class="wrapper">
+    <div class="toolbars">
+      <div class="toolbars__search">
+        <input class="search-item" type="search" placeholder="Поиск наименованию, дате, статусу...">
+      </div>      
+    </div>
+    <div class="task-content">
+      <div class="task-headers-list">
+        <div class="task-header__toolbar">
+          <span class="task-headers__title">Опции</span>
+        </div>
+        <div class="task-header__workplace-name">
+          <span class="task-headers__title">Наименование Задачи</span>
+        </div>
+        <div class="task-header__task-name">
+          <span class="task-headers__title">График выполнения</span>
+        </div>
+        <div class="task-header__task-status">
+          <span class="task-headers__title">Количество (шт.)</span>
+        </div>
+        <div class="task-header__position-quantity">
+          <span class="task-headers__title">Текущий статус</span>
+        </div>
+        <div class="task-header__actions">
+          <span class="task-headers__title">Операции с задачей</span>
+        </div>
+      </div>
+      <div class="task-cards-list">        
+        {% for el in tasks %}
+        <div class="task-card-item" data-itemId={{el.id}} data-category={{el.task_status}} data-category-id={{el.task_status_id}}>
+          <div class="task-card-item__wrapper">
+            <div class="card-item__toolbar">              
+              <div class="toolbar-item__history" onclick="more_information_click(this)"><img class="toolbar-item__history__svg" src="{% static "img/Master.svg" %}" alt="Развернуть"></div>
+            </div>
+            <div class="card-item__workplace-name">
+              <span class="card-item__title">{{ el.task_name }}</span><br>
+              <span class="card-item__title">(Тип профиля: {{ el.task_profile_type }})</span>
+              <div class="worplace-name__equipment">
+              </div>
+            </div>
+            <div class="card-item__task-name">
+                <span class="card-item__title">Время начала: {{ el.task_timedate_start }}</span><br>
+                <span class="card-item__title">Время окончания: {{ el.task_timedate_end }}</span><br>
+                <span class="card-item__title">Время на работу: {% dates_to_time el.task_timedate_start el.task_timedate_end %}</span><br>                
+            </div>
+            <div class="card-item__position-quantity">
+              <span class="card-item__title">{{ el.task_profile_amount }}</span>
+            </div>
+            {% if el.task_status_id == 1 %}
+            <div class="card-item__task-status">
+              <div class="task-status-widget">              
+                <span class="task-status-widget__text task_added">{{el.task_status}}</span>
+              </div>             
+              <span class="task-status__text">Дата начала: {{el.task_timedate_start}}</span>
+            </div>
+            {% elif el.task_status_id == 4 %}
+            <div class="card-item__task-status">
+              <div class="task-status-widget">              
+                <span class="task-status-widget__text falling-off">{{el.task_status}}</span>
+              </div>             
+              <span class="task-status__text">Принято исполнетелем.  Ожидает начала</span>
+            </div>
+            {% elif el.task_status_id == 3 %}
+            <div class="card-item__task-status">
+              <div class="task-status-widget">              
+                <span class="task-status-widget__text working">{{el.task_status}}</span>
+              </div>             
+              <span class="task-status__text">Старт выполнения <br> Факт. время начала: <br> {{el.task_timedate_start_fact}}</span>
+            </div>
+            {% elif el.task_status_id == 6 %}
+            <div class="card-item__task-status">
+              <div class="task-status-widget">              
+                <span class="task-status-widget__text paused">{{el.task_status}}</span>
+              </div>                         
+              <span class="task-status__text">Задача приостановлена. <br> Расскройте историю, чтобы узнать подробнее</span>
+            </div>
+            {% elif el.task_status_id == 5 %}
+            <div class="card-item__task-status">
+              <div class="task-status-widget">              
+                <span class="task-status-widget__text paused">{{el.task_status}}</span>
+              </div>             
+              <span class="task-status__text">Задача отменена. <br> Расскройте историю, чтобы узнать подробнее</span>
+            </div>
+            {% elif el.task_status_id == 2 %}
+            <div class="card-item__task-status">
+              <div class="task-status-widget">              
+                <span class="task-status-widget__text well_done">{{el.task_status}}</span>
+              </div>             
+              <span class="task-status__text">Выполнено. Фактическая дата выполнения: {{el.task_timedate_end_fact}}</span>
+            </div>
+            {% elif el.task_status_id == 7 %}
+            <div class="card-item__task-status">
+              <div class="task-status-widget">              
+                <span class="task-status-widget__text settingUp">{{el.task_status}}</span>
+              </div>             
+              <span class="task-status__text">Наладка оборудования. Старт: {{el.task_time_settingUp}}</span>
+            </div>
+            {% elif el.task_status_id == 8 %}
+            <div class="card-item__task-status">
+              <div class="task-status-widget">              
+                <span class="task-status-widget__text shiftChange">{{el.task_status}}</span>
+              </div>             
+              <span class="task-status__text">Ожидание пересменки</span>
+            </div>
+            {% endif %}            
+            <div class="card-item__actions">
+              <div class="actions__more-info">
+                {% if el.task_status_id == 4 or el.task_status_id == 6 %}
+                <span class="more-info__text__accept" data-itemId={{el.id}} onclick="start_working(this)"></span>
+                <span class="more-info__text__deny" data-itemId={{el.id}} onclick="deny_task(this)"></span>
+                <span class="more-info__text__setting-up" data-itemId={{el.id}} onclick="start_settingUp(this)"></span>
+                {%endif%}
+                {% if el.task_status_id == 3 %}
+                <span class="more-info__text__complete" data-itemId={{el.id}} onclick="complete_task(this)"></span>
+                <span class="more-info__text__paused" data-itemId={{el.id}} onclick="paused_task(this)"></span>
+                {%endif%}
+                {% if el.task_status_id == 7 or el.task_status_id == 8 %}
+                <span class="more-info__text__accept" data-itemId={{el.id}} onclick="start_working(this)"></span>
+                <span class="more-info__text__deny" data-itemId={{el.id}} onclick="deny_task(this)"></span>
+                {%endif%}                  
+              </div>           
+            </div>  
+          </div>
+          {% if el.task_status_id == 3 or el.task_status_id == 7 %}
+          <div class="task-card__more-information__wrapper ">
+          {% else %}
+          <div class="task-card__more-information__wrapper disable">
+          {%endif%}
+            <div class="more-information__header">
+              <span class="more-information__header__title">Задача № {{el.id}}</span>
+              <span class="more-information__header__task-text">{{ el.task_name }}</span>
+            </div>
+            <div class="more-information__worker-event ">
+              <div class="worker-event-leftside">
+                <div class="event-leftside__task-information">
+                  <div class="task-information__left-side">
+                    <span class="task-information__left-side__text" data-dateStart="{{ el.task_timedate_start|date:'c' }}">Время начала: не позднее {{ el.task_timedate_start }}</span>
+                    {% if el.task_timedate_start_fact %}
+                    <span class="task-information__left-side__text" data-dateStartFact="{{ el.task_timedate_start_fact|date:'c' }}">Фактическое время начала: {{ el.task_timedate_start_fact }}</span>
+                    {%endif%}
+                    <span class="task-information__left-side__text" data-dateEnd="{{ el.task_timedate_end|date:'c' }}">Закончить до: {{ el.task_timedate_end }}</span>
+                    <span class="task-information__left-side__text">План времени: <span>{% dates_to_time el.task_timedate_start el.task_timedate_end %}</span></span>
+                    {% if el.task_timedate_start_fact %}
+                    <span class="task-information__left-side__text">Осталось времени: <span>{% dates_to_time el.task_timedate_start_fact el.task_timedate_end %}</span></span>
+                    {%else%}
+                    <span class="task-information__left-side__text">Осталось времени: <span>00:00:00</span></span>
+                    {% endif %}
+                  </div>
+                  <div class="task-information__right-side">
+                    <div class="task-information__right-side__required-length">
+                      <span class="right-side__required-length__text">Длина профиля</span>
+                      <span class="right-side__required-length__amount">{{ el.task_profile_length }}</span>
+                    </div>
+                    <div class="task-information__right-side__required-quantity">
+                      <span class="right-side__required-quantity__text">Необходимое количество</span>
+                      <span class="right-side__required-quantity__amount">{{ el.task_profile_amount }}</span>
+                    </div>
+                    <div class="task-information__right-side__current-quantity">
+                      <span class="right-side__current-quantity__text">Текущее количество</span>
+                      {%if el.task_status_id == 7 or el.task_status_id == 3 or el.task_status_id == 8  %}
+                      <input class="right-side__current-quantity__amount" type="text" value="{{el.profile_amount_now}}"></input>
+                      {%else%}
+                      <input class="right-side__current-quantity__amount" type="text" value="0"></input>
+                      {%endif%}
+                    </div>
+                  </div>
+                </div>
+                <div class="event-leftside__buttons">
+                  {% if el.task_status_id == 4 or el.task_status_id == 6 or el.task_status_id == 7 or el.task_status_id == 8 %}
+                  <div class="event-leftside__button-accept__inner">
+                    <input class="event-leftside__button-accept" name="event-leftside__button-accept" type="button" value="Начать выполнение" data-itemId={{el.id}} onclick="start_working(this)">                    
+                  </div>
+                  <div class="event-leftside__button-stop__inner">
+                    <input class="event-leftside__button-deny" name="event-leftside__button-deny" type="button" value="Отменить" data-itemId={{el.id}} onclick="deny_task(this)">
+                  </div>
+                  {%endif%}
+                  {% if el.task_status_id == 3 %}
+                  <div class="event-leftside__button-accept__inner">                    
+                    <input class="event-leftside__button-complete-task" name="event-leftside__button-complete-task" type="button" value="Завершить задание" data-itemId={{el.id}} onclick="complete_task(this)">
+                  </div>
+                  <div class="event-leftside__button-stop__inner">
+                    <input class="event-leftside__button-pause" name="event-leftside__button-pause" type="button" value="Приостановить" data-itemId={{el.id}} onclick="paused_task(this)"> 
+                  </div>
+                  <div class="event-leftside__button-shiftСhange__inner">
+                    <input class="event-leftside__button-shiftСhange" name="event-leftside__button-shiftСhange" type="button" value="Пересменка" data-itemId={{el.id}} onclick="shiftChange(this)"> 
+                  </div>
+                  {%endif%}
+                </div>                
+              </div>
+              <div class="worker-event-rightside" data-workplace="workpalce-{{el.task_workplace_id}}">
+                {% if el.task_status_id == 3 %}
+                <h1>Видеопоток с веб-камеры</h1>
+                <video hidden id="videoElement" autoplay></video>
+                <canvas hidden id="canvas" width="640" height="480"></canvas>
+                {% else %}
+                <img id="video_stream" src="{% static "img/video-disabled.svg" %}" alt="Изображение с камеры" />
+                {% endif %}               
+              </div>                              
+            </div>            
+          </div>  
+        </div>
+        {% endfor %}        
+      </div>
+    </div>
+    </div>
+    <div class="pause_task_popup disable">      
+      <form class="pause_task_popup_form" method="POST" action="/worker/pause_task/">
+        {% csrf_token %}          
+        <h3 class="pause_task_popup_form__title">AT-Manager</h3>
+        <div class="pause_task_popup__catproblem_block">
+          <span class="pause_task_popup__cat-problem__title">Выберете категорию проблемы</span>
+          {{ new_paused_form.problem_type }}          
+        </div>          
+        <div class="pause_task_popup__comments_block">
+          <span class="pause_task_popup__comment_title">Опишите причину остановки</span>
+          {{ new_paused_form.problem_comments }}          
+        </div>
+        <div class="pause_task_popup__button_block">
+          <button class="pause_task_popup_accept-button" type="submit" name="pause_task_popup_button_accept">Отправить</button>
+          <button class="pause_task_popup_cansel-button" type="button" name="pause_task_popup_button_cansel">Отменить</button>
+        </div>        
+      </form>
+      <div class="overlay"></div>    
+    </div>
+    <div class="deny_task_popup disable">      
+      <form class="pause_task_popup_form" method="POST" action="/worker/deny_task/">
+        {% csrf_token %}          
+        <h3 class="pause_task_popup_form__title">AT-Manager</h3>
+        <div class="pause_task_popup__catproblem_block">
+          <span class="pause_task_popup__cat-problem__title">Выберете категорию проблемы</span>
+          {{ new_deny_form.problem_type }}          
+        </div>          
+        <div class="pause_task_popup__comments_block">
+          <span class="pause_task_popup__comment_title">Опишите причину отмены выполнения задания</span>
+          {{ new_deny_form.problem_comments }}          
+        </div>
+        <div class="pause_task_popup__button_block">
+          <button class="pause_task_popup_accept-button" type="submit" name="pause_task_popup_button_accept">Отправить</button>
+          <button class="pause_task_popup_cansel-button" type="button" name="pause_task_popup_button_cansel">Отменить</button>
+        </div>        
+      </form>
+      <div class="overlay"></div>    
+    </div>
+  </div>
+</section>
+<footer class="footer">
+  <div class="wrapper">
+    <div class="footer-content">
+      <div class="footer-content__position-in-list">
+        <div class="position-in-list__title-block">
+          <span class="title-block__text">Позиций на листе: </span>
+        </div>
+        <div class="title-block__quality-position">
+          <input type="text" class="quality-position__title" value="{{number_block_in_page}}">
+        </div>
+        <div class="title_block__quality-icon">          
+        </div>
+      </div>
+      <div class="footer-content__all-task-info">
+        <span class="all-task-info__range">1-10 из 30</span>
+      </div>
+      <div class="footer-content__navigation">
+        <div class="navigation__left"></div>
+        <div class="navigation__right"></div>       
+      </div>
+    </div>
+  </div>
+</footer>
+<script src="{% static "/js/jquery/jquery-3.7.1.min.js" %}"></script>
+<script src="{% static "/js/moment.min.js" %}"></script>  
+<script src="{% static "/js/worker.js" %}"></script>     
+</body>
+</html>
+{%endif%}
