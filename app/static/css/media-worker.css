@@ -1,0 +1,102 @@
+@media (max-width: 2900px) {
+  .actions__more-info::after {
+    display: none;
+  }
+  .card-item__title {
+    font-size: calc(16px + (16 - 14) * (100vw - 1600px) / (1600 - 1000) );
+  }
+  .task-headers-list {
+    font-size: calc(16px + (16 - 14) * (100vw - 1600px) / (1600 - 1000) );  
+  }
+  .worker-event-rightside img {
+    width: calc(400px + (400 - 200) * (100vw - 1600px) / (1600 - 800) );
+  }
+  .event-leftside__buttons input {
+    width: calc(280px + (280 - 150) * (100vw - 1600px) / (1600 - 800) );
+    height: calc(40px + (40 - 25) * (100vw - 1600px) / (1600 - 800) );
+    font-size: calc(16px + (16 - 13) * (100vw - 1600px) / (1600 - 800) );
+  }
+} 
+
+@media (max-width: 1000px) {
+  .task-status__text {
+    display: none;
+  }
+  .more-info__text__accept::after {
+    top: -45px;
+    right: 0px; 
+  }
+  .more-info__text__deny::after {
+    top: -10px;
+    right: -3px;
+  }
+  .more-info__text__setting-up::after  {
+    top: 25px;
+    right: -3px;
+  }
+  .task-status-widget {
+    margin-bottom: 0;
+  }
+  .card-item__task-status {
+    font-size: calc(16px + (16 - 12) * (100vw - 1600px) / (1600 - 1000) );   
+  }
+  .falling-off::before {
+    left: 8px;
+    top: 5px;
+  }
+  .task-status-widget__text {
+    padding: 2px 15px 2px 20px;
+  }
+  .actions__more-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+  }
+  .more-info__text__accept {
+    width: 25px;
+    border-bottom: none;
+  }
+  .more-info__text__deny  {
+    width: 25px;
+    border-bottom: none; 
+  }
+  .more-info__text__setting-up  {
+    width: 25px;
+    border-bottom: none; 
+  }
+  .settingUp::before {
+    display: none;
+  }
+  .falling-off::before {
+    display: none;
+  }
+  .logo-title {
+    font-size: calc(24px + (24 - 18) * (100vw - 1600px) / (1600 - 1000) );     
+  }
+  .header-menu-list {
+    font-size: calc(16px + (16 - 14) * (100vw - 1600px) / (1600 - 1000) ); 
+  }
+  .stats-info__text {
+    font-size: calc(16px + (16 - 12) * (100vw - 1600px) / (1600 - 1000) );
+    margin-bottom: 10px;  
+  }
+  .header-stats {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .person-info__name  {
+    font-size: calc(18px + (18 - 14) * (100vw - 1600px) / (1600 - 1000) );   
+  }
+  .person-info__department {
+    font-size: calc(12px + (12 - 10) * (100vw - 1600px) / (1600 - 1000) ); 
+  }
+  .logout {
+    font-size: calc(16px + (16 - 12) * (100vw - 800px) / (1600 - 1000) );  
+  }
+  .search-item {
+    width: 320px;
+  }
+}

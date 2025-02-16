@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-&xb#$lmx#$a)a97dw==jw)$j(emz5nguc0ml(=k5j3-y9_)g4a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.209.215', '127.0.0.1', 'cntrl-ai.alt.ural', '192.168.211.1']
+ALLOWED_HOSTS = ['192.168.0.6', '127.0.0.1', '192.168.195.168']
 
 
 # Application definition
@@ -92,9 +92,9 @@ ASGI_APPLICATION = 'app.asgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'atmmanager',
-        'USER': 'atmadmin',
-        'PASSWORD': '7510897575Max',
+        'NAME': 'atmanager',
+        'USER': 'postgres',
+        'PASSWORD': '7510897575',
         'HOST': '127.0.0.1',
         'PORT': '5432',
     }
@@ -141,7 +141,6 @@ AUTH_USER_MODEL = 'login.User'
 
 STATIC_URL = 'static/'
 
-STATIC_ROOT = '/var/www/static'
 STATICFILES_DIRS = [
     BASE_DIR / "app/static",    
 ]
@@ -150,9 +149,3 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-#CHANNEL_LAYERS = {
-#    "default": {
-#        "BACKEND": "channels.layers.InMemoryChannelLayer"
-#    }
-#}

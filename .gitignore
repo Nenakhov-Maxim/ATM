@@ -2,4 +2,13 @@ app/settings.py
 app/asgi.py
 app/wsgi.py
 manage.py
-
+analytics/__pycache__
+app/__pycache__
+login/__pycache__
+master/__pycache__
+worker/__pycache__
+worker/migrations/__pycache__
+master/migrations/__pycache__
+master/templatetags/__pycache__
+login/migrations/__pycache__
+analytics/migrations/__pycache__

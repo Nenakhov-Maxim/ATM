@@ -1,0 +1,266 @@
+@media (max-width: 1600px) { 
+  .more-information__event  {
+   font-size: calc(16px + (16 - 13) * (100vw - 1600px) / (1600 - 1200) );   
+  }
+  .header-menu-list {
+    font-size: calc(16px + (16 - 10) * (100vw - 1600px) / (1600 - 800) );
+  } 
+  .task-headers-list {
+    font-size: calc(16px + (16 - 9) * (100vw - 1600px) / (1600 - 600) );
+      
+  }
+  .logout  {
+    font-size: calc(16px + (16 - 12) * (100vw - 1600px) / (1600 - 1200) );    
+  }  
+  .card-item__title {
+    font-size: calc(18px + (18 - 14) * (100vw - 1600px) / (1600 - 1200) ); 
+  }
+  .new-task-button {
+    width: calc(280px + (280 - 200) * (100vw - 1600px) / (1600 - 1200) );
+    height: calc(45px + (45 - 35) * (100vw - 1600px) / (1600 - 1200) );
+    font-size: calc(16px + (16 - 12) * (100vw - 1600px) / (1600 - 1200) );
+    min-width: 150px;
+    min-height: 35px;
+  }
+  .search-item {
+    width: calc(500px + (500 - 340) * (100vw - 1600px) / (1600 - 1200) );    
+    font-size: calc(12px + (12 - 9) * (100vw - 1600px) / (1600 - 1200) );
+    height: calc(35px + (35 - 25) * (100vw - 1600px) / (1600 - 800) );
+    min-width: 190px;
+  }
+  .toolbars__search::after {
+    width: calc(20px + (20 - 10) * (100vw - 1600px) / (1600 - 800) );
+    height: calc(20px + (20 - 10) * (100vw - 1600px) / (1600 - 800) );    
+  }
+  .task-status-widget__text {
+    font-size: calc(16px + (16 - 12) * (100vw - 1600px) / (1600 - 1200) );
+    border-radius: calc(10px + (10 - 6) * (100vw - 1600px) / (1600 - 800) );
+    padding-left: calc(35px + (35 - 20) * (100vw - 1600px) / (1600 - 800) );
+  }
+  .task-status-widget ::before {
+    top: calc(8px + (8 - 5) * (100vw - 1600px) / (1600 - 1200) );
+    left: calc(14px + (14 - 10) * (100vw - 1600px) / (1600 - 1200) );    
+  }
+  .toolbars__sub_tasks {
+    font-size: calc(16px + (16 - 14) * (100vw - 1600px) / (1600 - 1200) );
+  }
+  .toolbars__sub_tasks img {
+    width: calc(40px + (40 - 30) * (100vw - 1600px) / (1600 - 1200) );
+  }
+  .stats-info__text {
+    font-size: calc(16px + (16 - 12) * (100vw - 1600px) / (1600 - 1200) );
+  }
+  .stats-info__num {
+    font-size: calc(20px + (20 - 16) * (100vw - 1600px) / (1600 - 1200) );
+  }
+  .toolbar-item__history__svg {
+    width: calc(25px + (25 - 13) * (100vw - 1600px) / (1600 - 400) ); 
+    height: calc(25px + (25 - 13) * (100vw - 1600px) / (1600 - 400) );
+  }
+  .toolbar-item__checkbox {
+    width: calc(25px + (25 - 13) * (100vw - 1600px) / (1600 - 400) ); 
+    height: calc(25px + (25 - 13) * (100vw - 1600px) / (1600 - 400) );
+    margin-right: calc(30px + (30 - 15) * (100vw - 1600px) / (1600 - 800) );
+  }
+  .person-info__name {
+    font-size: calc(18px + (18 - 16) * (100vw - 1600px) / (1600 - 1200) );
+  }
+  .person-info__department {
+    font-size: calc(12px + (12 - 10) * (100vw - 1600px) / (1600 - 1200) ); 
+  }
+  .header-logo  {
+    font-size: calc(24px + (24 - 20) * (100vw - 1600px) / (1600 - 1200) );   
+  }
+  .footer-content {
+    font-size: calc(16px + (16 - 7) * (100vw - 1600px) / (1600 - 600) );
+
+  }
+  .navigation__left {
+    width: calc(15px + (15 - 10) * (100vw - 1600px) / (1600 - 600) ); 
+    height: calc(15px + (15 - 10) * (100vw - 1600px) / (1600 - 600) );
+    margin-right: calc(25px + (25 - 20) * (100vw - 1600px) / (1600 - 1200) );
+    min-width: 8px;
+    min-height: 8px;
+  }
+  .navigation__right {
+    width: calc(15px + (15 - 10) * (100vw - 1600px) / (1600 - 600) ); 
+    height: calc(15px + (15 - 10) * (100vw - 1600px) / (1600 - 600) );
+    min-width: 8px;
+    min-height: 8px;
+  }
+  .footer-content__navigation ::after {
+    width: calc(15px + (15 - 10) * (100vw - 1600px) / (1600 - 600) ); 
+    height: calc(15px + (15 - 10) * (100vw - 1600px) / (1600 - 600) );
+    min-width: 8px;
+    min-height: 8px; 
+  }
+  .worplace-name__equipment {
+    font-size: calc(12px + (12 - 9) * (100vw - 1600px) / (1600 - 400) );
+  }
+  .wrapper {
+    margin-left: calc(50px + (50 - 15) * (100vw - 1600px) / (1600 - 400) );
+    margin-right: calc(50px + (50 - 15) * (100vw - 1600px) / (1600 - 400) );
+  }
+  .footer-content__position-in-list  {
+    margin-right: calc(100px + (100 - 30) * (100vw - 1600px) / (1600 - 400) );
+  }
+  .footer-content__all-task-info  {
+    margin-right: calc(100px + (100 - 30) * (100vw - 1600px) / (1600 - 400) ); 
+  }
+  .footer-content__navigation {
+    margin-right: calc(25px + (25- 15) * (100vw - 1600px) / (1600 - 400) ); 
+  }
+  .more-information__head-names  {
+    font-size: calc(16px + (16 - 4) * (100vw - 1600px) / (1600 - 400) );
+  }
+  .new-task-popup-wrapper {
+    width: calc(1000px + (1000 - 600) * (100vw - 1600px) / (1600 - 800) );
+  }
+  .new-task-popup input {
+    width: calc(250px + (250 - 150) * (100vw - 1600px) / (1600 - 800) );
+  }
+  .new-task-popup select {
+    width: calc(250px + (250 - 150) * (100vw - 1600px) / (1600 - 800) );  
+  }
+  .new-task-popup {
+    font-size: calc(16px + (16 - 10) * (100vw - 1600px) / (1600 - 400) );
+  }
+  .new-task-popup-wrapper {
+    grid-template-rows: 15vh 1.5fr 1.5fr;
+  }
+  .new-task-popup__title-block {
+    max-height: 550px;
+  }     
+}
+
+@media (max-width: 1000px) { 
+  .task-status__text {
+    display: none;
+  }
+  .task-status-widget__text {
+    border: none;
+  }
+  .actions__more-info::after {
+    top: 21px;
+  }
+  .new-task-popup__content-block {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 800px) { 
+  .more-info__text {
+    display: none;
+  }
+  .actions__more-info::after {
+    right: calc(50px + (50 - 30) * (100vw - 1600px) / (1600 - 600) );
+  }
+  .header-menu-wrapper::after {
+    display: inherit;
+  }
+  .header-menu-list {
+    display: none;
+    position: absolute;
+    flex-direction: column;    
+    width: 130px;
+    height: 155px;
+    background-color: black;
+    z-index: 2;
+    left: 0;
+    padding: 5px;
+    
+  }
+  .header-menu-item {
+    margin-bottom: 15px;
+    margin-right: 0;
+    
+  }
+  .active::after {
+    position: absolute;
+    content: '';
+    width: 100%;
+    height: 2px;
+    background-color: #C21500;
+    left: 0px;
+    bottom: -5px;
+    z-index: 1;
+  }
+  .header-border {
+    display: none;
+  }
+  .actions__more-info::after {
+    width: calc(25px + (25 - 15) * (100vw - 800px) / (800 - 400) );
+    height: calc(25px + (25 - 15) * (100vw - 800px) / (800 - 400) );
+    top: calc(21px + (21 - 30) * (100vw - 800px) / (800 - 400) );
+  }
+
+  .logout {
+    font-size: 10px;
+    margin-top: 10px;
+  }
+  .popup-content-block__footer {
+    grid-template-columns: 1fr;
+  }  
+  .new-task-popup__content-block {
+    grid-template-columns: 1fr;
+  }
+  .new-task-popup input {
+    width: 100%;
+  }
+  .new-task-popup select {
+    width: 100%;  
+  }
+}
+
+@media (max-width: 600px) { 
+  .task-status-widget ::before {
+    top: 2.5px;
+    left: 4px;
+    width: calc(7px + (7 - 5) * (100vw - 600px) / (600 - 400) );
+    height: calc(7px + (7 - 5) * (100vw - 600px) / (600 - 400) );
+  }
+  .new-task-button {
+    font-size: 8px;
+  } 
+  .toolbars {
+    flex-direction: column;
+  }
+  .toolbars__search {
+    margin-bottom: 10px;
+    
+  }
+  .toolbars__sub_tasks {
+    margin-bottom: 10px;
+  }
+  .toolbars__new-task{
+    margin-bottom: 10px;
+  }
+  .stats-info__text {    
+    font-size: 7px;
+  }
+  .header-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .stats-info__num{
+    margin-top: 10px;
+    font-size: 12px;
+  }
+  .more-information__event {
+    font-size: 6px;
+  }
+  .new-task-popup__content-block {
+    text-align: center;
+    
+  }
+  .popup-content-block__footer  {
+    text-align: center;
+  }
+  .new-task-popup input {
+    width: calc(350px + (350 - 300) * (100vw - 600px) / (600 - 400) );
+  }
+  .new-task-popup select {
+    width: calc(350px + (350 - 300) * (100vw - 600px) / (600 - 400) );  
+  }
+}

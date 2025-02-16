@@ -1,0 +1,17 @@
+@font-face {
+  font-family: 'Rosatom-regular';
+  src: url("fonts/Rosatom-Regular_W.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Rosatom-bold';
+  src: url("fonts/Rosatom-Bold_W.woff2") format("woff2");
+  font-weight: bold;
+  font-style: normal;
+}
+
+body {
+  font-family: 'Rosatom-regular';  
+}

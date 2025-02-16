@@ -1,0 +1,25 @@
+@media (max-width: 1000px) {
+  .content__inner-block  {
+    width: calc(800px + (800 - 530) * (100vw - 1000px) / (1000 - 600) );
+    height: auto;
+    position: relative;
+    margin: 0 auto;
+    top: 0;
+    left: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .content__inner-block  {
+    flex-direction: column;
+    padding: 0;
+  }
+  .right-side {
+    width: 100%;
+    padding: 0
+  }
+  .left-side {
+    max-height: 150px;
+  }
+  
+}
