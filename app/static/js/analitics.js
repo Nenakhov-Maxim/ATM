@@ -7,6 +7,20 @@ const ctx_hours_worked = document.getElementById('chart__hours-worked');
 const ctx_profile_amount = document.getElementById('chart__profile-amount');
 const ctx_effectiveness = document.getElementById('chart__effectiveness');
 
+// заполнение статус баров текущего выполнения задания по линиям
+let status_bar_collection = document.querySelectorAll(".loading-equipment__status-bar")
+for (const key in status_bar_collection) {
+  if (Object.prototype.hasOwnProperty.call(status_bar_collection, key)) {
+    const element = status_bar_collection[key];
+    let data_koef = parseInt(element.getAttribute("data-koef"))
+    let status_bar_elem = element.querySelector('.status-bar__value')
+    console.log(data_koef)
+    let new_value_status = `${data_koef}%`
+    status_bar_elem.style.height = new_value_status
+  }
+}
+
+
 function update_chart(block, filter=undefined) {
   let data
   let labels
@@ -122,6 +136,37 @@ function update_chart(block, filter=undefined) {
   return config
 }
 
+
+//Функция отправки запросов серверу
+function ajax_request(url, type,  data) {  
+  // console.log(url)
+  $.ajax({
+  
+    url: url,
+    
+    type: type,
+    
+    data: data,
+
+    headers: {
+        "Accept": "network/json",
+        "Content-Type": "network/json",        
+    },
+    
+    success: function(answer){        
+    },
+  
+    error: function(){  
+      alert('Error!');  
+      }      
+  });
+}
+
+// setInterval(() => {
+//   context.drawImage(video, 0, 0, canvas.width, canvas.height);
+//   const imageData = canvas.toDataURL('image/jpeg', 0.4); //0.4 - качество изображения, изменить при плохом обнаружении
+//   socket.send(JSON.stringify({ image: imageData.split(',')[1], isFs: 0, chgVal: 0}));
+// }, 250);
 
 new Chart(ctx_current_profile, update_chart('current_profile'));
 new Chart(ctx_performance, update_chart('current_performance'));
