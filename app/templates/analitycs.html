@@ -41,8 +41,8 @@
       </div>      
       <div class="current-work">
         <div class="current-work__profile">
-          <select name="choices">
-            <option value="1">По рабочим</option>
+          <select id="choice-current-work" name="choices" onchange=change_current_work(this)>
+            <option value="1" selected="selected">По рабочим</option>
             <option value="2">По видам профиля</option>
             <option value="3">По рабочим местам</option>
           </select>

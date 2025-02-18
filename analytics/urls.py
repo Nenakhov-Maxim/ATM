@@ -12,6 +12,7 @@ from django.contrib.auth.views import LogoutView
 app_name = 'analytics'
 
 urlpatterns = [       
-    path('', views.get_home_page, name='analitytics-home'),       
+    path('', views.get_home_page, name='analitytics-home'),
+    path('update-chart/<str:type_chart>/<int:filter>/', views.update_chart, name='update-chart'),       
 ]
  

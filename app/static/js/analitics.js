@@ -7,21 +7,34 @@ const ctx_hours_worked = document.getElementById('chart__hours-worked');
 const ctx_profile_amount = document.getElementById('chart__profile-amount');
 const ctx_effectiveness = document.getElementById('chart__effectiveness');
 
+
 // заполнение статус баров текущего выполнения задания по линиям
 let status_bar_collection = document.querySelectorAll(".loading-equipment__status-bar")
 for (const key in status_bar_collection) {
   if (Object.prototype.hasOwnProperty.call(status_bar_collection, key)) {
     const element = status_bar_collection[key];
     let data_koef = parseInt(element.getAttribute("data-koef"))
-    let status_bar_elem = element.querySelector('.status-bar__value')
-    console.log(data_koef)
+    let status_bar_elem = element.querySelector('.status-bar__value')    
     let new_value_status = `${data_koef}%`
     status_bar_elem.style.height = new_value_status
   }
 }
 
+//Переключение между типами графиков в количестве изготовленного профиля
+function change_current_work(element) {  
+  chartInstance.destroy();  
+  current_profile_update(element.value); 
+}
 
-function update_chart(block, filter=undefined) {
+//Функция построения графика для current_profile
+function current_profile_update(filter){ 
+  ajax_request('update-chart/current_profile/' + filter + '/', 'GET', {}).then(answer => {    
+    config = update_chart('current_profile', answer)
+    chartInstance = new Chart(ctx_current_profile, config);
+  })
+}
+
+function update_chart(block, data_values) {
   let data
   let labels
   let date_value
@@ -29,14 +42,25 @@ function update_chart(block, filter=undefined) {
   let type_chart
   let indexAxis_value
   let title_value
+  
+  if (block == 'current_profile') {    
+    labels = []
+    date_value = []
 
-  if (block == 'current_profile') {
-    labels = ['Рабочий 1', 'Рабочий 2', 'Рабочий 3', 'Рабочий 4', 'Рабочий 5', 'Рабочий 6', 'Рабочий 7', 'Рабочий 8']
-    date_value = [65, 59, 80, 81, 56, 55, 40, 59]
+    for (const key in data_values.answer) {
+      if (Object.prototype.hasOwnProperty.call(data_values.answer, key)) {
+        if (key != '') {          
+          labels.push(key)
+          date_value.push(data_values.answer[key])
+        }
+      }
+    }      
+    
     label = 'Количество изготовленного профиля, шт.'
     type_chart = 'bar'
     indexAxis_value = 'y'
     title_value = 'Количество изготовленного профиля, шт.'
+
   } else if (block == 'current_performance') {
     labels = ['Линия 1', 'Линия 2', 'Линия 3', 'Линия 4', 'Линия 5']
     date_value = [65, 59, 80, 81, 56]
@@ -138,28 +162,30 @@ function update_chart(block, filter=undefined) {
 
 
 //Функция отправки запросов серверу
-function ajax_request(url, type,  data) {  
-  // console.log(url)
-  $.ajax({
+async function ajax_request(url, type,  data) {    
+  let data_value = await $.ajax({
   
     url: url,
     
     type: type,
     
-    data: data,
+    data: data,    
 
     headers: {
         "Accept": "network/json",
         "Content-Type": "network/json",        
     },
     
-    success: function(answer){        
+    success: function(answer){  
+      return answer
+           
     },
   
     error: function(){  
       alert('Error!');  
       }      
   });
+  return data_value
 }
 
 // setInterval(() => {
@@ -168,7 +194,7 @@ function ajax_request(url, type,  data) {
 //   socket.send(JSON.stringify({ image: imageData.split(',')[1], isFs: 0, chgVal: 0}));
 // }, 250);
 
-new Chart(ctx_current_profile, update_chart('current_profile'));
+current_profile_update(1)
 new Chart(ctx_performance, update_chart('current_performance'));
 new Chart(ctx_load, update_chart('current_load'));
 new Chart(ctx_setup_speed, update_chart('setup_speed'));
