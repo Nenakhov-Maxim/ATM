@@ -34,6 +34,14 @@ function current_profile_update(filter){
   })
 }
 
+//Функция построения графика производительности линии
+function current_performance_update(filter=99){ 
+  ajax_request('update-chart/current_performance/' + filter + '/', 'GET', {}).then(answer => {    
+    config = update_chart('current_performance', answer)
+    chartPerformance = new Chart(ctx_performance, config);
+  })
+}
+
 function update_chart(block, data_values) {
   let data
   let labels
@@ -62,8 +70,19 @@ function update_chart(block, data_values) {
     title_value = 'Количество изготовленного профиля, шт.'
 
   } else if (block == 'current_performance') {
-    labels = ['Линия 1', 'Линия 2', 'Линия 3', 'Линия 4', 'Линия 5']
-    date_value = [65, 59, 80, 81, 56]
+    labels = []
+    date_value = []
+    for (const key in data_values.answer) {
+      if (Object.prototype.hasOwnProperty.call(data_values.answer, key)) {
+        const line_perf = data_values.answer[key];
+        labels.push(key)
+        let sum_perfomance = 0        
+        line_perf.forEach(element => {
+          sum_perfomance += element
+        });
+        date_value.push(sum_perfomance / line_perf.length)
+      }
+    }    
     label = 'Производительность линии, профиль/час'
     type_chart = 'bar'
     indexAxis_value = 'x'
@@ -195,7 +214,8 @@ async function ajax_request(url, type,  data) {
 // }, 250);
 
 current_profile_update(1)
-new Chart(ctx_performance, update_chart('current_performance'));
+current_performance_update()
+// new Chart(ctx_performance, update_chart('current_performance'));
 new Chart(ctx_load, update_chart('current_load'));
 new Chart(ctx_setup_speed, update_chart('setup_speed'));
 new Chart(ctx_hours_worked, update_chart('hours_worked'));

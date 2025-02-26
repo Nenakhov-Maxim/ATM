@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from master.models import Tasks, Workplace
 from django.contrib.auth.decorators import login_required, permission_required
+import datetime
 
 @login_required()
 @permission_required(perm='master.change_tasks', raise_exception=True)
@@ -51,7 +52,11 @@ def update_chart(request, type_chart, filter):
   if request.method == 'GET':
     if type_chart == 'current_profile':
       data = update_current_profile(filter)
-    return JsonResponse({'answer':data})
+      return JsonResponse({'answer':data})
+  
+    if type_chart == 'current_performance':
+      data = update_current_performance()
+      return JsonResponse({'answer':data})
   else:
     return HttpResponse('Только GET-запрос')
   
@@ -110,4 +115,27 @@ def update_current_profile(param):
       else:
         data[str(profile_type)] = profile_amount     
            
+  return data
+
+#Обновление графика производительность линии в час
+def update_current_performance():
+  date_end = datetime.datetime.now()
+  date_start = date_end - datetime.timedelta(weeks=4)
+  data = {}    
+  tasks_in_work = Tasks.objects.all().filter(task_timedate_end_fact__isnull = False) & Tasks.objects.all().filter(task_timedate_end_fact__range = [date_start, date_end])
+  workplace_lib = Workplace.objects.all()
+  for workplace in workplace_lib:
+    data[workplace.id] = []
+  for task in tasks_in_work:
+    old_value = []
+    time_to_work = task.task_timedate_end_fact - task.task_timedate_start_fact
+    tasks_in_work_day = time_to_work.days   
+    tasks_in_work_min = round((time_to_work.seconds / 60) + (tasks_in_work_day * 24 * 60), 2)
+    if task.profile_amount_now != 0: 
+      if task.task_workplace_id in data.keys():
+        old_value = data[task.task_workplace_id]
+        old_value.append((task.profile_amount_now / tasks_in_work_min) * 60)
+        data[task.task_workplace_id] = old_value
+      else:
+        data[task.task_workplace_id] = [(task.profile_amount_now / tasks_in_work_min) * 60]    
   return data
