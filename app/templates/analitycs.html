@@ -103,8 +103,8 @@
       <div class="analysis-of-workers__title">
         <h2>Рабочая загрузка</h2>
       </div>
-      <select name="analysis-of-workers__filter__date">
-        <option value="1">Сегодня</option>
+      <select id="plan-analysis-filter__date" name="analysis-of-workers__filter__date" onchange=change_array_chart(this)>
+        <option value="1" selected="selected">Сегодня</option>
         <option value="2">Последние 7 дней</option>
         <option value="3">Последний месяц</option>
         <option value="4">Пол года</option>

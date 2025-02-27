@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from master.models import Tasks, Workplace
+from login.models import User
 from django.contrib.auth.decorators import login_required, permission_required
 import datetime
 
@@ -54,9 +55,14 @@ def update_chart(request, type_chart, filter):
       data = update_current_profile(filter)
       return JsonResponse({'answer':data})
   
-    if type_chart == 'current_performance':
+    elif type_chart == 'current_performance':
       data = update_current_performance()
       return JsonResponse({'answer':data})
+    
+    elif type_chart == 'setup_speed':
+      data = update_setup_speed(int(filter))
+      return JsonResponse({'answer':data})
+      
   else:
     return HttpResponse('Только GET-запрос')
   
@@ -138,4 +144,51 @@ def update_current_performance():
         data[task.task_workplace_id] = old_value
       else:
         data[task.task_workplace_id] = [(task.profile_amount_now / tasks_in_work_min) * 60]    
+  return data
+
+#Обновление графика производительность линии в час
+def update_setup_speed(param):  
+  data = {}
+  date_end = datetime.datetime.now()  
+  if param == 1:
+    date_start = date_end - datetime.timedelta(days=1)
+  elif param == 2:
+    date_start = date_end - datetime.timedelta(days=7)
+  elif param == 3:
+    date_start = date_end - datetime.timedelta(weeks=4) 
+  elif param == 4:
+    date_start = date_end - datetime.timedelta(weeks=24)
+  elif param == 5:
+    date_start = date_end - datetime.timedelta(weeks=48)
+  else: 
+    date_start = date_end - datetime.timedelta(weeks=4800) 
+        
+  tasks_in_work = Tasks.objects.all().filter(task_time_settingUp__isnull = False) & Tasks.objects.all().filter(task_time_settingUp__range = [date_start, date_end])
+  workers_summary = User.objects.all().filter(position_id_id = 2)
+  
+  for worker in workers_summary:    
+    if worker.position_id_id == 2:
+      worker_name = f'{worker.last_name} {worker.first_name}'
+      data[worker_name] = []
+  
+  for task in tasks_in_work:
+    date_start_sup = task.task_timedate_start_fact
+    if date_start_sup ==  None:
+      date_start_sup = datetime.datetime.now()  
+    date_end_sup = task.task_time_settingUp          
+    time_to_work = date_start_sup.replace(tzinfo=None) - date_end_sup.replace(tzinfo=None)  
+    tasks_in_work_day = time_to_work.days   
+    tasks_in_work_min = round((time_to_work.seconds / 60) + (tasks_in_work_day * 24 * 60), 2)   
+    name_how_accept_task = (task.worker_accepted_task.split(', ')[0]).split('(')[0]
+    if name_how_accept_task in data.keys():
+      old_value = data[name_how_accept_task]
+      old_value.append(tasks_in_work_min)
+      data[name_how_accept_task] = old_value
+    else:
+      if 'Неизвестный пользователь' in data.keys():
+        old_value = data['Неизвестный пользователь']
+        old_value.append(tasks_in_work_min)
+        data['Неизвестный пользователь'] = old_value
+      else:
+        data['Неизвестный пользователь'] = [tasks_in_work_min]         
   return data

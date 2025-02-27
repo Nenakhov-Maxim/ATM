@@ -10,13 +10,13 @@ from django.contrib.auth.admin import UserAdmin as OrigUserAdmin
 
 class AuthorAdmin(OrigUserAdmin):
     list_display = (
-        'username', 'id', 'first_name', 'last_name', 'email', 'position', 'production_area_id',
+        'username', 'id', 'first_name', 'last_name', 'email', 'position_id', 'production_area_id',
     )
-    list_display_links = ('username', 'position', 'production_area_id')
+    list_display_links = ('username', 'position_id', 'production_area_id')
     
     fieldsets = (
         (None, {
-            'fields': ('username', 'first_name', 'last_name', 'email', 'position', 'production_area_id', 'password', 'groups', 'user_permissions', )
+            'fields': ('username', 'first_name', 'last_name', 'email', 'position_id', 'production_area_id', 'password', 'groups', 'user_permissions', )
         }),
         # ('Advanced options', {
         #     'classes': ('collapse',),

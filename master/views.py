@@ -26,10 +26,15 @@ def master_home(request):
   tasks_stat_complited = Tasks.objects.filter(task_status=2).count()  
   load_data = {'title': 'AT-Manager', "task_stat": f'{tasks_stat_all}/{tasks_stat_complited}'}
   # print(request.META)
+  if request.user.position_id_id == 1:
+    user_prd = 'Мастер'
+  else:
+    user_prd = 'Рабочий'
   
+  user_info = [request.user.first_name, request.user.last_name, user_prd]
   return render(request, 'master.html', {'load_data': load_data, 'new_task_form':new_task_form,
                                          'edit_task_form': edit_task_form, 'new_paused_form':new_paused_form,
-                                         'tasks': tasks, 'report_form': report_form})
+                                         'tasks': tasks, 'report_form': report_form, 'user_info': user_info})
 
 @login_required()
 @permission_required(perm='master.change_tasks', raise_exception=True)

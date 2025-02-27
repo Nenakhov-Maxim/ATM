@@ -6,6 +6,8 @@ const ctx_setup_speed = document.getElementById('chart__setup-speed');
 const ctx_hours_worked = document.getElementById('chart__hours-worked');
 const ctx_profile_amount = document.getElementById('chart__profile-amount');
 const ctx_effectiveness = document.getElementById('chart__effectiveness');
+const change_current_work_element = document.getElementById('choice-current-work');
+const filter_date_element = document.getElementById('plan-analysis-filter__date')
 
 
 // заполнение статус баров текущего выполнения задания по линиям
@@ -40,6 +42,20 @@ function current_performance_update(filter=99){
     config = update_chart('current_performance', answer)
     chartPerformance = new Chart(ctx_performance, config);
   })
+}
+
+//Переключение между типами графиков "рабочая загрузка"
+function change_array_chart(element) {  
+  chartSpeedSetup.destroy();  
+  setup_speed(element.value); 
+}
+
+//Функция построения графика среднего времени переналадки по рабочим
+function setup_speed(filter) {
+  ajax_request('update-chart/setup_speed/' + filter + '/', 'GET', {}).then(answer => {       
+    config = update_chart('setup_speed', answer)
+    chartSpeedSetup = new Chart(ctx_setup_speed, config);
+  })  
 }
 
 function update_chart(block, data_values) {
@@ -95,12 +111,23 @@ function update_chart(block, data_values) {
     indexAxis_value = 'x'
     title_value = 'Загрузка линии, %'
   } else  if (block == 'setup_speed') {
-    labels = ['Рабочий 1', 'Рабочий 2', 'Рабочий 3', 'Рабочий 4', 'Рабочий 5', 'Рабочий 6', 'Рабочий 7', 'Рабочий 8']
-    date_value = [1.15, 0.45, 0.80, 0.81, 0.7, 1.65, 1.2, 2.0, 0.85,]
+    labels = []
+    date_value = []
+    for (const key in data_values.answer) {
+      if (Object.prototype.hasOwnProperty.call(data_values.answer, key)) {
+        const time_rework= data_values.answer[key];
+        labels.push(key)
+        let sum_perfomance = 0        
+        time_rework.forEach(element => {
+          sum_perfomance += element
+        });
+        date_value.push(sum_perfomance / time_rework.length)
+      }
+    }
     label = 'Среднее время переналадки/наладки'
     type_chart = 'bar'
     indexAxis_value = 'y'
-    title_value = 'Среднее время переналадки/наладки, час.' 
+    title_value = 'Среднее время переналадки/наладки, мин.' 
   } else if (block == 'hours_worked')  {
     labels = ['Рабочий 1', 'Рабочий 2', 'Рабочий 3', 'Рабочий 4', 'Рабочий 5', 'Рабочий 6', 'Рабочий 7', 'Рабочий 8']
     date_value = [0.9, 0.45, 0.80, 0.81, 0.7, 0.65, 0.2, 0.95, 0.85,]
@@ -213,11 +240,13 @@ async function ajax_request(url, type,  data) {
 //   socket.send(JSON.stringify({ image: imageData.split(',')[1], isFs: 0, chgVal: 0}));
 // }, 250);
 
-current_profile_update(1)
+current_profile_update(change_current_work_element.value)
 current_performance_update()
+setup_speed(filter_date_element.value)
+
 // new Chart(ctx_performance, update_chart('current_performance'));
 new Chart(ctx_load, update_chart('current_load'));
-new Chart(ctx_setup_speed, update_chart('setup_speed'));
+// new Chart(ctx_setup_speed, update_chart('setup_speed'));
 new Chart(ctx_hours_worked, update_chart('hours_worked'));
 new Chart(ctx_profile_amount, update_chart('profile_amount'));
 new Chart(ctx_effectiveness, update_chart('effectiveness'));
