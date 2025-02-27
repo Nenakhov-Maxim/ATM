@@ -42,7 +42,7 @@ def start_task(request):
   if request.method == 'GET':
     data_task = DatabaseWork({'id_task':request.GET.get('id_task')})
     user_name = f'{request.user.last_name} {request.user.first_name}'
-    user_position =f'{request.user.position}'
+    user_position =f'{request.user.position_id_id}'
     task = data_task.push_to_workers(user_name, user_position)     
     if task == True:      
       return HttpResponse('Статус задачи успешно обновлен')
@@ -59,7 +59,7 @@ def pause_task(request, id_task):
     new_paused_form = PauseTaskForm(request.POST)    
     if new_paused_form.is_valid():      
       user_name = f'{request.user.last_name} {request.user.first_name}'
-      user_position =f'{request.user.position}'
+      user_position =f'{request.user.position_id_id}'
       new_data_file = DatabaseWork(new_paused_form.cleaned_data)                   
       new_task_file = new_data_file.paused_task(user_name, user_position, id_task)        
       if  new_task_file == True:
@@ -76,7 +76,7 @@ def new_task(request):
     new_task_form = NewTaskForm(request.POST)    
     if new_task_form.is_valid():      
       user_name = f'{request.user.last_name} {request.user.first_name}'
-      user_position =f'{request.user.position}'
+      user_position =f'{request.user.position_id_id}'
       new_data_file = DatabaseWork(new_task_form.cleaned_data)
       new_history_file = new_data_file.add_new_history_data(user_name, user_position, new_task_form.cleaned_data['task_comments'])            
       if new_history_file == True:        
@@ -118,7 +118,7 @@ def edit_task(request):
     edit_task_form = EditTaskForm(request.POST)    
     if edit_task_form.is_valid():      
       user_name = f'{request.user.last_name} {request.user.first_name}'
-      user_position =f'{request.user.position}'
+      user_position =f'{request.user.position_id_id}'
       new_data_file = DatabaseWork(edit_task_form.cleaned_data)
       #new_history_file = new_data_file.add_new_history_data(user_name, user_position)       
       new_task_file = new_data_file.edit_data_from_task(user_name, user_position, id_task)        
