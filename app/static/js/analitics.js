@@ -44,17 +44,28 @@ function current_performance_update(filter=99){
   })
 }
 
+// Блок "Рабочая загрузка"
 //Переключение между типами графиков "рабочая загрузка"
 function change_array_chart(element) {  
-  chartSpeedSetup.destroy();  
-  setup_speed(element.value); 
+  chartSpeedSetup.destroy();
+  chartProfileAmount.destroy();  
+  setup_speed(element.value);
+  profile_amount(element.value); 
 }
 
-//Функция построения графика среднего времени переналадки по рабочим
+//Функция построения графика среднего времени переналадки
 function setup_speed(filter) {
   ajax_request('update-chart/setup_speed/' + filter + '/', 'GET', {}).then(answer => {       
     config = update_chart('setup_speed', answer)
     chartSpeedSetup = new Chart(ctx_setup_speed, config);
+  })  
+}
+
+//Функция построения графика количества изготовленного профиля
+function profile_amount(filter) {
+  ajax_request('update-chart/profile_amount/' + filter + '/', 'GET', {}).then(answer => {       
+    config = update_chart('profile_amount', answer)
+    chartProfileAmount = new Chart(ctx_profile_amount, config);
   })  
 }
 
@@ -136,8 +147,19 @@ function update_chart(block, data_values) {
     indexAxis_value = 'x'
     title_value = 'Среднее значение коэф.  полезной работы'   
   } else if (block == 'profile_amount') {
-    labels = ['Рабочий 1', 'Рабочий 2', 'Рабочий 3', 'Рабочий 4', 'Рабочий 5', 'Рабочий 6', 'Рабочий 7', 'Рабочий 8']
-    date_value = [800, 450, 300, 1200, 120, 741, 550, 640, 970,]
+    labels = []
+    date_value = []
+    for (const key in data_values.answer) {
+      if (Object.prototype.hasOwnProperty.call(data_values.answer, key)) {
+        const profile_amount= data_values.answer[key];
+        labels.push(key)
+        let sum_perfomance = 0        
+        profile_amount.forEach(element => {
+          sum_perfomance += element
+        });
+        date_value.push(sum_perfomance)
+      }
+    }
     label = 'Изготовлено профиля'
     type_chart = 'bar'
     indexAxis_value = 'y'
@@ -243,10 +265,10 @@ async function ajax_request(url, type,  data) {
 current_profile_update(change_current_work_element.value)
 current_performance_update()
 setup_speed(filter_date_element.value)
-
+profile_amount(filter_date_element.value)
 // new Chart(ctx_performance, update_chart('current_performance'));
 new Chart(ctx_load, update_chart('current_load'));
 // new Chart(ctx_setup_speed, update_chart('setup_speed'));
 new Chart(ctx_hours_worked, update_chart('hours_worked'));
-new Chart(ctx_profile_amount, update_chart('profile_amount'));
+//new Chart(ctx_profile_amount, update_chart('profile_amount'));
 new Chart(ctx_effectiveness, update_chart('effectiveness'));

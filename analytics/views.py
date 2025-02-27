@@ -62,6 +62,10 @@ def update_chart(request, type_chart, filter):
     elif type_chart == 'setup_speed':
       data = update_setup_speed(int(filter))
       return JsonResponse({'answer':data})
+    
+    elif type_chart == 'profile_amount':
+      data = update_profile_amount(int(filter))
+      return JsonResponse({'answer':data})  
       
   else:
     return HttpResponse('Только GET-запрос')
@@ -146,7 +150,7 @@ def update_current_performance():
         data[task.task_workplace_id] = [(task.profile_amount_now / tasks_in_work_min) * 60]    
   return data
 
-#Обновление графика производительность линии в час
+#Обновление графика переналадки оборудования
 def update_setup_speed(param):  
   data = {}
   date_end = datetime.datetime.now()  
@@ -191,4 +195,61 @@ def update_setup_speed(param):
         data['Неизвестный пользователь'] = old_value
       else:
         data['Неизвестный пользователь'] = [tasks_in_work_min]         
+  return data
+
+#Обновление графика количества изготовленного профиля
+def update_profile_amount(param):
+  data = {}
+  date_end = datetime.datetime.now()  
+  if param == 1:
+    date_start = date_end - datetime.timedelta(days=1)
+  elif param == 2:
+    date_start = date_end - datetime.timedelta(days=7)
+  elif param == 3:
+    date_start = date_end - datetime.timedelta(weeks=4) 
+  elif param == 4:
+    date_start = date_end - datetime.timedelta(weeks=24)
+  elif param == 5:
+    date_start = date_end - datetime.timedelta(weeks=48)
+  else: 
+    date_start = date_end - datetime.timedelta(weeks=4800) 
+        
+  tasks_in_work = Tasks.objects.all().filter(task_timedate_end_fact__isnull = False) & Tasks.objects.all().filter(task_timedate_end_fact__range = [date_start, date_end])
+  workers_summary = User.objects.all().filter(position_id_id = 2)
+  
+  for worker in workers_summary:    
+    if worker.position_id_id == 2:
+      worker_name = f'{worker.last_name} {worker.first_name}'
+      data[worker_name] = []
+  
+  for task in tasks_in_work:    
+    array_workers_sum_inf = task.worker_accepted_task.split(', ')    
+    for worker_sum_inf in array_workers_sum_inf:
+      if worker_sum_inf.find('(') != -1 & worker_sum_inf.find(')') != -1:
+        pos1 = worker_sum_inf.find('(')
+        pos2 = worker_sum_inf.find(')')
+        name_worker = worker_sum_inf[0:pos1]
+        amount_profile = int(worker_sum_inf[pos1 + 1:pos2].split(' - ')[0])        
+        if name_worker in data.keys():
+          old_value = data[name_worker]
+          old_value.append(amount_profile)
+          data[name_worker] = old_value
+        else:
+          data['Неизвестный пользователь'] = [amount_profile]
+      else:
+        if worker_sum_inf != "":
+          if worker_sum_inf in data.keys():
+            old_value = data[worker_sum_inf]
+            old_value.append(task.profile_amount_now)
+            data[worker_sum_inf] = old_value
+          else:
+            data['Неизвестный пользователь'] = [int(task.profile_amount_now)]
+        else:
+          if 'Неизвестный пользователь' in data.keys():
+            old_value = data['Неизвестный пользователь']
+            old_value.append(task.profile_amount_now)
+            data['Неизвестный пользователь'] = old_value
+          else:
+            data['Неизвестный пользователь'] = [int(task.profile_amount_now)]       
+  
   return data
