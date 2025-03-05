@@ -52,7 +52,8 @@ function change_array_chart(element) {
   chartHoursWorked.destroy();  
   setup_speed(element.value);
   profile_amount(element.value);
-  hours_worked(element.value) 
+  hours_worked(element.value);
+  effectiveness(element.value); 
 }
 
 //Функция построения графика среднего времени переналадки
@@ -77,6 +78,14 @@ function hours_worked(filter) {
     config = update_chart('hours_worked', answer)
     chartHoursWorked = new Chart(ctx_hours_worked, config);
   })  
+}
+
+//Функция построения графика эффективности
+function effectiveness(filter) {
+  ajax_request('update-chart/effectiveness/' + filter + '/', 'GET', {}).then(answer => {       
+    config = update_chart('effectiveness', answer)
+    chartEffectiveness = new Chart(ctx_effectiveness, config);
+  })
 }
 
 function update_chart(block, data_values) {
@@ -189,8 +198,20 @@ function update_chart(block, data_values) {
     indexAxis_value = 'y'
     title_value = 'Изготовлено профиля, шт.'   
   } else if (block == 'effectiveness') {
-    labels = ['Рабочий 1', 'Рабочий 2', 'Рабочий 3', 'Рабочий 4', 'Рабочий 5', 'Рабочий 6', 'Рабочий 7', 'Рабочий 8']
-    date_value = [150, 250, 100, 100, 210, 160, 50, 200, 230, 190, 170]
+    labels = []
+    date_value = []
+    for (const key in data_values.answer) {
+      if (Object.prototype.hasOwnProperty.call(data_values.answer, key)) {
+        const effect= data_values.answer[key];
+        labels.push(key)
+        let sum_perfomance = 0        
+        effect.forEach(element => {
+          sum_perfomance += element
+        });
+        date_value.push(sum_perfomance / effect.length)
+        
+      }            
+    }
     label = 'Эффективность'
     type_chart = 'bar'
     indexAxis_value = 'x'
@@ -291,9 +312,10 @@ current_performance_update()
 setup_speed(filter_date_element.value)
 profile_amount(filter_date_element.value)
 hours_worked(filter_date_element.value)
+effectiveness(filter_date_element.value)
 // new Chart(ctx_performance, update_chart('current_performance'));
 new Chart(ctx_load, update_chart('current_load'));
 // new Chart(ctx_setup_speed, update_chart('setup_speed'));
 //new Chart(ctx_hours_worked, update_chart('hours_worked'));
 //new Chart(ctx_profile_amount, update_chart('profile_amount'));
-new Chart(ctx_effectiveness, update_chart('effectiveness'));
+//new Chart(ctx_effectiveness, update_chart('effectiveness'));

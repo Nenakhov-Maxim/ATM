@@ -69,6 +69,10 @@ def update_chart(request, type_chart, filter):
       
     elif type_chart == 'hours_worked':
       data = update_hours_worked(int(filter))
+      return JsonResponse({'answer':data})
+    
+    elif type_chart == 'effectiveness':
+      data = update_effectiveness(int(filter))
       return JsonResponse({'answer':data})  
       
   else:
@@ -253,8 +257,7 @@ def update_profile_amount(param):
             old_value.append(task.profile_amount_now)
             data['Неизвестный пользователь'] = old_value
           else:
-            data['Неизвестный пользователь'] = [int(task.profile_amount_now)]       
-  print(data)
+            data['Неизвестный пользователь'] = [int(task.profile_amount_now)]    
   return data
 
 def update_hours_worked(param):
@@ -341,4 +344,103 @@ def update_hours_worked(param):
       i += 1
          
   return data
+
+# Обновление графика эффективности  
+def update_effectiveness(param):
+  data = {}
+  date_end = datetime.datetime.now() + datetime.timedelta(days=1)  
+  if param == 1:
+    date_start = date_end - datetime.timedelta(days=1)
+  elif param == 2:
+    date_start = date_end - datetime.timedelta(days=7)
+  elif param == 3:
+    date_start = date_end - datetime.timedelta(weeks=4) 
+  elif param == 4:
+    date_start = date_end - datetime.timedelta(weeks=24)
+  elif param == 5:
+    date_start = date_end - datetime.timedelta(weeks=48)
+  else: 
+    date_start = date_end - datetime.timedelta(weeks=4800) 
+        
+  tasks_in_work = Tasks.objects.all().filter(task_timedate_end_fact__isnull = False) & Tasks.objects.all().filter(task_timedate_end_fact__range = [date_start, date_end])
+  workers_summary = User.objects.all().filter(position_id_id = 2)
+  for worker in workers_summary:    
+    if worker.position_id_id == 2:
+      worker_name = f'{worker.last_name} {worker.first_name}'
+      data[worker_name] = []
   
+  for task in tasks_in_work:
+    array_workers_sum_inf = task.worker_accepted_task.split(', ')
+    i = 0 
+    time_start = task.task_timedate_start_fact       
+    for worker_sum_inf in array_workers_sum_inf:      
+      if worker_sum_inf.find('(') != -1 & worker_sum_inf.find(')') != -1:
+        pos1 = worker_sum_inf.find('(')
+        pos2 = worker_sum_inf.find(')')
+        name_worker = worker_sum_inf[0:pos1]
+        try:
+          time_to_end = worker_sum_inf[pos1 + 1:pos2].split(' - ')[1]
+          time_to_end = datetime.datetime.strptime(time_to_end, "%Y-%m-%d %H:%M:%S.%f%z")
+        except Exception as e:
+          time_to_end = task.task_timedate_end_fact
+        try:
+          profile_amount = int(worker_sum_inf[pos1 + 1:pos2].split(' - ')[0])          
+        except Exception as e:
+          profile_amount = task.profile_amount_now        
+        
+                  
+        if time_to_end.replace(tzinfo=None) >= time_start.replace(tzinfo=None):
+          time_work = time_to_end.replace(tzinfo=None) - time_start.replace(tzinfo=None)
+          time_work_day = time_work.days
+          time_work_min = round((time_work.seconds / 60) + (time_work_day * 24 * 60), 2)
+        else:
+           time_work_min = 0    
+        if i == 0: 
+          time_set_up = task.task_time_settingUp
+          if time_set_up != None:             
+            time_to_reload = task.task_timedate_start_fact.replace(tzinfo=None) - task.task_time_settingUp.replace(tzinfo=None)  
+            time_to_reload_day = time_to_reload.days             
+            time_to_reload_min = round((time_to_reload.seconds / 60) + (time_to_reload_day * 24 * 60), 2)
+          else:
+            time_to_reload_min = 0.00
+        else:
+          time_to_reload_min = 0.00     
+        if (time_work_min - time_to_reload_min) != 0: 
+          effect = round(profile_amount/(time_work_min - time_to_reload_min), 2)               
+        else:
+          effect = 0.00
+        if name_worker in data.keys():
+          old_value = data[name_worker]
+          old_value.append(effect)
+          data[name_worker] = old_value
+        else:
+          data['Неизвестный пользователь'] = [effect]
+        time_start = time_to_end
+      else:
+        if worker_sum_inf != None:
+          time_set_up = task.task_time_settingUp
+          if time_set_up != '':             
+            time_to_reload = task.task_timedate_start_fact.replace(tzinfo=None) - task.task_time_settingUp.replace(tzinfo=None)
+            time_to_reload_day = time_to_reload.days
+            time_to_reload_min = round((time_to_reload.seconds / 60) + (time_to_reload_day * 24 * 60), 2)
+          else:
+            time_to_reload_min = 0.00
+              
+          time_to_work = datetime.datetime.now().replace(tzinfo=None) - task.task_timedate_start_fact.replace(tzinfo=None)
+          time_to_work_day =  time_to_work.days
+          time_work_min = round((time_to_work.seconds / 60) + (time_to_work_day * 24 * 60), 2)
+          profile_amount = task.profile_amount_now
+          if (time_work_min - time_to_reload_min) != 0:
+            effect = round(profile_amount/(time_work_min - time_to_reload_min), 2)
+          else:
+            effect = 0.00   
+          if worker_sum_inf in data.keys():
+            old_value = data[worker_sum_inf]
+            old_value.append(effect)
+            data[worker_sum_inf] = old_value
+          else:
+            data['Неизвестный пользователь'] = [effect] 
+      i += 1
+  
+  print(data)
+  return data
