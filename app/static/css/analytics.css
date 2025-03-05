@@ -37,6 +37,11 @@
   justify-content: space-between;
 }
 
+.logo-title__analitics  {
+  font-style: italic;
+  font-weight: bold;
+}
+
 .person-info {
   display: flex;
   flex-wrap: nowrap;
