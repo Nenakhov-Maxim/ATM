@@ -79,6 +79,14 @@
   color: #000000d6;;
 }
 
+#plan-analysis-filter__date  {
+  background-color: transparent;  
+  border-radius: 10px;
+  border: 1px solid #0000006b;;
+  text-align: center;
+  color: #000000d6;;
+}
+
 /* позиционирование графиков */
 
 .current-work__title {
