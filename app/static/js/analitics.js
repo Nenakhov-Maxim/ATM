@@ -49,7 +49,8 @@ function current_performance_update(filter=99){
 function change_array_chart(element) {  
   chartSpeedSetup.destroy();
   chartProfileAmount.destroy();
-  chartHoursWorked.destroy();  
+  chartHoursWorked.destroy();
+  chartEffectiveness.destroy();  
   setup_speed(element.value);
   profile_amount(element.value);
   hours_worked(element.value);

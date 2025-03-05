@@ -417,9 +417,9 @@ def update_effectiveness(param):
           data['Неизвестный пользователь'] = [effect]
         time_start = time_to_end
       else:
-        if worker_sum_inf != None:
+        if worker_sum_inf != '':
           time_set_up = task.task_time_settingUp
-          if time_set_up != '':             
+          if time_set_up != None:             
             time_to_reload = task.task_timedate_start_fact.replace(tzinfo=None) - task.task_time_settingUp.replace(tzinfo=None)
             time_to_reload_day = time_to_reload.days
             time_to_reload_min = round((time_to_reload.seconds / 60) + (time_to_reload_day * 24 * 60), 2)
