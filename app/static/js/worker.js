@@ -10,7 +10,7 @@ $(document).ready(function() {
       task_id_list[element.dataset.itemid] = element.dataset.categoryId      
     }
   }  
-  const socket = new WebSocket(`ws://127.0.0.1:8000/ws/task-transfer/${name_line}`);
+  const socket = new WebSocket(`ws://192.168.211.1/ws/task-transfer/${name_line}`); //На домашней машине 127.0.0.1:8000
 
   socket.onopen = function() {
     socket.send(JSON.stringify({message:"start", task_list:task_id_list}))
