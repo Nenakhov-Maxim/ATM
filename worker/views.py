@@ -15,14 +15,15 @@ def worker_home(request, filter='all'):
   new_paused_form = PauseTaskForm()
   new_deny_form = DenyTaskForm()  
   now = datetime.datetime.now()
-  if request.META['REMOTE_ADDR']=='192.168.211.10':
-    user_prd_ar = 'Производственная линия № 1'
-    area_id = 1
+  adr_lib = {'192.168.211.10': 1, '192.168.211.11': 2, '192.168.211.12': 3, '192.168.211.13': 4, '192.168.211.14': 5, '192.168.211.15': 6}
+  if request.META['REMOTE_ADDR'] in adr_lib.keys():
+    area_id = adr_lib[request.META['REMOTE_ADDR']]
+    user_prd_ar = f'Производственная линия № {str(area_id)}'
   else:
     user_prd_ar = 'Неизвестная линия'
-    area_id = 0
+    area_id = 99
   #Далее удалить при реальной эксплуатации
-  area_id = 1 
+  #area_id = 1 
   #area_id = request.user.production_area_id
   tasks = Tasks.objects.all().filter(task_workplace=area_id, task_status_id__in=[3, 4, 7, 8]).order_by('-id')
   task_to_start = tasks.filter(task_status_id=4).count
