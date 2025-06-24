@@ -13,4 +13,6 @@ class User(AbstractUser):
 class UserDepPosition(models.Model):
   position = models.CharField(max_length=100, verbose_name='Должность')
   
+  def __str__(self):
+    return self.position
   
