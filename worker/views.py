@@ -23,7 +23,7 @@ def worker_home(request, filter='all'):
     user_prd_ar = f'Производственная линия № {str(area_id)}'
   else:
     user_prd_ar = 'Неизвестная линия'
-    area_id = 99 #99  
+    area_id = 1 #99  
   tasks = Tasks.objects.all().filter(task_workplace=area_id, task_status_id__in=[3, 4, 7, 8]).order_by('-id')  
   task_to_start = tasks.filter(task_status_id=4).count
   task_start= tasks.filter(task_status_id=3).count
@@ -84,7 +84,7 @@ def task_month(request):
 @login_required
 @permission_required(perm='worker.change_workertypeproblem', raise_exception=True) 
 def pause_task(request):  
-  global id_task   
+  global id_task
   if request.method == 'POST':
     adr_lib = {'192.168.211.10': 1, '192.168.211.11': 2, '192.168.211.12': 3, '192.168.211.13': 4, '192.168.211.14': 5, '192.168.211.15': 6}
     new_paused_form = PauseTaskForm(request.POST)
@@ -114,7 +114,7 @@ def pause_task(request):
 @login_required
 @permission_required(perm='worker.change_workertypeproblem', raise_exception=True)     
 def deny_task(request):
-  global id_task    
+  global id_task
   if request.method == 'POST':
     adr_lib = {'192.168.211.10': 1, '192.168.211.11': 2, '192.168.211.12': 3, '192.168.211.13': 4, '192.168.211.14': 5, '192.168.211.15': 6}    
     new_deny_form = DenyTaskForm(request.POST)    
