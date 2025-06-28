@@ -58,7 +58,7 @@ class Tasks(models.Model):
   task_profile_type = models.ForeignKey('Profile_type', null=True, on_delete=models.SET_NULL)
   task_workplace = models.ForeignKey('Workplace', null=True, on_delete=models.SET_NULL)
   task_profile_amount = models.BigIntegerField('Количество')
-  task_comments = models.TextField('Комментарий', blank=True)
+  task_comments = models.TextField('Комментарий', blank=True, default='', null=True)
   task_status = models.ForeignKey('Task_status', null=True, on_delete=models.SET_NULL)
   task_user_created = models.CharField('Кто создал задачу', max_length=250, default='Неизвестный пользователь')
   task_history = models.ForeignKey('Task_history',  on_delete=models.CASCADE)
