@@ -92,17 +92,16 @@ def pause_task(request):
     if new_paused_form.is_valid():
       user_name = f'{request.user.last_name} {request.user.first_name}'
       user_position =f'{request.user.position_id_id}'
-      new_data_file = DatabaseWork(new_paused_form.cleaned_data)
-      print(new_paused_form.cleaned_data)
-      if new_paused_form.cleaned_data['problem_type'].id == 1:
-        if request.META['REMOTE_ADDR'] in adr_lib.keys():
-          area_id = adr_lib[request.META['REMOTE_ADDR']]
-        else:
-          area_id = 99
-        comment = new_paused_form.cleaned_data['problem_comments']  
-        TelegramBot().send_text(f'На линии {area_id} произошла неисправность.  Комментарий рабочего: "{comment}"')
+      new_data_file = DatabaseWork(new_paused_form.cleaned_data)    
       new_task_file = new_data_file.paused_task(user_name, user_position, id_task) 
-      if  new_task_file == True:      
+      if  new_task_file == True:
+        if new_paused_form.cleaned_data['problem_type'].id == 1:
+          if request.META['REMOTE_ADDR'] in adr_lib.keys():
+            area_id = adr_lib[request.META['REMOTE_ADDR']]
+          else:
+            area_id = 99
+          comment = new_paused_form.cleaned_data['problem_comments']  
+          TelegramBot().send_text(f'На линии {area_id} произошла неисправность.  Комментарий рабочего: "{comment}"')      
         return redirect('/worker', permanent=True)
       else:
         return HttpResponse(f'Ошибка: {new_task_file}')
@@ -123,17 +122,16 @@ def deny_task(request):
     if new_deny_form.is_valid():      
       user_name = f'{request.user.last_name} {request.user.first_name}'
       user_position =f'{request.user.position_id_id}'
-      new_data_file = DatabaseWork(new_deny_form.cleaned_data)
-      if new_deny_form.cleaned_data['problem_type'].id == 1:
-        if request.META['REMOTE_ADDR'] in adr_lib.keys():
-          area_id = adr_lib[request.META['REMOTE_ADDR']]
-        else:
-          area_id = 99
-        comment = new_deny_form.cleaned_data['problem_comments']  
-        TelegramBot().send_text(f'На линии {area_id} произошла неисправность.  Комментарий рабочего: "{comment}"')
+      new_data_file = DatabaseWork(new_deny_form.cleaned_data)      
       new_task_file = new_data_file.deny_task(user_name, user_position, id_task)        
       if  new_task_file == True:
-        
+        if new_deny_form.cleaned_data['problem_type'].id == 1:
+          if request.META['REMOTE_ADDR'] in adr_lib.keys():
+            area_id = adr_lib[request.META['REMOTE_ADDR']]
+          else:
+            area_id = 99
+          comment = new_deny_form.cleaned_data['problem_comments']  
+          TelegramBot().send_text(f'На линии {area_id} произошла неисправность.  Комментарий рабочего: "{comment}"')
         return redirect('/worker', permanent=True)
       else:
         
