@@ -9,6 +9,7 @@ from django.views.generic import UpdateView
 from django.urls import reverse_lazy
 from .report import create_excel_from_dict_list
 import math, datetime, os
+from datetime import datetime, timedelta
 
 
 
@@ -72,22 +73,44 @@ def pause_task(request, id_task):
 @login_required
 @permission_required(perm='master.add_tasks', raise_exception=True)
 def new_task(request):
-  if request.method == 'POST':    
-    new_task_form = NewTaskForm(request.POST)    
-    if new_task_form.is_valid():      
-      user_name = f'{request.user.last_name} {request.user.first_name}'
-      user_position =f'{request.user.position_id_id}'
-      new_data_file = DatabaseWork(new_task_form.cleaned_data)
-      new_history_file = new_data_file.add_new_history_data(user_name, user_position, new_task_form.cleaned_data['task_comments'])            
-      if new_history_file == True:        
-        new_task_file = new_data_file.add_new_task_data(user_name)        
-        if  new_task_file == True:
-          # print(f'Добавление прошло успешно, id записи: {new_data_file.new_task_id}')
-          return redirect('/master', permanent=True)
+  if request.method == 'POST':
+    profile_length_array = request.POST.getlist('task_profile_length')
+    profile_amount_array = request.POST.getlist('task_profile_amount')
+    amount_date_period = len(profile_length_array)
+    date_start = datetime.strptime(request.POST.get('task_timedate_start'), "%Y-%m-%dT%H:%M") 
+    date_end = datetime.strptime(request.POST.get('task_timedate_end'), "%Y-%m-%dT%H:%M")
+    total_hour = ((date_end - date_start).total_seconds()) / 3600
+    time_for_sector = total_hour / amount_date_period
+    start_position = date_start            
+    for index, value in enumerate(profile_length_array):               
+      decleaned_data = {}      
+      for key in request.POST:
+        if key == 'task_profile_length':
+          decleaned_data['task_profile_length'] = value
+        elif key == 'task_profile_amount':
+          decleaned_data['task_profile_amount'] = profile_amount_array[index]
+        elif key == 'task_timedate_start':
+          decleaned_data['task_timedate_start'] = start_position
+        elif key == 'task_timedate_end':
+          decleaned_data['task_timedate_end'] = start_position + timedelta(hours=time_for_sector)
+          start_position = start_position + timedelta(hours=time_for_sector)
         else:
-          return HttpResponse(f'Ошибка: {new_task_file}')
-      else:        
-        return HttpResponse(f'Ошибка: {new_history_file}')   
+          decleaned_data[key] = request.POST[key]
+      new_task_form = NewTaskForm(decleaned_data)    
+      if new_task_form.is_valid():      
+        user_name = f'{request.user.last_name} {request.user.first_name}'
+        user_position =f'{request.user.position_id_id}'
+        new_data_file = DatabaseWork(new_task_form.cleaned_data)               
+        new_history_file = new_data_file.add_new_history_data(user_name, user_position, new_task_form.cleaned_data['task_comments'])            
+        if new_history_file == True:        
+          new_task_file = new_data_file.add_new_task_data(user_name)        
+          if  new_task_file == True:
+            print(f'Добавление прошло успешно, id записи: {new_data_file.new_task_id}')            
+          else:
+            return HttpResponse(f'Ошибка: {new_task_file}')
+        else:        
+          return HttpResponse(f'Ошибка: {new_history_file}')
+    return redirect('/master', permanent=True)   
 
 # Удаление задачи    
 @login_required
@@ -113,7 +136,7 @@ def edit_task(request):
       return JsonResponse({'task_name': data.task_name, 'task_timedate_start':data.task_timedate_start,
                           'task_timedate_end': data.task_timedate_end, 'task_profile_type': data.task_profile_type_id, 
                           'task_workplace': data.task_workplace_id, 'task_profile_amount': data.task_profile_amount,
-                          'task_comments': data.task_comments})
+                          'task_profile_length': data.task_profile_length, 'task_comments': data.task_comments})
   elif request.method == 'POST':    
     edit_task_form = EditTaskForm(request.POST)    
     if edit_task_form.is_valid():      

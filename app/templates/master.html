@@ -37,13 +37,11 @@
           <span class="stats-info__num">{{load_data.task_stat}}</span>
         </div>
       </div>
-      
       <div class="header__right__side">
         <div class="person-info">
           <span class="person-info__name">{{user_info.1}} {{user_info.0}}</span>
           <span class="person-info__department">{{user_info.2}}</span>
-          <span class="person-info__department">{{user.production_area}}</span>
-          <!-- <span class="person-info__department">{{ request.META }}</span> -->
+          <span class="person-info__department">{{user.production_area}}</span>          
         </div>
         <div class="logout">
           <a href="{% url 'users:logout' %}" class="logout-link">Выход</a>
@@ -333,6 +331,7 @@
             <label for="task_workplace">Выберете рабочее место</label>
             {{ new_task_form.task_workplace }}            
           </div> 
+          <br>
           <div class="popup-content-block__amount">
             <span class="popup-content-block__amoun__text">Введите необходимое количество профиля</span>
             {{ new_task_form.task_profile_amount }}           
@@ -340,8 +339,11 @@
           <div class="popup-content-block__amount">
             <span class="popup-content-block__amoun__text">Введите необходимую длину профиля</span>
             {{ new_task_form.task_profile_length }}           
-          </div>            
+          </div>         
         </div>
+        <div class="add-profile-length">
+          <a href="" onclick="add_profile_length(event, this)">Добавить длину профиля</a>
+        </div>        
         <div class="popup-content-block__footer">
           <div class="new-task-popup-comments">
             <span class="new-task-popup-comments__text">Комментарий к задаче</span>
@@ -389,10 +391,12 @@
             <label for="task_workplace">Выберете рабочее место</label>
             {{ edit_task_form.task_workplace }}            
           </div> 
+          <br>
           <div class="popup-content-block__amount">
             <span class="popup-content-block__amoun__text">Введите необходимое количество профиля</span>
             {{ edit_task_form.task_profile_amount }}           
           </div>
+          
           <div class="popup-content-block__amount">
             <span class="popup-content-block__amoun__text">Введите необходимую длину профиля</span>
             {{ edit_task_form.task_profile_length }}           
@@ -468,16 +472,12 @@
         </div>
       </div>
       <div class="footer-content__all-task-info">
-        
         <span class="all-task-info__range">1-10 из 30</span>
-        
-        
       </div>
       <div class="footer-content__navigation">
         <div class="navigation__left"></div>
         <div class="navigation__right"></div>       
       </div>
-        
     </div>
   </div>
 </footer>

@@ -191,18 +191,66 @@ function filter_task(filter)  {
 }
 
 // Новое задание открытие/скрытие poup
+let input_index = 2
+
 let new_task_button = document.querySelector('.toolbars__new-task')
 let new_task_popup = document.querySelector('.new-task-popup')
 let edit_task_popup = document.querySelector('.edit-task-popup')
       
-new_task_button.addEventListener('click', ()=>open_new_task_popup())
-new_task_popup.querySelector('.new-task-popup__exit-popup').addEventListener('click', ()=>open_new_task_popup())
-new_task_popup.querySelectorAll('.popup-button')[2].addEventListener('click', ()=>open_new_task_popup())
-edit_task_popup.querySelectorAll('.popup-button')[2].addEventListener('click', ()=>open_new_task_popup())
+new_task_button.addEventListener('click', ()=>open_new_task_popup(new_task_popup))
+new_task_popup.querySelector('.new-task-popup__exit-popup').addEventListener('click', ()=>open_new_task_popup(new_task_popup))
+new_task_popup.querySelectorAll('.popup-button')[2].addEventListener('click', ()=>open_new_task_popup(new_task_popup))
+edit_task_popup.querySelectorAll('.popup-button')[2].addEventListener('click', ()=>open_new_task_popup(edit_task_popup))
 
-function open_new_task_popup() {  
-  new_task_popup.classList.toggle('disable')
+function open_new_task_popup(elem) {  
+  elem.classList.toggle('disable')
+  input_index = 2
 }; 
+
+// Добавление длины профиля в форму
+
+function add_profile_length(event, elem) {
+  event.preventDefault()
+  new_br = document.createElement('br')
+  new_div_length = document.createElement('div')
+  new_div_amount = document.createElement('div')
+  new_div_close = document.createElement('div')
+  new_div_length.classList.add('popup-content-block__amount')
+  new_div_amount.classList.add('popup-content-block__amount')
+  new_div_close.classList.add('popup-content-close-line')
+  
+  inner_html_length = `    
+            <span class="popup-content-block__amoun__text">Длина профиля ${input_index}</span>
+            <input type="number" name="task_profile_length" step="any" required="" id="id_task_profile_length">     
+  `
+  inner_html_amount = `    
+            <span class="popup-content-block__amoun__text">Количество профиля ${input_index}</span>
+            <input type="number" name="task_profile_amount" required="" id="id_task_profile_amount">     
+  `
+
+  inner_html_close = `<a href="">удалить строку</a>`
+
+  new_div_length.innerHTML = inner_html_length
+  new_div_amount.innerHTML = inner_html_amount
+  new_div_close.innerHTML = inner_html_close
+  if (input_index == 2){
+    $('div.new-task-popup__content-block')[0].append(new_br)
+  }  
+  $('div.new-task-popup__content-block')[0].append(new_div_amount)
+  $('div.new-task-popup__content-block')[0].append(new_div_length)
+  $('div.new-task-popup__content-block')[0].append(new_div_close) 
+  input_index += 1
+  new_div_close.addEventListener('click', (event)=> {
+    event.preventDefault()
+    this_elem = event.target.closest('div')
+    length_profile = this_elem.previousSibling
+    amount_profile = length_profile.previousSibling
+    this_elem.remove()
+    length_profile.remove()
+    amount_profile.remove()
+  })  
+}
+
 
 //Запуск, приостановка, удаление задачи
 $(document).ready(function() {
@@ -350,6 +398,7 @@ $(document).ready(function() {
           edit_task_popup.querySelector('#id_task_profile_type').value = data['task_profile_type']
           edit_task_popup.querySelector('#id_task_workplace').value = data['task_workplace']
           edit_task_popup.querySelector('#id_task_profile_amount').value = data['task_profile_amount']
+          edit_task_popup.querySelector('#id_task_profile_length').value = data['task_profile_length']
           edit_task_popup.querySelector('#id_task_comments').value = data['task_comments']
           edit_task_popup.querySelector('.edit-task-popup__title-text').innerText = `Редактировать задачу № ${id_task}`          
           //location.reload();            

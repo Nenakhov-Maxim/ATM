@@ -799,9 +799,9 @@
 }
 
 .new-task-popup-wrapper {
-  display: grid;
-  grid-template-rows: 0.5fr 1.5fr 1.5fr;
-  width:1000px;  
+  display: flex;
+  flex-direction: column;
+  width: 1000px;  
   z-index:2;  
   background-color: white;
   overflow: auto; 
@@ -998,6 +998,7 @@ input[name="cansel-popup"] {
   position: relative;
   transition: all 1s ease; 
   cursor: pointer;
+  z-index: 3;
 }
 
 
@@ -1029,13 +1030,35 @@ input[name="cansel-popup"] {
   z-index: 3; 
 }
 
+.add-profile-length {
+  padding: 5px 15px 25px 15px;
+  font-size: 12px;
+  margin-left: 38px;  
+}
+
+.popup-content-close-line {
+  padding: 5px 15px 25px 15px;
+  font-size: 12px;
+  margin-left: 38px;   
+}
+
+.popup-content-close-line a {  
+  border-bottom: 1px dotted rgba(48, 47, 47, 0.3);  
+}
+
+.add-profile-length a {
+  border-bottom: 2px dotted rgba(48, 47, 47, 0.3);
+}
+
 .new-task-popup .popup-button:hover:before {
-  width: 79%;
+  width: 79%;  
 }
 
 .edit-task-popup .popup-button:hover:before {
-  width: 79%;
+  width: 79%;   
 }
+
+
 
 .pause_task_popup {
   position: fixed;
