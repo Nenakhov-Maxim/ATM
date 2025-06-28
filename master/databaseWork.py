@@ -72,6 +72,7 @@ class DatabaseWork:
   # Приостановить выполнение задачи (мастер, рабочий)
   def paused_task(self, user_name, user_position, id_task):
     # now = datetime.datetime.now()
+    print(id_task)
     task = Tasks.objects.get(id=id_task) 
     profile_amount = task.profile_amount_now          
     profile_index = 0

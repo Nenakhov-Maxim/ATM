@@ -80,20 +80,18 @@ def task_month(request):
   
   return return_value
 
-id_task = 9999999
 # Приостановка выполнения задания
 @login_required
 @permission_required(perm='worker.change_workertypeproblem', raise_exception=True) 
-def pause_task(request):
-  global id_task   
+def pause_task(request):    
   if request.method == 'POST':
     adr_lib = {'192.168.211.10': 1, '192.168.211.11': 2, '192.168.211.12': 3, '192.168.211.13': 4, '192.168.211.14': 5, '192.168.211.15': 6}
     new_paused_form = PauseTaskForm(request.POST)
     if new_paused_form.is_valid():
       user_name = f'{request.user.last_name} {request.user.first_name}'
       user_position =f'{request.user.position_id_id}'
-      new_data_file = DatabaseWork(new_paused_form.cleaned_data)    
-      new_task_file = new_data_file.paused_task(user_name, user_position, id_task) 
+      new_data_file = DatabaseWork(new_paused_form.cleaned_data)        
+      new_task_file = new_data_file.paused_task(user_name, user_position, new_paused_form.cleaned_data['task_id']) 
       if  new_task_file == True:
         if new_paused_form.cleaned_data['problem_type'].id == 1:
           if request.META['REMOTE_ADDR'] in adr_lib.keys():
@@ -105,28 +103,24 @@ def pause_task(request):
         return redirect('/worker', permanent=True)
       else:
         return HttpResponse(f'Ошибка: {new_task_file}')
-  elif request.method == 'GET':
-    print(id_task)
-    id_task_local = request.GET.get('id_task')
-    id_task = id_task_local
-    print(id_task)
-    return HttpResponse(f'Данные отправлены на сервер, id записи: {id_task}') 
+  elif request.method == 'GET':    
+    id_task_local = request.GET.get('id_task')        
+    return HttpResponse(f'Данные отправлены на сервер, id записи: {id_task_local}') 
   else:
     new_task_form = PauseTaskForm()
 
 # Отмена выполнения задания
 @login_required
 @permission_required(perm='worker.change_workertypeproblem', raise_exception=True)     
-def deny_task(request):
-  global id_task  
+def deny_task(request):   
   if request.method == 'POST':
     adr_lib = {'192.168.211.10': 1, '192.168.211.11': 2, '192.168.211.12': 3, '192.168.211.13': 4, '192.168.211.14': 5, '192.168.211.15': 6}    
     new_deny_form = DenyTaskForm(request.POST)    
     if new_deny_form.is_valid():      
       user_name = f'{request.user.last_name} {request.user.first_name}'
       user_position =f'{request.user.position_id_id}'
-      new_data_file = DatabaseWork(new_deny_form.cleaned_data)      
-      new_task_file = new_data_file.deny_task(user_name, user_position, id_task)        
+      new_data_file = DatabaseWork(new_deny_form.cleaned_data)         
+      new_task_file = new_data_file.deny_task(user_name, user_position, new_deny_form.cleaned_data['task_id'])        
       if  new_task_file == True:
         if new_deny_form.cleaned_data['problem_type'].id == 1:
           if request.META['REMOTE_ADDR'] in adr_lib.keys():
@@ -136,15 +130,11 @@ def deny_task(request):
           comment = new_deny_form.cleaned_data['problem_comments']  
           TelegramBot().send_text(f'На линии {area_id} произошла неисправность.  Комментарий рабочего: "{comment}"')
         return redirect('/worker', permanent=True)
-      else:
-        
+      else:        
         return HttpResponse(f'Ошибка: {new_task_file}')
   elif request.method == 'GET':
-    print(id_task)
-    id_task_local = request.GET.get('id_task') 
-    id_task = id_task_local 
-    print(id_task)   
-    return HttpResponse(f'Данные отправлены на сервер, id записи: {id_task}') 
+    id_task_local = request.GET.get('id_task')     
+    return HttpResponse(f'Данные отправлены на сервер, id записи:{id_task_local}') 
   else:
     new_task_form = DenyTaskForm()
 

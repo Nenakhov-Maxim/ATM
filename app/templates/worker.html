@@ -276,7 +276,9 @@
     </div>
     <div class="pause_task_popup disable">      
       <form class="pause_task_popup_form" method="POST" action="/worker/pause_task/">
-        {% csrf_token %}          
+        <!-- /worker/pause_task/ -->
+        {% csrf_token %}
+        {{ new_paused_form.task_id.as_hidden }}           
         <h3 class="pause_task_popup_form__title">AT-Manager</h3>
         <div class="pause_task_popup__catproblem_block">
           <span class="pause_task_popup__cat-problem__title">Выберете категорию проблемы</span>
@@ -294,8 +296,10 @@
       <div class="overlay"></div>    
     </div>
     <div class="deny_task_popup disable">      
-      <form class="pause_task_popup_form" method="POST" action="/worker/deny_task/">
-        {% csrf_token %}          
+      <form class="pause_task_popup_form" method="POST" action="/worker/deny_task/"> 
+        <!-- /worker/deny_task/ -->
+        {% csrf_token %} 
+        {{ new_deny_form.task_id.as_hidden }}         
         <h3 class="pause_task_popup_form__title">AT-Manager</h3>
         <div class="pause_task_popup__catproblem_block">
           <span class="pause_task_popup__cat-problem__title">Выберете категорию проблемы</span>
@@ -303,7 +307,7 @@
         </div>          
         <div class="pause_task_popup__comments_block">
           <span class="pause_task_popup__comment_title">Опишите причину отмены выполнения задания</span>
-          {{ new_deny_form.problem_comments }}          
+          {{ new_deny_form.problem_comments }}                    
         </div>
         <div class="pause_task_popup__button_block">
           <button class="pause_task_popup_accept-button" type="submit" name="pause_task_popup_button_accept">Отправить</button>

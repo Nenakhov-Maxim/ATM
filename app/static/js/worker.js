@@ -510,10 +510,11 @@ function start_settingUp(e){
 function deny_task(e) {
   let task = e.closest(".task-card-item");    
   let id_task = task.dataset.itemid;
-  let deny_popup = document.querySelector('.deny_task_popup')
+  let deny_popup = document.querySelector('.deny_task_popup')  
   let link = 'deny_task/'
   let data = {'id_task': id_task}
-  let type_request = 'GET'  
+  let type_request = 'GET' 
+  deny_popup.querySelector('#id_task_id').value = id_task
   deny_popup.classList.toggle('disable')
   deny_popup.querySelector('.pause_task_popup_cansel-button').addEventListener('click', ()=>{deny_popup.classList.add('disable')})
   ajax_request(link, type_request, data)
@@ -523,10 +524,11 @@ function deny_task(e) {
 function paused_task(e) {
   let task = e.closest(".task-card-item");     
   let id_task = task.dataset.itemid;
-  let paused_popup = document.querySelector('.pause_task_popup')
+  let paused_popup = document.querySelector('.pause_task_popup')  
   let link = 'pause_task/'
   let data = {'id_task': id_task}
   let type_request = 'GET'
+  paused_popup.querySelector('#id_task_id').value = id_task
   paused_popup.classList.toggle('disable')
   paused_popup.querySelector('.pause_task_popup_cansel-button').addEventListener('click', ()=>{paused_popup.classList.add('disable')})
   ajax_request(link, type_request, data)
