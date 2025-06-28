@@ -7,6 +7,8 @@ import datetime
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required, permission_required
 from django.views.decorators.csrf import csrf_exempt
+from app.telegramAPI import TelegramBot
+
 
 # Стратовая страница
 @login_required
@@ -21,11 +23,9 @@ def worker_home(request, filter='all'):
     user_prd_ar = f'Производственная линия № {str(area_id)}'
   else:
     user_prd_ar = 'Неизвестная линия'
-    area_id = 99
-  #Далее удалить при реальной эксплуатации
-  #area_id = 1 
-  #area_id = request.user.production_area_id
+    area_id = 99 #99  
   tasks = Tasks.objects.all().filter(task_workplace=area_id, task_status_id__in=[3, 4, 7, 8]).order_by('-id')
+  print(tasks)
   task_to_start = tasks.filter(task_status_id=4).count
   task_start= tasks.filter(task_status_id=3).count
   user_info = [request.user.first_name, request.user.last_name, request.user.position_id.position, user_prd_ar]
@@ -85,13 +85,22 @@ def task_month(request):
 @login_required
 @permission_required(perm='worker.change_workertypeproblem', raise_exception=True) 
 def pause_task(request):  
-  global id_task
+  global id_task   
   if request.method == 'POST':
+    adr_lib = {'192.168.211.10': 1, '192.168.211.11': 2, '192.168.211.12': 3, '192.168.211.13': 4, '192.168.211.14': 5, '192.168.211.15': 6}
     new_paused_form = PauseTaskForm(request.POST)
     if new_paused_form.is_valid():
       user_name = f'{request.user.last_name} {request.user.first_name}'
       user_position =f'{request.user.position_id_id}'
       new_data_file = DatabaseWork(new_paused_form.cleaned_data)
+      print(new_paused_form.cleaned_data)
+      if new_paused_form.cleaned_data['problem_type'].id == 1:
+        if request.META['REMOTE_ADDR'] in adr_lib.keys():
+          area_id = adr_lib[request.META['REMOTE_ADDR']]
+        else:
+          area_id = 99
+        comment = new_paused_form.cleaned_data['problem_comments']  
+        TelegramBot().send_text(f'На линии {area_id} произошла неисправность.  Комментарий рабочего: "{comment}"')
       new_task_file = new_data_file.paused_task(user_name, user_position, id_task) 
       if  new_task_file == True:      
         return redirect('/worker', permanent=True)
@@ -107,13 +116,21 @@ def pause_task(request):
 @login_required
 @permission_required(perm='worker.change_workertypeproblem', raise_exception=True)     
 def deny_task(request):
-  global id_task  
-  if request.method == 'POST':    
+  global id_task    
+  if request.method == 'POST':
+    adr_lib = {'192.168.211.10': 1, '192.168.211.11': 2, '192.168.211.12': 3, '192.168.211.13': 4, '192.168.211.14': 5, '192.168.211.15': 6}    
     new_deny_form = DenyTaskForm(request.POST)    
     if new_deny_form.is_valid():      
       user_name = f'{request.user.last_name} {request.user.first_name}'
       user_position =f'{request.user.position_id_id}'
-      new_data_file = DatabaseWork(new_deny_form.cleaned_data)                   
+      new_data_file = DatabaseWork(new_deny_form.cleaned_data)
+      if new_deny_form.cleaned_data['problem_type'].id == 1:
+        if request.META['REMOTE_ADDR'] in adr_lib.keys():
+          area_id = adr_lib[request.META['REMOTE_ADDR']]
+        else:
+          area_id = 99
+        comment = new_deny_form.cleaned_data['problem_comments']  
+        TelegramBot().send_text(f'На линии {area_id} произошла неисправность.  Комментарий рабочего: "{comment}"')
       new_task_file = new_data_file.deny_task(user_name, user_position, id_task)        
       if  new_task_file == True:
         
