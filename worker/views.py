@@ -85,6 +85,7 @@ def task_month(request):
 @permission_required(perm='worker.change_workertypeproblem', raise_exception=True) 
 def pause_task(request):  
   global id_task
+  id_task = 99
   if request.method == 'POST':
     adr_lib = {'192.168.211.10': 1, '192.168.211.11': 2, '192.168.211.12': 3, '192.168.211.13': 4, '192.168.211.14': 5, '192.168.211.15': 6}
     new_paused_form = PauseTaskForm(request.POST)
@@ -115,6 +116,7 @@ def pause_task(request):
 @permission_required(perm='worker.change_workertypeproblem', raise_exception=True)     
 def deny_task(request):
   global id_task
+  id_task = 99
   if request.method == 'POST':
     adr_lib = {'192.168.211.10': 1, '192.168.211.11': 2, '192.168.211.12': 3, '192.168.211.13': 4, '192.168.211.14': 5, '192.168.211.15': 6}    
     new_deny_form = DenyTaskForm(request.POST)    
