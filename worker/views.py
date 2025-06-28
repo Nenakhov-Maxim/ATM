@@ -80,12 +80,12 @@ def task_month(request):
   
   return return_value
 
+id_task = 9999999
 # Приостановка выполнения задания
 @login_required
 @permission_required(perm='worker.change_workertypeproblem', raise_exception=True) 
-def pause_task(request):  
-  global id_task
-  id_task = 99
+def pause_task(request):
+  global id_task   
   if request.method == 'POST':
     adr_lib = {'192.168.211.10': 1, '192.168.211.11': 2, '192.168.211.12': 3, '192.168.211.13': 4, '192.168.211.14': 5, '192.168.211.15': 6}
     new_paused_form = PauseTaskForm(request.POST)
@@ -106,7 +106,10 @@ def pause_task(request):
       else:
         return HttpResponse(f'Ошибка: {new_task_file}')
   elif request.method == 'GET':
-    id_task = request.GET.get('id_task')
+    print(id_task)
+    id_task_local = request.GET.get('id_task')
+    id_task = id_task_local
+    print(id_task)
     return HttpResponse(f'Данные отправлены на сервер, id записи: {id_task}') 
   else:
     new_task_form = PauseTaskForm()
@@ -115,8 +118,7 @@ def pause_task(request):
 @login_required
 @permission_required(perm='worker.change_workertypeproblem', raise_exception=True)     
 def deny_task(request):
-  global id_task
-  id_task = 99
+  global id_task  
   if request.method == 'POST':
     adr_lib = {'192.168.211.10': 1, '192.168.211.11': 2, '192.168.211.12': 3, '192.168.211.13': 4, '192.168.211.14': 5, '192.168.211.15': 6}    
     new_deny_form = DenyTaskForm(request.POST)    
@@ -138,8 +140,10 @@ def deny_task(request):
         
         return HttpResponse(f'Ошибка: {new_task_file}')
   elif request.method == 'GET':
-    id_task = request.GET.get('id_task') 
-       
+    print(id_task)
+    id_task_local = request.GET.get('id_task') 
+    id_task = id_task_local 
+    print(id_task)   
     return HttpResponse(f'Данные отправлены на сервер, id записи: {id_task}') 
   else:
     new_task_form = DenyTaskForm()
