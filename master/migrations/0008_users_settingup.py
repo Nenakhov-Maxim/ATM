@@ -7,7 +7,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('master', '0007_alter_tasks_task_time_settingup'),
+        ('master', '0006_tasks_task_time_settingup'),
     ]
 
     operations = [

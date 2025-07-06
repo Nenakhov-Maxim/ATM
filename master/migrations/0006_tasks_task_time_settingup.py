@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='tasks',
             name='task_time_settingUp',
-            field=models.FloatField(default=0, verbose_name='Время на переналадку'),
+            field=models.DateTimeField(blank=True, null=True, verbose_name='Фактическая дата и время начала наладки'),
         ),
     ]
