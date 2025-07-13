@@ -20,7 +20,7 @@ class VideoConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         await self.accept()
         # torch.cuda.set_device(0)
-        self.model_t = YOLO("AiVision/yolo_weights/t-profile_640_16.pt")
+        self.model = YOLO("AiVision/yolo_weights/t-profile_320_16.pt")
         self.task_id = -1
         self.max_id_profile = 0
         self.amount_profile = 0
@@ -38,7 +38,7 @@ class VideoConsumer(AsyncWebsocketConsumer):
             self.task_id = data['task_id']
             self.amount_profile = await self.get_start_profile_amount()
             self.type_profile = await self.get_type_profile()
-            print(self.type_profile)
+            self.model = YOLO(f'AiVision/yolo_weights/{self.as_profile_yolo[self.type_profile]}')
         elif data['chgVal'] ==  1:
             #print('Изменение количества профиля')
             self.amount_profile = data['value']
@@ -70,7 +70,7 @@ class VideoConsumer(AsyncWebsocketConsumer):
     def process_frame(self, frame):
     # Логика обработки изображения
     # Предобученная модель Yolov8      
-        results = self.model_t.track(frame, stream=True, persist=True, iou=0.50, conf=0.88,
+        results = self.model.track(frame, stream=True, persist=True, iou=0.50, conf=0.88,
                                         tracker="botsort.yaml", imgsz=640, classes=0, verbose=False)
         for result in results:
             res_plotted = result.plot()
@@ -92,7 +92,7 @@ class VideoConsumer(AsyncWebsocketConsumer):
     
     @sync_to_async
     def get_type_profile(self):
-        return Tasks.objects.get(id=self.task_id).task_profile_type
+        return Tasks.objects.get(id=self.task_id).task_profile_type.profile_name
     
     @sync_to_async
     def change_profile_amount_in_db(self):
