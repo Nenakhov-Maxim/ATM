@@ -9,7 +9,7 @@ from django.views.generic import UpdateView
 from django.urls import reverse_lazy
 from .report import create_excel_from_dict_list
 import math, datetime, os
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 
 
@@ -175,8 +175,8 @@ def new_report(request):
     report_form = ReportForm(request.POST)
     if report_form.is_valid():
       data = report_form.cleaned_data
-      start_date = data['date_start'] + datetime.timedelta(hours=5)
-      end_date = data['date_end'] + datetime.timedelta(hours=5)      
+      start_date = data['date_start'] + timedelta(hours=5)
+      end_date = data['date_end'] + timedelta(hours=5)      
       tasks = Tasks.objects.all().filter(task_timedate_end_fact__range=(start_date, end_date))
       dict_list = []
       for task in tasks:
