@@ -566,16 +566,22 @@ function shiftChange(e) {
 
 // Передача видео через websocket (Необходимо раскомментить, как только подключу камеру!)
 
-// $(document).ready(function() {
-//   let list_task = document.querySelectorAll('.task-card-item[data-category="Выполняется"]')
-//   for (const elem in list_task) {
-//     if (Object.prototype.hasOwnProperty.call(list_task, elem)) {
-//       const task = list_task[elem];
-//       let task_id = task.dataset.itemid
-//       videoStream(task_id)
-//     }
-//   }
-// })
+$(document).ready(function() {
+  let list_task = document.querySelectorAll('.task-card-item[data-category="Выполняется"]')
+  for (const elem in list_task) {
+    if (Object.prototype.hasOwnProperty.call(list_task, elem)) {
+      const task = list_task[elem];
+      let task_id = task.dataset.itemid
+      if (task.dataset.video == 'True') {
+        alert('В данный момент осуществляется автоматическое определение количества профиля')
+        // videoStream(task_id)
+      } else {
+        alert('Автоматическое определение количества профиля для текущего типа недоступно. Пожалуйста, добавляйте вручную')
+      }   
+      
+    }
+  }
+})
 
 function videoStream(task_id){
   

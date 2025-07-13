@@ -73,6 +73,11 @@ class Tasks(models.Model):
   def __str__(self):
     return self.task_name
   
+  def is_accepted_video(self):
+    type_profile_accepted = {'Т-профиль': ['T1', 'T2']}
+    
+    return True if self.task_profile_type.profile_name in type_profile_accepted.keys() else False
+  
   class Meta():
     verbose_name = 'Задачи'
     verbose_name_plural = 'Задачи'  

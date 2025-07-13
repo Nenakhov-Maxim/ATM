@@ -98,7 +98,7 @@
       </div>
       <div class="task-cards-list">        
         {% for el in tasks %}
-        <div class="task-card-item" data-itemId={{el.id}} data-category={{el.task_status}} data-category-id={{el.task_status_id}}>
+        <div class="task-card-item" data-itemId={{el.id}} data-category={{el.task_status}} data-category-id={{el.task_status_id}} data-video={{el.is_accepted_video}}>
           <div class="task-card-item__wrapper">
             <div class="card-item__toolbar">              
               <div class="toolbar-item__history" onclick="more_information_click(this)"><img class="toolbar-item__history__svg" src="{% static "img/Master.svg" %}" alt="Развернуть"></div>
