@@ -12,7 +12,7 @@ from channels.generic.websocket import WebsocketConsumer, AsyncWebsocketConsumer
 from ultralytics import YOLO
 from master.databaseWork import DatabaseWork
 from master.models import *
-from master.models import Tasks
+from master.models import Tasks, AcceptedProfile
 
 
 
@@ -28,8 +28,8 @@ class VideoConsumer(AsyncWebsocketConsumer):
         
         
 
-    async def disconnect(self, close_code):
-        pass
+    async def disconnect(self, close_code=None):  #close_code
+        pass       
 
     async def receive(self, text_data):        
         data = json.loads(text_data)                
@@ -37,8 +37,14 @@ class VideoConsumer(AsyncWebsocketConsumer):
             #print('Первая отправка сообщения')          
             self.task_id = data['task_id']
             self.amount_profile = await self.get_start_profile_amount()
-            self.type_profile = await self.get_type_profile()
-            self.model = YOLO(f'AiVision/yolo_weights/{self.as_profile_yolo[self.type_profile]}')
+            self.is_acc_pr = await self.is_accept_profile()
+            
+            if self.is_acc_pr == False:
+                await self.send(text_data=json.dumps({
+                    'error': 'Для данного профиля не поддерживается автоматическое распознование'
+                }))
+                await self.close(code=4123)
+                
         elif data['chgVal'] ==  1:
             #print('Изменение количества профиля')
             self.amount_profile = data['value']
@@ -91,8 +97,19 @@ class VideoConsumer(AsyncWebsocketConsumer):
         return Tasks.objects.get(id=self.task_id).profile_amount_now
     
     @sync_to_async
-    def get_type_profile(self):
-        return Tasks.objects.get(id=self.task_id).task_profile_type.profile_name
+    def is_accept_profile(self):
+        profile = Tasks.objects.get(id=self.task_id).task_profile_type
+        accepted_profile_list = AcceptedProfile.objects.get(type_profile=profile.association_name)
+        if accepted_profile_list:
+            print(accepted_profile_list.names_profile.split(','))
+            print(profile.profile_name)
+            print(profile.profile_name in accepted_profile_list.names_profile.split(','))
+            if profile.profile_name in accepted_profile_list.names_profile.split(','):
+                self.model = YOLO(f'AiVision/yolo_weights/{self.as_profile_yolo[profile.association_name]}')
+                return True
+            else:
+                return False
+        return False
     
     @sync_to_async
     def change_profile_amount_in_db(self):

@@ -573,8 +573,13 @@ $(document).ready(function() {
       const task = list_task[elem];
       let task_id = task.dataset.itemid
       if (task.dataset.video == 'True') {
-        alert('В данный момент осуществляется автоматическое определение количества профиля')
-        // videoStream(task_id)
+        if(confirm('Включить автоматическое определение количества профиля?')) {
+          alert('В данный момент осуществляется автоматическое определение количества профиля')
+          videoStream(task_id)  
+        } else {
+          alert('В данный момент осуществляется ручное определение количества профиля')  
+        }
+        
       } else {
         alert('Автоматическое определение количества профиля для текущего типа недоступно. Пожалуйста, добавляйте вручную')
       }   
@@ -583,8 +588,9 @@ $(document).ready(function() {
   }
 })
 
+var localstream;
 function videoStream(task_id){
-  
+ 
   let new_profile_amount = 0  
   const video = document.getElementById('videoElement');
   const canvas = document.getElementById('canvas');
@@ -593,10 +599,12 @@ function videoStream(task_id){
   const img = document.createElement('img');
   video.after(img); // Добавляем изображение на страницу
   navigator.mediaDevices.getUserMedia({ video: true })
-  .then(function(stream) {    
+   .then(stream => {    
       video.srcObject = stream;
+      localstream = stream;
   })
-  .catch(function(error) {
+  .catch(error => {
+      // stream_n = null
       console.error("Ошибка доступа к веб-камере:", error);
   });
   socket.onopen = function() {
@@ -619,14 +627,12 @@ function videoStream(task_id){
       input_element.addEventListener('blur', () =>{
         let value = 0        
         let input_data = input_element.value
-        // console.log(input_data)
         if (input_data.includes('+')) {
           let arr_data = input_data.split('+')
           for (let i = 0; i < arr_data.length; i++) {
             const element = Number(arr_data[i]);
             value = value + element
           }
-          // value = Number(arr_data[0]) + Number(arr_data[1])
         } else {
           value = e.target.value          
         }
@@ -638,16 +644,21 @@ function videoStream(task_id){
   };
   socket.onmessage = function(event) {
     const data = JSON.parse(event.data);
-    const processedImage = data.processed_image;
-    const last_id = data.max_id_profile
-    let task_count = document.querySelector('.task-card-item[data-category="Выполняется"]') 
-    required_quantity = task_count.querySelector('.right-side__required-quantity__amount').innerText
-    if (new_profile_amount != Number(last_id)) {
-      task_count.querySelector('.right-side__current-quantity__amount').value = Number(last_id) 
-      new_profile_amount = Number(last_id) 
-    }   
-    // В элемент img отображаем обработанное изображение    
-    img.src = 'data:image/jpeg;base64,' + processedImage;
+    if (data.error) {
+      alert(data.error)
+    } else {
+      const processedImage = data.processed_image;
+      const last_id = data.max_id_profile
+      let task_count = document.querySelector('.task-card-item[data-category="Выполняется"]') 
+      required_quantity = task_count.querySelector('.right-side__required-quantity__amount').innerText
+      if (new_profile_amount != Number(last_id)) {
+        task_count.querySelector('.right-side__current-quantity__amount').value = Number(last_id) 
+        new_profile_amount = Number(last_id) 
+      }   
+      // В элемент img отображаем обработанное изображение    
+      img.src = 'data:image/jpeg;base64,' + processedImage;
+    }
+    
   };
 }
 

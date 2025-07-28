@@ -262,7 +262,7 @@
                 {% if el.task_status_id == 3 %}
                 <h1>Видеопоток с веб-камеры</h1>
                 <video hidden id="videoElement" autoplay></video>
-                <canvas hidden id="canvas" width="640" height="480"></canvas>
+                <canvas hidden  id="canvas" width="640" height="480"></canvas>
                 {% else %}
                 <img id="video_stream" src="{% static "img/video-disabled.svg" %}" alt="Изображение с камеры" />
                 {% endif %}               

@@ -25,6 +25,7 @@ class Task_status(models.Model):
   
 class Profile_type(models.Model):
   profile_name = models.CharField('Наименование', max_length=100)
+  association_name = models.CharField('Общее название', blank=True, default='', null=True)
   
   def __str__(self):
     return self.profile_name
@@ -74,10 +75,14 @@ class Tasks(models.Model):
     return self.task_name
   
   def is_accepted_video(self):
-    type_profile_accepted = {'Т-профиль': ['T1', 'T2']}
+    type_profile_accepted = {'Т-профиль': ['T1', 'T2', 'T-профиль']}
     
     return True if self.task_profile_type.profile_name in type_profile_accepted.keys() else False
   
   class Meta():
     verbose_name = 'Задачи'
     verbose_name_plural = 'Задачи'  
+
+class AcceptedProfile(models.Model):
+  type_profile = models.CharField('Общий тип профиля', max_length=50)
+  names_profile = models.TextField('Входящие тип профиля', blank=True, default='', null=True)
