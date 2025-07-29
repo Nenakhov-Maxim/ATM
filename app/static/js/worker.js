@@ -616,11 +616,14 @@ function videoStream(task_id){
 
     if (!isOpen(socket_video)) return;
     socket_video.send(JSON.stringify({chgVal: 0, isFs: 1, task_id: task_id}))
-
+    if (!isOpen(socket_video)) return;
     setInterval(() => {
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageData = canvas.toDataURL('image/jpeg', 0.4); //0.4 - качество изображения, изменить при плохом обнаружении
-        socket_video.send(JSON.stringify({ image: imageData.split(',')[1], isFs: 0, chgVal: 0}));
+        if (isOpen(socket_video)) {
+          socket_video.send(JSON.stringify({ image: imageData.split(',')[1], isFs: 0, chgVal: 0}));
+        };
+        
     }, 250); // Отправка кадра каждые 250 мс
 
       input_element.addEventListener('keypress', function(e){
