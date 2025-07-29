@@ -591,6 +591,7 @@ $(document).ready(function() {
 })
 
 var localstream;
+let video_interval
 function videoStream(task_id){
   let new_profile_amount = 0  
   const video = document.getElementById('videoElement');
@@ -617,11 +618,13 @@ function videoStream(task_id){
     if (!isOpen(socket_video)) return;
     socket_video.send(JSON.stringify({chgVal: 0, isFs: 1, task_id: task_id}))
     if (!isOpen(socket_video)) return;
-    setInterval(() => {
+    video_interval = setInterval(() => {
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageData = canvas.toDataURL('image/jpeg', 0.4); //0.4 - качество изображения, изменить при плохом обнаружении
         if (isOpen(socket_video)) {
           socket_video.send(JSON.stringify({ image: imageData.split(',')[1], isFs: 0, chgVal: 0}));
+        } else {
+          clearInterval(video_interval);
         };
         
     }, 250); // Отправка кадра каждые 250 мс
@@ -670,6 +673,12 @@ function videoStream(task_id){
       img.src = 'data:image/jpeg;base64,' + processedImage;
     }
   };
+  socket_video.onerror = function(error) {
+    console.log(error)
+  }
+  socket_video.onclose = function(event) {
+    console.log(event)
+  }
 }
 
 function isOpen(ws) { return ws.readyState === ws.OPEN }
