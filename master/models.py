@@ -75,9 +75,16 @@ class Tasks(models.Model):
     return self.task_name
   
   def is_accepted_video(self):
-    type_profile_accepted = {'Т-профиль': ['T1', 'T2', 'T-профиль']}
+    accepted_profiles = AcceptedProfile.objects.all().filter(type_profile=self.task_profile_type.association_name)
+    if not accepted_profiles:
+      print('Записи не найдены')
+      return False
+    print(accepted_profiles)
+    for profile in accepted_profiles:
+      if self.task_profile_type.profile_name in profile.names_profile.split(','):
+        return True
+    return False  
     
-    return True if self.task_profile_type.profile_name in type_profile_accepted.keys() else False
   
   class Meta():
     verbose_name = 'Задачи'
@@ -85,4 +92,4 @@ class Tasks(models.Model):
 
 class AcceptedProfile(models.Model):
   type_profile = models.CharField('Общий тип профиля', max_length=50)
-  names_profile = models.TextField('Входящие тип профиля', blank=True, default='', null=True)
+  names_profile = models.TextField('Входящий тип профиля', blank=True, default='', null=True)

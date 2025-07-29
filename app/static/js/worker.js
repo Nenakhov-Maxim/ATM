@@ -4,18 +4,20 @@ $(document).ready(function() {
   let task_id_list = {}
   let name_line = document.querySelectorAll(".person-info__department")[1].dataset.line
   let tasks_list = document.querySelectorAll(".task-card-item")
+  const socket_task = new WebSocket(`ws://192.168.211.1/ws/task-transfer/${name_line}`); //На домашней машине 127.0.0.1:8000
+  // const socket_task = new WebSocket(`ws://127.0.0.1:8000/ws/task-transfer/${name_line}`); //На домашней машине 127.0.0.1:8000
+
   for (const key in tasks_list) {
     if (Object.prototype.hasOwnProperty.call(tasks_list, key)) {
       const element = tasks_list[key];      
       task_id_list[element.dataset.itemid] = element.dataset.categoryId      
     }
-  }  
-  const socket = new WebSocket(`ws://192.168.211.1/ws/task-transfer/${name_line}`); //На домашней машине 127.0.0.1:8000
+  }
 
-  socket.onopen = function() {
-    socket.send(JSON.stringify({message:"start", task_list:task_id_list}))
+  socket_task.onopen = function() {
+    socket_task.send(JSON.stringify({message:"start", task_list:task_id_list}))
 
-  socket.onmessage = function(event) {
+  socket_task.onmessage = function(event) {
     const data = JSON.parse(event.data);
     if (data.type == "Welcome"){
       // alert(`Успешно подключились к серверу AT-Manager. Производственная линия № ${name_line}`)
@@ -590,40 +592,44 @@ $(document).ready(function() {
 
 var localstream;
 function videoStream(task_id){
- 
   let new_profile_amount = 0  
   const video = document.getElementById('videoElement');
   const canvas = document.getElementById('canvas');
   const context = canvas.getContext('2d');
-  const socket = new WebSocket(`ws://127.0.0.1:8000/ws/video/${task_id}`);
+  const socket_video = new WebSocket(`ws://192.168.211.1/ws/video/${task_id}`);
+  // const socket_video = new WebSocket(`ws://127.0.0.1:8000/ws/video/${task_id}`);
   const img = document.createElement('img');
+
   video.after(img); // Добавляем изображение на страницу
   navigator.mediaDevices.getUserMedia({ video: true })
-   .then(stream => {    
-      video.srcObject = stream;
-      localstream = stream;
+  .then(stream => {    
+    video.srcObject = stream;
+    localstream = stream;
   })
   .catch(error => {
-      // stream_n = null
       console.error("Ошибка доступа к веб-камере:", error);
   });
-  socket.onopen = function() {
-      socket.send(JSON.stringify({chgVal: 0, isFs: 1, task_id: task_id}))
 
-      setInterval(() => {
-          context.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const imageData = canvas.toDataURL('image/jpeg', 0.4); //0.4 - качество изображения, изменить при плохом обнаружении
-          socket.send(JSON.stringify({ image: imageData.split(',')[1], isFs: 0, chgVal: 0}));
-      }, 250); // Отправка кадра каждые 250 мс
+  socket_video.onopen = function() {
+    let current_card = document.querySelector(`.task-card-item[data-itemId="${task_id}"]`)
+    let input_element = current_card.querySelector('.right-side__current-quantity__amount')
 
-      let current_card = document.querySelector(`.task-card-item[data-itemId="${task_id}"]`)
-      let input_element = current_card.querySelector('.right-side__current-quantity__amount')
+    if (!isOpen(socket_video)) return;
+    socket_video.send(JSON.stringify({chgVal: 0, isFs: 1, task_id: task_id}))
+
+    setInterval(() => {
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = canvas.toDataURL('image/jpeg', 0.4); //0.4 - качество изображения, изменить при плохом обнаружении
+        socket_video.send(JSON.stringify({ image: imageData.split(',')[1], isFs: 0, chgVal: 0}));
+    }, 250); // Отправка кадра каждые 250 мс
+
       input_element.addEventListener('keypress', function(e){
         var key = e.which;
         if(key == 13)  {          
           input_element.blur()
         }
       })
+
       input_element.addEventListener('blur', () =>{
         let value = 0        
         let input_data = input_element.value
@@ -639,17 +645,19 @@ function videoStream(task_id){
         if (Number.isNaN(Number(value))) {
           alert('Неверное значение количества профиля. Допустимы числа и операция сложения')
         } else {
-        socket.send(JSON.stringify({chgVal: 1, isFs: 0, value: input_element.value}))}
+          socket_video.send(JSON.stringify({chgVal: 1, isFs: 0, value: input_element.value}))}
       })
   };
-  socket.onmessage = function(event) {
+
+  socket_video.onmessage = function(event) {
     const data = JSON.parse(event.data);
+    const processedImage = data.processed_image;
+    const last_id = data.max_id_profile
+    let task_count = document.querySelector('.task-card-item[data-category="Выполняется"]') 
+
     if (data.error) {
       alert(data.error)
-    } else {
-      const processedImage = data.processed_image;
-      const last_id = data.max_id_profile
-      let task_count = document.querySelector('.task-card-item[data-category="Выполняется"]') 
+    } else {  
       required_quantity = task_count.querySelector('.right-side__required-quantity__amount').innerText
       if (new_profile_amount != Number(last_id)) {
         task_count.querySelector('.right-side__current-quantity__amount').value = Number(last_id) 
@@ -658,9 +666,10 @@ function videoStream(task_id){
       // В элемент img отображаем обработанное изображение    
       img.src = 'data:image/jpeg;base64,' + processedImage;
     }
-    
   };
 }
+
+function isOpen(ws) { return ws.readyState === ws.OPEN }
 
 // Изменение количества профиля вручную на наладке (на выполнении меняется через вебсоккет)
 $(document).ready(function(){
@@ -706,9 +715,6 @@ $(document).ready(function(){
     }
   }
 })
-
-
-
 
 //Функция отправки запросов серверу
 function ajax_request(url, type,  data) {  
