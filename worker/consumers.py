@@ -19,12 +19,11 @@ from master.models import Tasks, AcceptedProfile
 class VideoConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         await self.accept()
-        # torch.cuda.set_device(0)
         self.model = YOLO("AiVision/yolo_weights/t-profile_320_16.pt")
         self.task_id = -1
         self.max_id_profile = 0
         self.amount_profile = 0
-        self.as_profile_yolo = {'Т-профиль':'t-profile_640_16.pt'}
+        self.as_profile_yolo = {'Т-профиль':'t-profile__v11.pt'}
         
         
 

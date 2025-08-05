@@ -5,7 +5,7 @@ $(document).ready(function() {
   let name_line = document.querySelectorAll(".person-info__department")[1].dataset.line
   let tasks_list = document.querySelectorAll(".task-card-item")
   const socket_task = new WebSocket(`ws://192.168.211.1/ws/task-transfer/${name_line}`); //На домашней машине 127.0.0.1:8000
-  // const socket_task = new WebSocket(`ws://127.0.0.1:8000/ws/task-transfer/${name_line}`); //На домашней машине 127.0.0.1:8000
+  //const socket_task = new WebSocket(`ws://127.0.0.1:8000/ws/task-transfer/${name_line}`); //На домашней машине 127.0.0.1:8000
 
   for (const key in tasks_list) {
     if (Object.prototype.hasOwnProperty.call(tasks_list, key)) {
@@ -598,7 +598,7 @@ function videoStream(task_id){
   const canvas = document.getElementById('canvas');
   const context = canvas.getContext('2d');
   const socket_video = new WebSocket(`ws://192.168.211.1/ws/video/${task_id}`);
-  // const socket_video = new WebSocket(`ws://127.0.0.1:8000/ws/video/${task_id}`);
+  //const socket_video = new WebSocket(`ws://127.0.0.1:8000/ws/video/${task_id}`);
   const img = document.createElement('img');
 
   video.after(img); // Добавляем изображение на страницу
@@ -620,14 +620,14 @@ function videoStream(task_id){
     if (!isOpen(socket_video)) return;
     video_interval = setInterval(() => {
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imageData = canvas.toDataURL('image/jpeg', 0.4); //0.4 - качество изображения, изменить при плохом обнаружении
+        const imageData = canvas.toDataURL('image/jpeg', 0.8); //0.8 - качество изображения, изменить при плохом обнаружении
         if (isOpen(socket_video)) {
           socket_video.send(JSON.stringify({ image: imageData.split(',')[1], isFs: 0, chgVal: 0}));
         } else {
           clearInterval(video_interval);
         };
         
-    }, 250); // Отправка кадра каждые 250 мс
+    }, 350); // Отправка кадра каждые 350 мс
 
       input_element.addEventListener('keypress', function(e){
         var key = e.which;
@@ -701,7 +701,6 @@ $(document).ready(function(){
       input_element.addEventListener('blur', (e) =>{
         let value = 0        
         let input_data = e.target.value
-        // console.log(input_data)
         if (input_data.includes('+')) {
           let arr_data = input_data.split('+')
           for (let i = 0; i < arr_data.length; i++) {
