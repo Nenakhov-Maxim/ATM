@@ -16,7 +16,7 @@ class NewTaskForm(forms.Form):
                                                                                                            attrs={'type': 'datetime-local',
                                                                                                                   "class":"popup-content-block__time-to-end__input"}),
         input_formats=["%Y-%m-%d %H:%m"])
-    task_profile_type = forms.ModelChoiceField(queryset=Profile_type.objects.all())
+    task_profile_type = forms.ModelChoiceField(queryset=ProfileType.objects.all())
     task_workplace =  forms.ModelChoiceField(queryset=Workplace.objects.all())
     task_profile_amount = forms.IntegerField()
     task_profile_length = forms.FloatField()
@@ -36,7 +36,7 @@ class EditTaskForm(forms.Form):
                                                                                                            attrs={'type': 'datetime-local',
                                                                                                                   "class":"popup-content-block__time-to-end__input"}),
         input_formats=["%Y-%m-%d %H:%m"])
-    task_profile_type = forms.ModelChoiceField(queryset=Profile_type.objects.all())
+    task_profile_type = forms.ModelChoiceField(queryset=ProfileType.objects.all())
     task_workplace =  forms.ModelChoiceField(queryset=Workplace.objects.all())
     task_profile_amount = forms.IntegerField()
     task_profile_length = forms.FloatField()
@@ -59,4 +59,3 @@ class ReportForm(forms.Form):
     date_end = forms.DateTimeField(widget=DateTimeInput(format="%Y-%m-%d %H:%M",
                                                       attrs={'type': 'datetime-local',
                                                             "class":"popup-content-block__time-to-end__input"}))
-   

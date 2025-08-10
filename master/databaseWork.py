@@ -37,7 +37,7 @@ class DatabaseWork:
   def add_new_history_data(self,user_name, user_position, comment):
     # now = datetime.datetime.now()
     try:
-      history_task = Task_history.objects.create(history_name={1:f"{self.now};Задача создана;{user_position} - {user_name}, комментарий: {comment}"})
+      history_task = TaskHistory.objects.create(history_name={1:f"{self.now};Задача создана;{user_position} - {user_name}, комментарий: {comment}"})
       self.history_id = history_task.id      
       return True
     except Exception as e:
@@ -47,7 +47,7 @@ class DatabaseWork:
   def push_to_workers(self, user_name, user_position):
     # now = datetime.datetime.now()
     task = Tasks.objects.get(id=self.data['id_task'])
-    history_task = Task_history.objects.get(id=task.task_history_id)    
+    history_task = TaskHistory.objects.get(id=task.task_history_id)    
     new_event = history_task.history_name
     max_key = max(new_event, key=new_event.get)
     new_event[int(max_key) + 1] = f'{self.now};Отправлена рабочему;{user_position} - {user_name}'
@@ -89,7 +89,7 @@ class DatabaseWork:
         int_data = int(profile_amount) - int(profile_index)        
         worker_now = task.worker_accepted_task + f'({int_data} - {self.now})'
         
-    history_task = Task_history.objects.get(id=task.task_history_id)
+    history_task = TaskHistory.objects.get(id=task.task_history_id)
     new_event = history_task.history_name
     max_key = max(new_event, key=new_event.get)
     new_event[int(max_key) + 1] = f"{self.now};Задача приостановлена;{user_position} - {user_name}, категория проблемы: {self.data['problem_type']}, комментарий: {self.data['problem_comments']}"
@@ -116,7 +116,7 @@ class DatabaseWork:
   def delete_task(self):
     try:
       task = Tasks.objects.get(id=self.data['id_task'])
-      history_task = Task_history.objects.get(id=task.task_history_id)
+      history_task = TaskHistory.objects.get(id=task.task_history_id)
       task.delete()
       history_task.delete()
     except Exception as e:
@@ -134,7 +134,7 @@ class DatabaseWork:
   def edit_data_from_task(self, user_name, user_position, id_task):
     # now = datetime.datetime.now()  
     task = Tasks.objects.get(id=id_task)
-    history_task = Task_history.objects.get(id=task.task_history_id)
+    history_task = TaskHistory.objects.get(id=task.task_history_id)
     new_event = history_task.history_name
     max_key = max(new_event, key=new_event.get)
     new_event[int(max_key) + 1] = f'{self.now};Задача отредактирована;{user_position} - {user_name}'
@@ -170,7 +170,7 @@ class DatabaseWork:
     # Получаем запись задачи, ее истории
     # now = datetime.datetime.now()  
     task = Tasks.objects.get(id=id_task)
-    history_task = Task_history.objects.get(id=task.task_history_id)
+    history_task = TaskHistory.objects.get(id=task.task_history_id)
     # генерируем новою запись в истории
     new_event = history_task.history_name
     max_key = max(new_event, key=new_event.get)
@@ -207,7 +207,7 @@ class DatabaseWork:
   def deny_task(self, user_name, user_position, id_task):
     # now = datetime.datetime.now()
     task = Tasks.objects.get(id=id_task)
-    history_task = Task_history.objects.get(id=task.task_history_id)
+    history_task = TaskHistory.objects.get(id=task.task_history_id)
     new_event = history_task.history_name
     max_key = max(new_event, key=new_event.get)
     new_event[int(max_key) + 1] = f"{self.now};Выполнение задачи невозможно;{user_position} - {user_name}, категория проблемы: {self.data['problem_type']}, комментарий: {self.data['problem_comments']}"
@@ -244,7 +244,7 @@ class DatabaseWork:
   def complete_task(self, id_task, user_name, user_position):
     # now = datetime.datetime.now()
     task = Tasks.objects.get(id=id_task)
-    history_task = Task_history.objects.get(id=task.task_history_id)
+    history_task = TaskHistory.objects.get(id=task.task_history_id)
     new_event = history_task.history_name
     max_key = max(new_event, key=new_event.get)
     new_event[int(max_key) + 1] = f"{self.now};Задача № {id_task} выполнена;{user_position} - {user_name}, фактическое время выполнения - {self.now}"
@@ -291,7 +291,7 @@ class DatabaseWork:
   def start_settingUp(self, id_task, user_name):
     # now = datetime.datetime.now()
     task = Tasks.objects.get(id=id_task)
-    history_task = Task_history.objects.get(id=task.task_history_id)
+    history_task = TaskHistory.objects.get(id=task.task_history_id)
     new_event = history_task.history_name
     max_key = max(new_event, key=new_event.get)
     new_event[int(max_key) + 1] = f"{self.now};Задача № {id_task};{user_name}, Старт наладки оборудования"
@@ -439,7 +439,7 @@ class DatabaseWork:
       except Exception as e:
         int_data = int(profile_amount) - int(profile_index)        
         worker_now = task.worker_accepted_task + f'({int_data} - {self.now})'        
-    history_task = Task_history.objects.get(id=task.task_history_id)
+    history_task = TaskHistory.objects.get(id=task.task_history_id)
     new_event = history_task.history_name
     max_key = max(new_event, key=new_event.get)
     new_event[int(max_key) + 1] = f"{self.now};Для задачи № {id_task} выполняется пересменка; Фактическое время приостановки - {self.now}"
@@ -460,6 +460,3 @@ class DatabaseWork:
       except Exception as e:
         print(f'Ошибка при выполнении пересменки: {e}') 
         return False
-    
-    
-       

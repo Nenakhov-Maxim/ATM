@@ -6,14 +6,14 @@ from .models import *
 
 admin.site.register(Tasks)
 admin.site.register(Workplace)
-admin.site.register(Profile_type)
-admin.site.register(Task_status)
+admin.site.register(ProfileType)
+admin.site.register(TaskStatus)
 # admin.site.register(Users)
 admin.site.register(Positions)
-admin.site.register(Access_app)
+admin.site.register(AccessApp)
 admin.site.register(MasterTypeProblem)
 
-@admin.register(Task_history)
+@admin.register(TaskHistory)
 class ProfileAdmin(admin.ModelAdmin):
     pass
 
