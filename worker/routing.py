@@ -1,8 +1,11 @@
 from django.urls import path
 
-from .consumers import VideoConsumer, TaskTransferConsumer
+from .consumers import TaskTransferConsumer, ObjectDetectionConsumer
 
+# WebSocket маршруты для приложения worker
 ws_urlpatterns = [ 
-  path('ws/video/<str:room_name>', VideoConsumer.as_asgi()),
-  path('ws/task-transfer/<str:line_name>', TaskTransferConsumer.as_asgi()),
+    # Маршрут для обнаружения объектов через WebRTC
+    path('ws/video/', ObjectDetectionConsumer.as_asgi()),
+    # Маршрут для передачи информации о задачах в реальном времени
+    path('ws/task-transfer/<str:line_name>', TaskTransferConsumer.as_asgi()),
 ]

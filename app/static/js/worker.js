@@ -590,98 +590,276 @@ $(document).ready(function() {
   }
 })
 
-var localstream;
-let video_interval
-function videoStream(task_id){
-  let new_profile_amount = 0  
-  const video = document.getElementById('videoElement');
-  const canvas = document.getElementById('canvas');
-  const context = canvas.getContext('2d');
-  const socket_video = new WebSocket(`ws://192.168.211.1/ws/video/${task_id}`);
-  //const socket_video = new WebSocket(`ws://127.0.0.1:8000/ws/video/${task_id}`);
-  const img = document.createElement('img');
+//Видео поток
 
-  video.after(img); // Добавляем изображение на страницу
-  navigator.mediaDevices.getUserMedia({ video: true })
-  .then(stream => {    
-    video.srcObject = stream;
-    localstream = stream;
-  })
-  .catch(error => {
-      console.error("Ошибка доступа к веб-камере:", error);
-  });
+const videoElement = document.getElementById('localVideo');
+const remoteVideoElement = document.getElementById('remoteVideo');
+// const startButton = document.getElementById('startButton');
+const callButton = document.getElementById('callButton');
+const hangupButton = document.getElementById('hangupButton');
+let localStream;
+let peerConnection;
+const serverUrl = 'ws://127.0.0.1:8000/ws/video/'; // URL WebSocket сервера
+let ws;
 
-  socket_video.onopen = function() {
-    let current_card = document.querySelector(`.task-card-item[data-itemId="${task_id}"]`)
-    let input_element = current_card.querySelector('.right-side__current-quantity__amount')
-
-    if (!isOpen(socket_video)) return;
-    socket_video.send(JSON.stringify({chgVal: 0, isFs: 1, task_id: task_id}))
-    if (!isOpen(socket_video)) return;
-    video_interval = setInterval(() => {
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imageData = canvas.toDataURL('image/jpeg', 0.8); //0.8 - качество изображения, изменить при плохом обнаружении
-        if (isOpen(socket_video)) {
-          socket_video.send(JSON.stringify({ image: imageData.split(',')[1], isFs: 0, chgVal: 0}));
-        } else {
-          clearInterval(video_interval);
-        };
+async function videoStream() {
+  console.log('Start Camera button clicked');
+  try {
+    console.log('Requesting camera access...');
+    
+    // Try to get real camera first
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      console.log('Camera access granted, setting video source');
+      videoElement.srcObject = localStream;
+      callButton.disabled = false;
+      // startButton.disabled = true;
+      console.log('Camera started successfully');
+    } catch (cameraError) {
+      console.log('Camera not available, creating synthetic video stream');
+      
+      // Create synthetic video stream for testing
+      const canvas = document.createElement('canvas');
+      canvas.width = 320;
+      canvas.height = 240;
+      const ctx = canvas.getContext('2d');
+      
+      // Create a synthetic video stream
+      const stream = canvas.captureStream(30); // 30 FPS
+      
+      // Animate the canvas
+      let frame = 0;
+      const animate = () => {
+        // Clear canvas
+        ctx.fillStyle = '#000080';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-    }, 350); // Отправка кадра каждые 350 мс
-
-      input_element.addEventListener('keypress', function(e){
-        var key = e.which;
-        if(key == 13)  {          
-          input_element.blur()
-        }
-      })
-
-      input_element.addEventListener('blur', () =>{
-        let value = 0        
-        let input_data = input_element.value
-        if (input_data.includes('+')) {
-          let arr_data = input_data.split('+')
-          for (let i = 0; i < arr_data.length; i++) {
-            const element = Number(arr_data[i]);
-            value = value + element
-          }
-        } else {
-          value = e.target.value          
-        }
-        if (Number.isNaN(Number(value))) {
-          alert('Неверное значение количества профиля. Допустимы числа и операция сложения')
-        } else {
-          socket_video.send(JSON.stringify({chgVal: 1, isFs: 0, value: input_element.value}))}
-      })
-  };
-
-  socket_video.onmessage = function(event) {
-    const data = JSON.parse(event.data);
-    const processedImage = data.processed_image;
-    const last_id = data.max_id_profile
-    let task_count = document.querySelector('.task-card-item[data-category="Выполняется"]') 
-
-    if (data.error) {
-      alert(data.error)
-    } else {  
-      required_quantity = task_count.querySelector('.right-side__required-quantity__amount').innerText
-      if (new_profile_amount != Number(last_id)) {
-        task_count.querySelector('.right-side__current-quantity__amount').value = Number(last_id) 
-        new_profile_amount = Number(last_id) 
-      }   
-      // В элемент img отображаем обработанное изображение    
-      img.src = 'data:image/jpeg;base64,' + processedImage;
+        // Draw moving rectangle
+        const x = (Math.sin(frame * 0.02) * 200) + 220;
+        const y = (Math.cos(frame * 0.03) * 150) + 165;
+        
+        ctx.fillStyle = '#FF0000';
+        ctx.fillRect(x, y, 100, 50);
+        
+        // Draw text
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '20px Arial';
+        ctx.fillText(`Test Video Frame: ${frame}`, 50, 50);
+        ctx.fillText('Synthetic Camera Feed', 50, 80);
+        
+        frame++;
+        requestAnimationFrame(animate);
+      };
+      
+      animate();
+      
+      localStream = stream;
+      videoElement.srcObject = localStream;
+      callButton.disabled = false;
+      // startButton.disabled = true;
+      console.log('Synthetic camera started successfully');
     }
-  };
-  socket_video.onerror = function(error) {
-    console.log(error)
+  } catch (e) {
+    console.error('Error starting video:', e);
+    alert('Error starting video: ' + e.message);
   }
-  socket_video.onclose = function(event) {
-    console.log(event)
-  }
-}
+};
 
-function isOpen(ws) { return ws.readyState === ws.OPEN }
+
+  callButton.onclick = () => {
+    callButton.disabled = true;
+    hangupButton.disabled = false;
+
+    // Инициализация WebSocket соединения
+    ws = new WebSocket(serverUrl);
+
+    ws.onopen = () => {
+      console.log('WebSocket connected');
+      // Отправляем предложение SDP на сервер
+      createOfferAndSend();
+    };
+    ws.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.type === 'answer') {
+        // Получаем ответ SDP от сервера и устанавливаем его
+        setRemoteDescription(message.sdp);
+      } else if (message.type === 'candidate') {
+        // Получаем ICE candidate от сервера и добавляем его
+        addIceCandidate(message.candidate);
+      } else if (message.type === 'detection_result') {
+        // Обрабатываем результаты обнаружения объектов
+        console.log('Обнаруженные объекты:', message.objects);
+        // TODO: Отобразите результаты на странице (например, наложите рамки на видео)
+      }
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket disconnected');
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+  };
+
+  hangupButton.onclick = () => {
+    hangup();
+  };
+
+  async function createPeerConnection() {
+    // Configure comprehensive ICE servers for maximum compatibility
+    const configuration = {
+      iceServers: [
+        // Google STUN servers
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' },
+        { urls: 'stun:stun4.l.google.com:19302' },
+        // Additional public STUN servers
+        { urls: 'stun:stun.stunprotocol.org:3478' },
+        { urls: 'stun:stun.voiparound.com' },
+        { urls: 'stun:stun.voipbuster.com' },
+        // Free TURN servers for relay (when STUN fails)
+        {
+          urls: 'turn:openrelay.metered.ca:80',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        {
+          urls: 'turn:openrelay.metered.ca:443',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        {
+          urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        }
+      ]
+    };
+    
+    peerConnection = new RTCPeerConnection(configuration);
+    console.log('PeerConnection created with STUN/TURN servers');
+
+    peerConnection.onicecandidate = (event) => {
+      if (event.candidate) {
+        console.log('Generated ICE candidate:', event.candidate.type, event.candidate.candidate);
+          sendIceCandidate(event.candidate);
+        // Отправляем ICE candidate на сервер
+        
+      } else {
+        console.log('ICE candidate gathering completed');
+      }
+    };
+
+    peerConnection.oniceconnectionstatechange = () => {
+      console.log('ICE connection state changed to:', peerConnection.iceConnectionState);
+      if (peerConnection.iceConnectionState === 'failed') {
+        console.error('ICE connection failed - NAT traversal unsuccessful');
+      } else if (peerConnection.iceConnectionState === 'connected') {
+        console.log('ICE connection established successfully!');
+      } else if (peerConnection.iceConnectionState === 'disconnected') {
+        console.warn('ICE connection disconnected');
+      }
+    };
+
+    peerConnection.onicegatheringstatechange = () => {
+      console.log('ICE gathering state changed to:', peerConnection.iceGatheringState);
+      if (peerConnection.iceGatheringState === 'complete') {
+        console.log('All ICE candidates have been gathered');
+      }
+    };
+
+    peerConnection.onconnectionstatechange = () => {
+      console.log('Connection state changed to:', peerConnection.connectionState);
+      if (peerConnection.connectionState === 'failed') {
+        console.error('Peer connection failed completely');
+      } else if (peerConnection.connectionState === 'connected') {
+        console.log('Peer connection established successfully!');
+      }
+    };
+
+    peerConnection.ontrack = (event) => {
+      console.log('Received remote track:', event.track.kind);
+      if (event.track.kind === 'video') {
+        // Display the processed video from server
+        remoteVideoElement.srcObject = event.streams[0];
+        console.log('Remote video stream set');
+      }
+    };
+
+    localStream.getTracks().forEach(track => {
+      peerConnection.addTrack(track, localStream);
+    });
+  }
+
+  async function createOfferAndSend() {
+    await createPeerConnection();
+    try {
+      const offer = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offer);
+      // Отправляем предложение SDP на сервер через WebSocket
+      ws.send(JSON.stringify({ type: 'offer', sdp: offer.sdp }));
+    } catch (e) {
+      console.error('createOffer error:', e);
+    }
+  }
+
+  async function setRemoteDescription(sdp) {
+    try {
+      remote_answer = {type: 'answer', sdp: sdp}
+      await peerConnection.setRemoteDescription(remote_answer);
+      // ws.send(JSON.stringify(remote_answer))
+    } catch (e) {
+      console.error('setRemoteDescription error:', e);
+    }
+  }
+
+  async function addIceCandidate(candidate) {
+    try {
+      await peerConnection.addIceCandidate(candidate);
+    } catch (e) {
+      console.error('addIceCandidate error:', e);
+    }
+  }
+
+  function sendIceCandidate(candidate) {
+    candidate_new = {
+      'candidate': candidate.candidate,
+      'foundation': candidate.foundation,
+      'ip': candidate.address || candidate.ip,
+      'port': candidate.port,
+      'protocol': candidate.protocol,
+      'type': candidate.type,
+      'priority': candidate.priority,
+      'component': candidate.component,
+      'sdpMid': candidate.sdpMid,
+      'sdpMLineIndex': candidate.sdpMLineIndex,
+      'tcpType': candidate.tcpType
+    }
+    ws.send(JSON.stringify({ type: 'candidate', candidate: candidate_new}));
+  }
+
+  function hangup() {
+    if (peerConnection) {
+      peerConnection.close();
+      peerConnection = null;
+    }
+    if (localStream) {
+      localStream.getTracks().forEach(track => track.stop());
+      localStream = null;
+    }
+    if (ws) {
+      ws.close();
+      ws = null;
+    }
+    callButton.disabled = false;
+    hangupButton.disabled = true;
+    startButton.disabled = false;
+  }
+
+
 
 // Изменение количества профиля вручную на наладке (на выполнении меняется через вебсоккет)
 $(document).ready(function(){

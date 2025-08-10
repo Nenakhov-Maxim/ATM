@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+      <title>Object Detection with WebRTC</title>
+    </head>
+    <body>
+      <h1>Object Detection with WebRTC</h1>
+
+      <div style="display: flex; gap: 20px;">
+        <div>
+          <h3>Local Video (Your Camera)</h3>
+          <video id="localVideo" autoplay muted playsinline width="640" height="480"></video>
+        </div>
+        <div>
+          <h3>Remote Video (Server Processed)</h3>
+          <video id="remoteVideo" autoplay playsinline width="640" height="480"></video>
+        </div>
+      </div>
+      <br>
+      <button id="startButton">Start Camera</button>
+      <button id="callButton" disabled>Call</button>
+      <button id="hangupButton" disabled>Hangup</button>
+
+      {% load static %}
+      <script src="{% static 'client.js' %}"></script>
+      <script>
+          // Добавьте CSRF токен, если используете Django формы
+          // const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+      </script>
+    </body>
+    </html>

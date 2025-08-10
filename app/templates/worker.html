@@ -260,12 +260,19 @@
               </div>
               <div class="worker-event-rightside" data-workplace="workpalce-{{el.task_workplace_id}}">
                 {% if el.task_status_id == 3 %}
-                <h1>Видеопоток с веб-камеры</h1>
-                <video hidden id="videoElement" autoplay></video>
-                <canvas hidden  id="canvas" width="640" height="480"></canvas>
+                  <div>
+                    <!-- <h3>Local Video (Your Camera)</h3> -->
+                    <video id="localVideo" hidden autoplay muted playsinline width="640" height="480"></video>
+                  </div>
+                  <div>
+                    <h3>Видео с сервера</h3>
+                    <video id="remoteVideo" autoplay playsinline width="640" height="480"></video>
+                  </div>
                 {% else %}
                 <img id="video_stream" src="{% static "img/video-disabled.svg" %}" alt="Изображение с камеры" />
-                {% endif %}               
+                {% endif %}
+                <button id="callButton" disabled>Call</button>
+                <button id="hangupButton" disabled>Hangup</button>               
               </div>                              
             </div>            
           </div>  
