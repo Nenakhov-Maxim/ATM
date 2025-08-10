@@ -938,3 +938,100 @@ function ajax_request(url, type,  data) {
     }      
   });
 }
+
+
+
+
+//Старый вариант отправки видео 
+// var localstream;
+// let video_interval
+// function videoStream(task_id){
+//   let new_profile_amount = 0  
+//   const video = document.getElementById('videoElement');
+//   const canvas = document.getElementById('canvas');
+//   const context = canvas.getContext('2d');
+//   //const socket_video = new WebSocket(`ws://192.168.211.1/ws/video/${task_id}`);
+//   const socket_video = new WebSocket(`ws://127.0.0.1:8000/ws/video/${task_id}`);
+//   const img = document.createElement('img');
+
+//   video.after(img); // Добавляем изображение на страницу
+//   navigator.mediaDevices.getUserMedia({ video: true })
+//   .then(stream => {    
+//     video.srcObject = stream;
+//     localstream = stream;
+//   })
+//   .catch(error => {
+//       console.error("Ошибка доступа к веб-камере:", error);
+//   });
+
+//   socket_video.onopen = function() {
+//     let current_card = document.querySelector(`.task-card-item[data-itemId="${task_id}"]`)
+//     let input_element = current_card.querySelector('.right-side__current-quantity__amount')
+
+//     if (!isOpen(socket_video)) return;
+//     socket_video.send(JSON.stringify({chgVal: 0, isFs: 1, task_id: task_id}))
+//     if (!isOpen(socket_video)) return;
+//     video_interval = setInterval(() => {
+//         context.drawImage(video, 0, 0, canvas.width, canvas.height);
+//         const imageData = canvas.toDataURL('image/webp', 0.5); //0.7 - качество изображения, изменить при плохом обнаружении
+//         if (isOpen(socket_video)) {
+//           socket_video.send(JSON.stringify({ image: imageData.split(',')[1], isFs: 0, chgVal: 0}));
+//         } else {
+//           clearInterval(video_interval);
+//         };
+        
+//     }, 750); // Отправка кадра каждые 750 мс
+
+//       input_element.addEventListener('keypress', function(e){
+//         var key = e.which;
+//         if(key == 13)  {          
+//           input_element.blur()
+//         }
+//       })
+
+//       input_element.addEventListener('blur', () =>{
+//         let value = 0        
+//         let input_data = input_element.value
+//         if (input_data.includes('+')) {
+//           let arr_data = input_data.split('+')
+//           for (let i = 0; i < arr_data.length; i++) {
+//             const element = Number(arr_data[i]);
+//             value = value + element
+//           }
+//         } else {
+//           value = e.target.value          
+//         }
+//         if (Number.isNaN(Number(value))) {
+//           alert('Неверное значение количества профиля. Допустимы числа и операция сложения')
+//         } else {
+//           socket_video.send(JSON.stringify({chgVal: 1, isFs: 0, value: input_element.value}))}
+//       })
+//   };
+
+//   socket_video.onmessage = function(event) {
+//     const data = JSON.parse(event.data);
+//     const processedImage = data.processed_image;
+//     const last_id = data.max_id_profile
+//     let task_count = document.querySelector('.task-card-item[data-category="Выполняется"]') 
+
+//     if (data.error) {
+//       alert(data.error)
+//     } else {  
+//       required_quantity = task_count.querySelector('.right-side__required-quantity__amount').innerText
+//       if (new_profile_amount != Number(last_id)) {
+//         task_count.querySelector('.right-side__current-quantity__amount').value = Number(last_id) 
+//         new_profile_amount = Number(last_id) 
+//       }   
+//       // В элемент img отображаем обработанное изображение    
+//       img.src = 'data:image/jpeg;base64,' + processedImage;
+//     }
+//   };
+//   socket_video.onerror = function(error) {
+//     console.log(error)
+//   }
+//   socket_video.onclose = function(event) {
+//     console.log(event)
+//   }
+// }
+
+// function isOpen(ws) { return ws.readyState === ws.OPEN }
