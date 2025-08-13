@@ -4,8 +4,8 @@ $(document).ready(function() {
   let task_id_list = {}
   let name_line = document.querySelectorAll(".person-info__department")[1].dataset.line
   let tasks_list = document.querySelectorAll(".task-card-item")
-  //const socket_task = new WebSocket(`ws://192.168.211.1/ws/task-transfer/${name_line}`); //На сервере
-  const socket_task = new WebSocket(`ws://127.0.0.1:8000/ws/task-transfer/${name_line}`); //На домашней машине
+  const socket_task = new WebSocket(`ws://192.168.211.1/ws/task-transfer/${name_line}`); //На сервере
+  //const socket_task = new WebSocket(`ws://127.0.0.1:8000/ws/task-transfer/${name_line}`); //На домашней машине
 
   for (const key in tasks_list) {
     if (Object.prototype.hasOwnProperty.call(tasks_list, key)) {
@@ -598,8 +598,8 @@ let callButton
 let hangupButton
 let localStream;
 let peerConnection;
-//const serverUrl = 'ws://192.168.211.1/ws/video/'; // URL WebSocket сервера
-const serverUrl = 'ws://127.0.0.1:8000/ws/video/'; // URL WebSocket сервера
+const serverUrl = 'ws://192.168.211.1/ws/video/'; // URL WebSocket сервера
+//const serverUrl = 'ws://127.0.0.1:8000/ws/video/'; // URL WebSocket сервера
 let ws;
 
 if (enabled_task) {
