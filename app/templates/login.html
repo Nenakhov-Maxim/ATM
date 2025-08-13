@@ -53,14 +53,39 @@
           </div>
           <div class="buttons-list"> 
             <button class="button__enter-app" type="submit">Вход</button>
-            <button class="button__qr-code">Вход по QR-коду</button> 
+            <button class="button__qr-code" type="button">Вход по QR-коду</button> 
             {{ form.non_field_errors.as_text }}
-          </div>  
+          </div>
         </form>
       </div>
     </div>
   </div>  
 </section>
+
+<!-- Модальное окно для QR-сканирования -->
+<div id="qr-modal" class="qr-modal" style="display: none;">
+  <div class="qr-modal-content">
+    <div class="qr-modal-header">
+      <h3>Сканирование QR-кода</h3>
+      <span class="qr-modal-close">&times;</span>
+    </div>
+    <div class="qr-modal-body">
+      <div class="qr-scanner-info">
+        <p>Отсканируйте QR-код с помощью USB-сканера</p>
+        <div class="qr-scanner-status">
+          <span id="scanner-status">Ожидание сканирования...</span>
+        </div>
+      </div>
+      <input type="text" id="qr-input" placeholder="QR-код будет введен автоматически" readonly style="opacity: 0; position: absolute; left: -9999px;">
+      <div class="qr-manual-input" style="margin-top: 20px;">
+        <label for="manual-qr-input">Или введите QR-код вручную:</label>
+        <input type="text" id="manual-qr-input" placeholder="Введите QR-код">
+        <button type="button" id="manual-qr-submit">Войти</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <footer class="footer"></footer> 
 <script src="{% static "/js/login.js" %}"></script> 
 </body>

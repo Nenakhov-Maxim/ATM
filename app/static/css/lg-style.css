@@ -201,3 +201,146 @@
   width: 100%;
 }
 
+/* Стили для модального окна QR-сканирования */
+.qr-modal {
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.qr-modal-content {
+  background-color: white;
+  border-radius: 10px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.qr-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.qr-modal-header h3 {
+  margin: 0;
+  color: #333;
+  font-family: 'Rosatom-bold';
+}
+
+.qr-modal-close {
+  font-size: 24px;
+  font-weight: bold;
+  color: #999;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.qr-modal-close:hover {
+  color: #C21500;
+}
+
+.qr-modal-body {
+  padding: 20px;
+}
+
+.qr-scanner-info {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.qr-scanner-info p {
+  margin: 0 0 10px 0;
+  color: #666;
+}
+
+.qr-scanner-status {
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  border-left: 4px solid #C21500;
+}
+
+#scanner-status {
+  color: #C21500;
+  font-weight: bold;
+}
+
+.qr-manual-input {
+  border-top: 1px solid #eee;
+  padding-top: 20px;
+}
+
+.qr-manual-input label {
+  display: block;
+  margin-bottom: 10px;
+  color: #333;
+  font-weight: bold;
+}
+
+.qr-manual-input input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.qr-manual-input input:focus {
+  outline: none;
+  border-color: #C21500;
+  box-shadow: 0 0 5px rgba(194, 21, 0, 0.3);
+}
+
+#manual-qr-submit {
+  width: 100%;
+  padding: 12px;
+  background-color: #C21500;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  text-transform: uppercase;
+  transition: background-color 0.3s ease;
+}
+
+#manual-qr-submit:hover {
+  background-color: #a01800;
+}
+
+.qr-success {
+  color: #28a745;
+}
+
+.qr-error {
+  color: #dc3545;
+}
+
+.qr-loading {
+  color: #ffc107;
+}

@@ -4,8 +4,8 @@ $(document).ready(function() {
   let task_id_list = {}
   let name_line = document.querySelectorAll(".person-info__department")[1].dataset.line
   let tasks_list = document.querySelectorAll(".task-card-item")
-  // const socket_task = new WebSocket(`ws://192.168.211.1/ws/task-transfer/${name_line}`); //На домашней машине 127.0.0.1:8000
-  const socket_task = new WebSocket(`ws://127.0.0.1:8000/ws/task-transfer/${name_line}`); //На домашней машине 127.0.0.1:8000
+  //const socket_task = new WebSocket(`ws://192.168.211.1/ws/task-transfer/${name_line}`); //На сервере
+  const socket_task = new WebSocket(`ws://127.0.0.1:8000/ws/task-transfer/${name_line}`); //На домашней машине
 
   for (const key in tasks_list) {
     if (Object.prototype.hasOwnProperty.call(tasks_list, key)) {
@@ -592,15 +592,23 @@ $(document).ready(function() {
 
 //Видео поток
 const enabled_task = document.querySelector('div.task-card-item[data-category-id="3"]')
-const videoElement = enabled_task.querySelector('#localVideo');
-const remoteVideoElement = enabled_task.querySelector('#remoteVideo');
-// const startButton = document.getElementById('startButton');
-const callButton = enabled_task.querySelector('#callButton');
-const hangupButton = enabled_task.querySelector('#hangupButton');
+let videoElement 
+let remoteVideoElement 
+let callButton
+let hangupButton
 let localStream;
 let peerConnection;
+//const serverUrl = 'ws://192.168.211.1/ws/video/'; // URL WebSocket сервера
 const serverUrl = 'ws://127.0.0.1:8000/ws/video/'; // URL WebSocket сервера
 let ws;
+
+if (enabled_task) {
+  videoElement = enabled_task.querySelector('#localVideo');
+  remoteVideoElement = enabled_task.querySelector('#remoteVideo');
+  callButton = enabled_task.querySelector('#callButton');
+  hangupButton = enabled_task.querySelector('#hangupButton');
+}
+
 
 
 async function videoStream() {
@@ -691,7 +699,7 @@ callButton.onclick = () => {
     } else if (message.type === 'detection_result') {
       // Обрабатываем результаты обнаружения объектов
       console.log('Обнаруженные объекты:', message.objects);
-      // TODO: Отобразите результаты на странице (например, наложите рамки на видео)
+      // TODO: Если требуется, то отражаем результаты на странице
     }
   };
 
