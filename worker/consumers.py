@@ -72,8 +72,8 @@ class ServerVideoTrack(VideoStreamTrack):
                 print(f'Обработка на видеокарте № 2: {torch.cuda.get_device_name(1)}')
         
         # Логика обработки изображения с помощью предобученной модели YOLOv8      
-        results = self.model.track(img, stream=True, persist=True, iou=0.50, conf=0.65,
-                                  tracker="botsort.yaml", imgsz=240, classes=0, verbose=False)
+        results = self.model.track(img, stream=True, persist=True, iou=0.60, conf=0.83,
+                                  tracker="botsort.yaml", imgsz=256, classes=0, verbose=False)
         
         for result in results:
             res_plotted = result.plot()
