@@ -1,3 +1,9 @@
+.card-item__actions {
+  width: 100px;
+  height: 50px;
+  margin-left: 125px;
+}
+
 .more-information__worker-event {
   display: grid;
   grid-template-columns: 1fr 1fr;
