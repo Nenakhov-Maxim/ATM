@@ -118,20 +118,20 @@ class Tasks(models.Model):
     
     def is_accepted_video(self):
         """Проверяет, поддерживается ли видеораспознавание для данного типа профиля"""
-        if not self.task_profile_type or not self.task_profile_type.association_name:
-            return False
+        return self.task_profile_type.is_accepted_video
             
-        accepted_profiles = AcceptedProfile.objects.filter(
-            type_profile=self.task_profile_type.association_name
-        )
+            
+        # accepted_profiles = AcceptedProfile.objects.filter(
+        #     type_profile=self.task_profile_type.association_name
+        # )
         
-        if not accepted_profiles.exists():
-            return False
+        # if not accepted_profiles.exists():
+        #     return False
             
-        for profile in accepted_profiles:
-            if self.task_profile_type.profile_name in profile.names_profile.split(','):
-                return True
-        return False
+        # for profile in accepted_profiles:
+        #     if self.task_profile_type.profile_name in profile.names_profile.split(','):
+        #         return True
+        # return False
     
     class Meta:
         verbose_name = 'Задача'
