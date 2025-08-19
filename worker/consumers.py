@@ -21,15 +21,21 @@ class ServerVideoTrack(VideoStreamTrack):
     """
     Видеодорожка, которая генерирует кадры с серверной обработкой
     """
-    def __init__(self, source_track=None):
+    def __init__(self, source_track=None, model_name=None, type_profile=None):
         super().__init__()
         self.source_track = source_track
         self.frame_count = 0
-        self.model = YOLO("AiVision/yolo_weights/t-profile_240_nano_b=32.pt")
         self.max_id_profile = 0
         self.amount_profile = 0
         self.counter_cuda = 0
-        self.type_profile = 'T-profile'
+        self.type_profile = type_profile
+        print(model_name)
+        print(type_profile)
+        if model_name == '' or model_name == None:
+            self.model_name = 't-profile_240_nano_b=32.pt'
+        else:
+            self.model_name = model_name   
+        self.model = YOLO(f"AiVision/yolo_weights/{self.model_name}")
         
     async def recv(self):
         """
@@ -90,16 +96,20 @@ class ServerVideoTrack(VideoStreamTrack):
         # Добавляем временную метку
         import time
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-        cv2.putText(res_plotted, f"Дата сервера: {timestamp}", 
+        cv2.putText(res_plotted, f"Server timedate: {timestamp}", 
                    (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 255, 0), 1)       
         
         # Добавляем счетчик профилей
-        cv2.putText(res_plotted, f"Обнаружено профилей: {self.max_id_profile}", 
+        cv2.putText(res_plotted, f"Number profile visible: {self.max_id_profile}", 
                    (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 0, 0), 1)
         
         # Добавляем тип профиля
-        cv2.putText(res_plotted, f"Тип профиля: {self.type_profile}", 
+        cv2.putText(res_plotted, f"Type profile: {self.type_profile}", 
                    (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 0, 0), 1)
+        
+        # Добавляем тип профиля
+        cv2.putText(res_plotted, f"Model type: {self.model_name}", 
+                   (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 0, 0), 1)
         
         return res_plotted
     
@@ -172,6 +182,9 @@ class ObjectDetectionConsumer(AsyncWebsocketConsumer):
         print(f"Получено сообщение: {message}")
 
         if message["type"] == "offer":
+            self.task_id = message["task_id"]
+            self.profile_type = await sync_to_async(lambda: Tasks.objects.get(id=self.task_id).task_profile_type.profile_name)()
+            self.model_name = await sync_to_async(lambda: Tasks.objects.get(id=self.task_id).task_profile_type.yolo_model_name)()
             await self.create_peer_connection(message["sdp"])
         elif message["type"] == "answer":
             print('Получен ответ SDP')
@@ -209,7 +222,7 @@ class ObjectDetectionConsumer(AsyncWebsocketConsumer):
                 raise e2
         
         # Добавляем серверную видеодорожку
-        self.server_video_track = ServerVideoTrack()
+        self.server_video_track = ServerVideoTrack(model_name=self.model_name, type_profile=self.profile_type)
         self.pc.addTrack(self.server_video_track)
         print("Серверная видеодорожка добавлена в peer connection")
     

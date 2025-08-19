@@ -598,8 +598,9 @@ let callButton
 let hangupButton
 let localStream;
 let peerConnection;
-const serverUrl = 'ws://192.168.211.1/ws/video/'; // URL WebSocket сервера
-//const serverUrl = 'ws://127.0.0.1:8000/ws/video/'; // URL WebSocket сервера
+
+// const serverUrl = 'ws://192.168.211.1/ws/video/'; // URL WebSocket сервера
+const serverUrl = 'ws://127.0.0.1:8000/ws/video/'; // URL WebSocket сервера
 let ws;
 
 if (enabled_task) {
@@ -810,7 +811,7 @@ async function createOfferAndSend() {
     const offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
     // Отправляем предложение SDP на сервер через WebSocket
-    ws.send(JSON.stringify({ type: 'offer', sdp: offer.sdp }));
+    ws.send(JSON.stringify({ type: 'offer', sdp: offer.sdp, task_id: enabled_task.dataset.itemid }));
   } catch (e) {
     console.error('createOffer error:', e);
   }

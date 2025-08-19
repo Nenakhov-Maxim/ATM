@@ -45,6 +45,7 @@ class ProfileType(models.Model):
     profile_name = models.CharField('Наименование', max_length=100)
     association_name = models.CharField('Общее название', blank=True, default='', null=True, max_length=100)
     is_accepted_video = models.BooleanField('Доступно для видео?', default=False, null=True)
+    yolo_model_name = models.CharField('Название модели нейросети', blank=True, default='')
     
     def __str__(self):
         return self.profile_name
