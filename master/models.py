@@ -1,5 +1,7 @@
+import django
 from django.db import models
 from django.contrib.postgres.fields import HStoreField
+from datetime import datetime, timezone
 
 
 class AccessApp(models.Model):
@@ -39,11 +41,30 @@ class TaskStatus(models.Model):
         verbose_name = 'Статус задачи'
         verbose_name_plural = 'Статусы задач'
 
+class ShtripsValueType(models.Model):
+    """Типы значений для для списания штрипса"""
+    type_offs_shtrips = models.CharField('Тип списания (кг или метры)')
+
+class OffsShtrips(models.Model):
+    """Модель истории списания штрипсов"""
+    value = models.FloatField('Значение')
+    type_value_id = models.ForeignKey('ShtripsValueType', null=True, on_delete=models.SET_NULL)
+    created_at = models.DateTimeField('Фактическая дата и время списания', default=django.utils.timezone.now)
+    
+    def __str__(self):
+        return self.value
+    
+    class Meta:
+        verbose_name = 'История списания'
+        verbose_name_plural = 'Истории списаний'
+    
+    
+    
 
 class ProfileType(models.Model):
     """Модель типов профилей"""
     profile_name = models.CharField('Наименование', max_length=100)
-    association_name = models.CharField('Общее название', blank=True, default='', null=True, max_length=100)
+    association_name_shtrips = models.CharField('Тип штрипса', blank=True, default='', null=True, max_length=100)
     is_accepted_video = models.BooleanField('Доступно для видео?', default=False, null=True)
     yolo_model_name = models.CharField('Название модели нейросети', blank=True, default='')
     
@@ -113,6 +134,7 @@ class Tasks(models.Model):
     profile_amount_now = models.BigIntegerField('Количество профиля текущего', default=0)
     task_profile_length = models.FloatField('Длина профиля', default=0)
     worker_accepted_task = models.TextField('ФИО рабочего', blank=True)
+    history_offs_shtrips = models.ManyToManyField(OffsShtrips)
     
     def __str__(self):
         return self.task_name
@@ -120,6 +142,10 @@ class Tasks(models.Model):
     def is_accepted_video(self):
         """Проверяет, поддерживается ли видеораспознавание для данного типа профиля"""
         return self.task_profile_type.is_accepted_video
+
+    def get_all_history_shtrips(self):
+        offs_shtrips = Tasks.objects.get(id=self.id).history_offs_shtrips.all()
+        return offs_shtrips
             
             
         # accepted_profiles = AcceptedProfile.objects.filter(

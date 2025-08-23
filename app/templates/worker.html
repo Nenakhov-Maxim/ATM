@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 {% load static %}
 {% load split_tag %}
+{% load tags %}
 {% if user.is_authenticated %}
 <html lang="ru">
 <head>  
@@ -216,6 +217,26 @@
                     {%else%}
                     <span class="task-information__left-side__text">Осталось времени: <span>00:00:00</span></span>
                     {% endif %}
+                    <div class="task-information-history-shtrips-offs">
+                      <button id="shtrips-offs-btn" type="button">Списать штрипс</button>
+                      <h3 class="history-shtrips-offs-title">История списания штрипсов</h3>
+                      <div class="history-shtrips-offs-wrapper">
+                        <div class="history-shtrips-offs-item-labels">
+                            <span>ID</span>
+                            <span>Значение</span>
+                            <span>Размерность</span>
+                            <span>Дата списания</span>
+                        </div>
+                        {% for history_item in el.get_all_history_shtrips %}
+                        <div class="history-shtrips-offs-item">
+                            <span>{{history_item.id}}</span>
+                            <span>{{history_item.value}}</span>
+                            <span>{{history_item.type_value_id.type_offs_shtrips}}</span>
+                            <span>{{history_item.created_at | date_to_chel}}</span>
+                        </div>
+                        {%endfor%}
+                      </div>
+                    </div>
                   </div>
                   <div class="task-information__right-side">
                     <div class="task-information__right-side__required-length">
@@ -325,6 +346,31 @@
     </div>
   </div>
 </section>
+<!-- Модальное окно для QR-сканирования -->
+<div id="shtrips-modal" class="shtrips-modal" style="display: none;"> <!-- style="display: none;" -->
+  <div class="shtrips-modal-content">
+    <div class="shtrips-modal-header">
+      <h3>Списание штрипса</h3>
+      <span class="shtrips-modal-close">&times;</span>
+    </div>
+    <div class="shtrips-modal-body">
+      <div class="shtrips-label-info">
+        <p>Запишите значение в поле ниже, укажите размерную единицу</p>
+      </div>
+      <div class="shtrips-manual-input" style="margin-top: 20px;">
+        <label for="manual-shtrips-input-value">Значение</label>
+        <input type="text" id="manual-shtrips-input-value" placeholder="Введите значение">
+        <label for="manual-shtrips-input-type">Размерность</label>
+        <select name="manual-shtrips-input-type" id="manual-shtrips-input-type">
+          <option value="1">Килограммы</option>
+          <option value="2">Метры</option>
+        </select>
+        <span class="error_input"></span>
+        <button type="button" id="manual-shtrips-submit">Списать</button>
+      </div>
+    </div>
+  </div>
+</div>
 <footer class="footer">
   <div class="wrapper">
     <div class="footer-content">
@@ -350,7 +396,8 @@
 </footer>
 <script src="{% static "/js/jquery/jquery-3.7.1.min.js" %}"></script>
 <script src="{% static "/js/moment.min.js" %}"></script>  
-<script src="{% static "/js/worker.js" %}"></script>     
+<script src="{% static "/js/worker.js" %}"></script> 
+<script src="{% static "/js/shtrips.js" %}"></script>     
 </body>
 </html>
 {%endif%}

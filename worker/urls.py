@@ -25,5 +25,6 @@ urlpatterns = [
     path('setting-up/', views.start_settingUp, name='settingUp'),
     path('edit-profile-amount-value/', views.edit_profile_amount, name='change_profile_amount'),
     path('shiftChange/', views.shiftChange, name='change_worker'),
+    path('shtrips-offs/', views.shtripsOffs, name='shtrips_offs'),
         
 ]

@@ -4,11 +4,13 @@ from master.databaseWork import DatabaseWork
 from django.http import HttpResponse, JsonResponse
 from .forms import PauseTaskForm, DenyTaskForm
 import datetime
+from datetime import timedelta
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required, permission_required
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 from app.telegramAPI import TelegramBot
-
+import json
 
 # Стратовая страница
 @login_required
@@ -34,7 +36,7 @@ def worker_home(request, filter='all'):
     tasks = tasks.filter(task_timedate_start__lte = now + datetime.timedelta(days=5))
   elif filter == 'month':    
     tasks = tasks.filter(task_timedate_start__lte = now + datetime.timedelta(days=30))
-  #print(request.META) 
+  
   return render(request, 'worker.html', {'filter': filter, 'tasks':tasks, 'task_to_start':task_to_start,
                                          'task_start':task_start, 'user_info':user_info, 'new_paused_form':new_paused_form,
                                          'new_deny_form':new_deny_form, 'line_id':area_id})
@@ -184,3 +186,31 @@ def shiftChange(request):
   data_task = DatabaseWork({'id_task':task_id})
   result = data_task.shiftChange(task_id, profile_amount)
   return JsonResponse({'answer':'ОК'})
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def shtripsOffs(request):
+  try:
+    data_json = json.loads(request.body)
+    data = data_json.get('data')
+    value = data['val_num']
+    type_value = ShtripsValueType.objects.get(id=data['type'])
+    task_id = data['task_id']
+    task = Tasks.objects.get(id=task_id)
+    task.history_offs_shtrips.create(value=value, type_value_id=type_value)
+    last_history = OffsShtrips.objects.latest('id')
+    
+    date_value = last_history.created_at + timedelta(hours=5)
+    return JsonResponse({
+                'success': True, 
+                'id': int(last_history.id),
+                'value': float(last_history.value),
+                'date_value': str(date_value),
+                'type_value': str(last_history.type_value_id.type_offs_shtrips)
+            })
+  except Exception as e:
+    print(e)
+    return JsonResponse({
+                'success': False, 
+                'error': 'Ошибка на сервере'
+            })

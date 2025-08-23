@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 {% load static %}
 {% load split_tag %}
+{% load tags %}
 {% if user.is_authenticated %}
 <html lang="ru">
 <head>  
@@ -293,7 +294,19 @@
             </div>            
             {% endwith %}                
             {% endfor %}
-            {% endwith %}                                  
+            {% endwith %}
+            <div class="more-information__head-names">
+              <div class="more-information__head-name__date">Дата</div>
+              <div class="more-information__head-name__text-message">Значение</div>
+              <div class="more-information__head-name__details">Размерность</div>
+            </div>
+            {%for shtrips in el.get_all_history_shtrips%}
+            <div class="more-information__event">
+              <div class="more-information__event__date">{{shtrips.created_at | date_to_chel}}</div>
+              <div class="more-information__event__text-message">{{shtrips.value}}</div>
+              <div class="more-information__event__details">{{shtrips.type_value_id.type_offs_shtrips}}</div>
+            </div> 
+            {%endfor%}                        
           </div>  
         </div>
         {% endfor %}   
