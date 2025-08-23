@@ -195,14 +195,18 @@ def new_report(request):
           if old_date == '':            
             date_start_data = task.task_timedate_start_fact            
           else:                        
-            date_start_data = datetime.datetime.strptime(str(old_date), '%Y-%m-%d %H:%M:%S.%f%z')            
-          total_time = dates_to_time(date_start_data, datetime.datetime.strptime(str(date_end_data), '%Y-%m-%d %H:%M:%S.%f%z'))
+            date_start_data = datetime.strptime(str(old_date), '%Y-%m-%d %H:%M:%S.%f%z')            
+          total_time = dates_to_time(date_start_data, datetime.strptime(str(date_end_data), '%Y-%m-%d %H:%M:%S.%f%z'))
           old_date = date_end_data        
-          new_row = {'Ф.И.О': value[0:start_i], 'Номер линии': task.task_workplace_id, 'Марка изделия': task.task_profile_type.profile_name, 'Общее кол-во п/м': total_length,
-                                                        'Отработанные часы':total_time, 'Ср. зд.':'0', 'Хоз. работы':'Да', 'Подпись работника':''}
+          new_row = {'Ф.И.О': value[0:start_i], 'Номер линии': task.task_workplace_id,
+                     'Марка изделия': task.task_profile_type.profile_name,
+                     'Общее кол-во п/м': total_length,
+                     'Отработанные часы':total_time,
+                     'Ср. зд.':'0', 'Хоз. работы':'Да',
+                     'Подпись работника':''}
           dict_list.append(new_row)
         
-      answer = create_excel_from_dict_list(dict_list, f'Акт от {datetime.date.today()}.xlsx')
+      answer = create_excel_from_dict_list(dict_list, f'Акт от {datetime.date(datetime.now())}.xlsx')
       link = f'/app/{answer}'
       link = link.replace('\\', '/')      
       return FileResponse(open(os.path.join(answer), "rb"))
