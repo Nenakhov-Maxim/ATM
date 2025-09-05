@@ -21,6 +21,7 @@ class NewTaskForm(forms.Form):
     task_profile_amount = forms.IntegerField()
     task_profile_length = forms.FloatField()
     task_comments = forms.CharField(widget=forms.Textarea(attrs={"class":"new-task-popup-comments__input", 'style':'resize:none;'}), required=False)
+    # task_type_material = forms.ChoiceField(required=False)
     
     class Meta:
         model = Tasks

@@ -3,7 +3,7 @@ from login import models as login_model
 from django.contrib.postgres.fields import HStoreField
 
 class WorkerTypeProblem(models.Model):
-  name_problem = models.CharField('Наименование типа проблемы', max_length=100)
+  name_problem = models.CharField('Наименование типа проблемы', max_length=500)
   
   def __str__(self):
     return str(self.name_problem) 

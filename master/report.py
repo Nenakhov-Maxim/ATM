@@ -16,7 +16,7 @@ def create_empty_excel(columns: list, filename: str, sheet_name: str = 'Акта
 
     return filepath
   
-def create_excel_from_dict_list(dict_list: list, output_filename: str, sheet_name='Sheet1'):
+def create_excel_from_dict_list(header_list: list, dict_list, output_filename: str, sheet_name='Sheet1'):
     # Создаем директорию, если она не существует
     if not os.path.exists('excel_files'):
         os.makedirs('excel_files')
@@ -32,12 +32,12 @@ def create_excel_from_dict_list(dict_list: list, output_filename: str, sheet_nam
     ws.append([])
 
     # Записываем данные из списка словарей в Excel
+    ws.append(header_list)
     if dict_list:
-        header = list(dict_list[0].keys())
-        ws.append(header)  # Записываем заголовки
-
-        for row in dict_list:
-            ws.append([row[col] for col in header])
+        for key in dict_list:
+            ws.append([dict_list[key]['label']])
+            for data in dict_list[key]['data']:
+                ws.append(data)
 
     # Настраиваем стили для красивого вида
     header_style = NamedStyle(name='header')

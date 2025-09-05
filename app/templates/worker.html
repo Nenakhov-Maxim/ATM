@@ -106,7 +106,7 @@
             </div>
             <div class="card-item__workplace-name">
               <span class="card-item__title">{{ el.task_name }}</span><br>
-              <span class="card-item__title">(Тип профиля: {{ el.task_profile_type }})</span>
+              <span class="card-item__title">(Тип профиля: {{ el.task_profile_type }}, штрипс - {{el.task_profile_type.association_name_shtrips}})</span>
               <div class="worplace-name__equipment">
               </div>
             </div>
@@ -246,6 +246,10 @@
                     <div class="task-information__right-side__required-quantity">
                       <span class="right-side__required-quantity__text">Необходимое количество</span>
                       <span class="right-side__required-quantity__amount">{{ el.task_profile_amount }}</span>
+                    </div>
+                    <div class="task-information__right-side__shtrips-type">
+                      <span class="right-side__shtrips-type__text">Штрипс</span>
+                      <span class="right-side__shtrips-type__value">{{ el.task_profile_type.association_name_shtrips}}</span>
                     </div>
                     <div class="task-information__right-side__current-quantity">
                       <span class="right-side__current-quantity__text">Текущее количество</span>

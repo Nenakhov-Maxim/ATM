@@ -279,22 +279,16 @@
           <div class="task-card__more-information__wrapper disable">
             <div class="more-information__head-names">
               <div class="more-information__head-name__date">Дата</div>
+              <div class="more-information__head-name__details">Тип</div>
               <div class="more-information__head-name__text-message">Сообщение</div>
-              <div class="more-information__head-name__details">Детали</div>
             </div>     
-            {% with dic=el.task_history.history_name %}
-            {% for key, value in dic.items %}
-            {% with value|split:";" as items %}                                       
+            {%for event in el.get_all_history_event_message%}                                       
             <div class="more-information__event">
-              <div class="more-information__event__date">{{ items.0 }}</div>
-              <div class="more-information__event__text-message">{{ items.1 }}</div>
-              <div class="more-information__event__details">
-                {{ items.2 }}
-              </div>
-            </div>            
-            {% endwith %}                
+              <div class="more-information__event__date">{{event.created_at | date_to_chel}}</div>
+              <div class="more-information__event__details">{{event.type_event.type_name}}</div>
+              <div class="more-information__event__text-message">{{event.message}}</div>
+            </div>                            
             {% endfor %}
-            {% endwith %}
             <div class="more-information__head-names">
               <div class="more-information__head-name__date">Дата</div>
               <div class="more-information__head-name__text-message">Значение</div>
@@ -344,7 +338,12 @@
             <label for="task_workplace">Выберете рабочее место</label>
             {{ new_task_form.task_workplace }}            
           </div> 
-          <br>
+          <div class="popup-content-block__material">
+            <label for="task_type_material">Выберете материал из доступных</label>
+            <select name="task_type_material" id="id_task_type_material"></select>
+  
+          </div>
+          
           <div class="popup-content-block__amount">
             <span class="popup-content-block__amoun__text">Введите необходимое количество профиля</span>
             {{ new_task_form.task_profile_amount }}           

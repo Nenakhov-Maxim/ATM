@@ -675,47 +675,51 @@ async function videoStream() {
   }
 };
 
+if (callButton) {
+  callButton.onclick = () => {
+    console.log('Нажал кнопку')
+    callButton.disabled = true;
+    hangupButton.disabled = false;
 
-callButton.onclick = () => {
-  console.log('Нажал кнопку')
-  callButton.disabled = true;
-  hangupButton.disabled = false;
+    // Инициализация WebSocket соединения
+    ws = new WebSocket(serverUrl);
 
-  // Инициализация WebSocket соединения
-  ws = new WebSocket(serverUrl);
+    ws.onopen = () => {
+      console.log('WebSocket connected');
+      // Отправляем предложение SDP на сервер
+      createOfferAndSend();
+    };
+    ws.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.type === 'answer') {
+        // Получаем ответ SDP от сервера и устанавливаем его
+        setRemoteDescription(message.sdp);
+      } else if (message.type === 'candidate') {
+        // Получаем ICE candidate от сервера и добавляем его
+        addIceCandidate(message.candidate);
+      } else if (message.type === 'detection_result') {
+        // Обрабатываем результаты обнаружения объектов
+        console.log('Обнаруженные объекты:', message.objects);
+        // TODO: Если требуется, то отражаем результаты на странице
+      }
+    };
 
-  ws.onopen = () => {
-    console.log('WebSocket connected');
-    // Отправляем предложение SDP на сервер
-    createOfferAndSend();
+    ws.onclose = () => {
+      console.log('WebSocket disconnected');
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
   };
-  ws.onmessage = (event) => {
-    const message = JSON.parse(event.data);
-    if (message.type === 'answer') {
-      // Получаем ответ SDP от сервера и устанавливаем его
-      setRemoteDescription(message.sdp);
-    } else if (message.type === 'candidate') {
-      // Получаем ICE candidate от сервера и добавляем его
-      addIceCandidate(message.candidate);
-    } else if (message.type === 'detection_result') {
-      // Обрабатываем результаты обнаружения объектов
-      console.log('Обнаруженные объекты:', message.objects);
-      // TODO: Если требуется, то отражаем результаты на странице
-    }
+}
+if (hangupButton) {
+  hangupButton.onclick = () => {
+    hangup();
   };
+}
 
-  ws.onclose = () => {
-    console.log('WebSocket disconnected');
-  };
 
-  ws.onerror = (error) => {
-    console.error('WebSocket error:', error);
-  };
-};
-
-hangupButton.onclick = () => {
-  hangup();
-};
 
 async function createPeerConnection() {
   // Configure comprehensive ICE servers for maximum compatibility
@@ -949,3 +953,4 @@ function ajax_request(url, type,  data) {
     }      
   });
 }
+

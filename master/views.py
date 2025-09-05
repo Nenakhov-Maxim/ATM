@@ -1,15 +1,18 @@
 from django.shortcuts import render
-from .models import Tasks
+from .models import Tasks, SteelTypeProfile
 from .forms import NewTaskForm, EditTaskForm, PauseTaskForm, ReportForm
 from .databaseWork import DatabaseWork
 from django.http import HttpResponse, JsonResponse, FileResponse
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required, permission_required
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 from django.views.generic import UpdateView
 from django.urls import reverse_lazy
 from .report import create_excel_from_dict_list
 import math, os
 from datetime import timedelta, datetime
+import json
 
 
 
@@ -26,7 +29,6 @@ def master_home(request):
   tasks_stat_all = Tasks.objects.all().count()
   tasks_stat_complited = Tasks.objects.filter(task_status=2).count()  
   load_data = {'title': 'AT-Manager', "task_stat": f'{tasks_stat_all}/{tasks_stat_complited}'}
-  # print(request.META)
   if request.user.position_id_id == 1:
     user_prd = 'Мастер'
   else:
@@ -42,9 +44,7 @@ def master_home(request):
 def start_task(request):    
   if request.method == 'GET':
     data_task = DatabaseWork({'id_task':request.GET.get('id_task')})
-    user_name = f'{request.user.last_name} {request.user.first_name}'
-    user_position =f'{request.user.position_id_id}'
-    task = data_task.push_to_workers(user_name, user_position)     
+    task = data_task.push_to_workers(request.user)     
     if task == True:      
       return HttpResponse('Статус задачи успешно обновлен')
     else:
@@ -59,12 +59,9 @@ def pause_task(request, id_task):
   if request.method == 'POST':    
     new_paused_form = PauseTaskForm(request.POST)    
     if new_paused_form.is_valid():      
-      user_name = f'{request.user.last_name} {request.user.first_name}'
-      user_position =f'{request.user.position_id_id}'
       new_data_file = DatabaseWork(new_paused_form.cleaned_data)                   
-      new_task_file = new_data_file.paused_task(user_name, user_position, id_task)        
+      new_task_file = new_data_file.paused_task(id_task, request.user)        
       if  new_task_file == True:
-        # print(f'Добавление прошло успешно, id записи: {new_data_file.new_task_id}')
         return redirect('/master', permanent=True)
       else:
         return HttpResponse(f'Ошибка: {new_task_file}')
@@ -96,21 +93,43 @@ def new_task(request):
           start_position = start_position + timedelta(hours=time_for_sector)
         else:
           decleaned_data[key] = request.POST[key]
-      new_task_form = NewTaskForm(decleaned_data)    
-      if new_task_form.is_valid():      
+      new_task_form = NewTaskForm(decleaned_data)
+      if new_task_form.is_valid():
+        type_material_id = request.POST.get('task_type_material')
         user_name = f'{request.user.last_name} {request.user.first_name}'
-        user_position =f'{request.user.position_id_id}'
-        new_data_file = DatabaseWork(new_task_form.cleaned_data)               
-        new_history_file = new_data_file.add_new_history_data(user_name, user_position, new_task_form.cleaned_data['task_comments'])            
-        if new_history_file == True:        
-          new_task_file = new_data_file.add_new_task_data(user_name)        
-          if  new_task_file == True:
-            print(f'Добавление прошло успешно, id записи: {new_data_file.new_task_id}')            
-          else:
-            return HttpResponse(f'Ошибка: {new_task_file}')
-        else:        
-          return HttpResponse(f'Ошибка: {new_history_file}')
+        new_data_file = DatabaseWork(new_task_form.cleaned_data)       
+        new_task_file = new_data_file.add_new_task_data(user_name, type_material_id, request.user)        
+        if  new_task_file == True:
+          print(f'Добавление прошло успешно, id записи: {new_data_file.new_task_id}')            
+        else:
+          return HttpResponse(f'Ошибка: {new_task_file}')
     return redirect('/master', permanent=True)   
+
+# Получение списка материалов для поля "Материал" при создании заявки
+@csrf_exempt
+@login_required
+@permission_required(perm='master.change_task', raise_exception=True)
+@require_http_methods(["POST"])
+def get_material(request):
+  try:
+    data = json.loads(request.body)
+    profile_id = data.get('profile_id', '').strip()
+    materials_list = SteelTypeProfile.objects.all().filter(type_profile_id=profile_id)
+    material_name_list = {}
+    for item in materials_list:
+      material_name_list[item.type_steel.id] = item.type_steel.name
+    
+    return JsonResponse({
+      'success': True,
+      'data': material_name_list
+    })
+    
+  except Exception as e:
+        return JsonResponse({
+            'success': False, 
+            'error': f'Произошла ошибка: {str(e)}'
+        })
+  
 
 # Удаление задачи    
 @login_required
@@ -140,13 +159,9 @@ def edit_task(request):
   elif request.method == 'POST':    
     edit_task_form = EditTaskForm(request.POST)    
     if edit_task_form.is_valid():      
-      user_name = f'{request.user.last_name} {request.user.first_name}'
-      user_position =f'{request.user.position_id_id}'
-      new_data_file = DatabaseWork(edit_task_form.cleaned_data)
-      #new_history_file = new_data_file.add_new_history_data(user_name, user_position)       
-      new_task_file = new_data_file.edit_data_from_task(user_name, user_position, id_task)        
+      new_data_file = DatabaseWork(edit_task_form.cleaned_data)    
+      new_task_file = new_data_file.edit_data_from_task(id_task, request.user)        
       if  new_task_file == True:
-        # print(f'Добавление прошло успешно, id записи: {new_data_file.new_task_id}')
         return redirect('/master', permanent=True)
       else:
         return HttpResponse(f'Ошибка: {new_task_file}')
@@ -175,44 +190,64 @@ def new_report(request):
     report_form = ReportForm(request.POST)
     if report_form.is_valid():
       data = report_form.cleaned_data
-      start_date = data['date_start'] + timedelta(hours=5)
-      end_date = data['date_end'] + timedelta(hours=5)      
-      tasks = Tasks.objects.all().filter(task_timedate_end_fact__range=(start_date, end_date))
-      dict_list = []
+      start_date = data['date_start']
+      end_date = data['date_end']
+      print(start_date)
+      print(end_date)   
+      tasks = Tasks.objects.all().filter(last_update__range=(start_date, end_date))
+      print(tasks)
+      dict_list = {}
       for task in tasks:
-        profile_index = 0
-        my_str = task.worker_accepted_task
-        arr_str = my_str.split(', ')
-        old_date = ''
-        for value in arr_str:
-          start_i = value.find('(')
-          end_i = value.find(')')         
-          int_data_summary = value[start_i + 1:end_i]
-          int_data = int(int_data_summary.split(' - ')[0])
-          date_end_data = int_data_summary.split(' - ')[1]               
-          profile_index = profile_index + int_data
-          total_length = round(float(task.task_profile_length) * int(int_data), 2) 
-          if old_date == '':            
-            date_start_data = task.task_timedate_start_fact            
-          else:                        
-            date_start_data = datetime.strptime(str(old_date), '%Y-%m-%d %H:%M:%S.%f%z')            
-          total_time = dates_to_time(date_start_data, datetime.strptime(str(date_end_data), '%Y-%m-%d %H:%M:%S.%f%z'))
-          old_date = date_end_data        
-          new_row = {'Ф.И.О': value[0:start_i], 'Номер линии': task.task_workplace_id,
-                     'Марка изделия': task.task_profile_type.profile_name,
-                     'Общее кол-во п/м': total_length,
-                     'Отработанные часы':total_time,
-                     'Ср. зд.':'0', 'Хоз. работы':'Да',
-                     'Подпись работника':''}
-          dict_list.append(new_row)
+        id_task = task.id
+        label_task = f'Задача ID № {id_task} от {task.created_at + timedelta(hours=5)}. Списаны штрипсы: '
+        # Обрабатываем штрипсы
+        shtrips_list_str = ""
+        for shtrips in task.get_all_history_shtrips():
+          if shtrips.type_value_id.id == 1:
+            shtrips_list_str = shtrips_list_str + str(shtrips.value) + '; '
+          else:
+              # получаем материал у задачи
+              material = task.task_profile_material
+              # получаем тип профиля
+              type_profile = task.task_profile_type
+              # Находим запись в таблице соответствий, указывающую на кг в погонном метре
+              value_kg_m = SteelTypeProfile.objects.get(type_profile=type_profile, type_steel=material)
+              # Вес профиля умножаем на длину остатка и добавляем в общую строку
+              value_to_add = value_kg_m.weight * shtrips.value
+              shtrips_list_str = shtrips_list_str + str(shtrips.value) + "(п.м.)" + str(value_to_add) + "(кг.)" + "; "
         
-      answer = create_excel_from_dict_list(dict_list, f'Акт от {datetime.date(datetime.now())}.xlsx')
+        # Дописываем какие штрипсы были списаны по задаче
+        label_task = label_task + shtrips_list_str    
+        # Обрабатываем записи по каждому событию изготовления профиля
+        # Объединяем по именю
+        data_lib = {}
+        all_records = task.history_profile_records.all()
+
+        for record in all_records:
+          if record.created_at >= start_date and record.created_at <= end_date:
+            user = f'{record.user.last_name} {record.user.first_name}'
+            profile_amount = record.amount
+            if user in data_lib.keys():
+              old_value = data_lib[user]
+              data_lib[user] = old_value + profile_amount
+            else:
+              data_lib[user] = profile_amount
+              
+        dict_list[id_task] = {'label':label_task, 'data':[]} 
+        
+        # Наполняем данными
+        for key in data_lib.keys():    
+          new_row = [key, task.task_workplace_id, task.task_profile_type.profile_name,
+                     data_lib[key] * task.task_profile_length, "8", '0', 'Да', '']
+          dict_list[id_task]['data'].append(new_row)
+        
+      header_list = ['Ф.И.О', 'Номер линии', 'Марка изделия', 'Общее кол-во п/м', 'Отработанные часы', 'Ср. зд.', 'Хоз. работы', 'Подпись работника']
+      answer = create_excel_from_dict_list(header_list, dict_list, f'Акт от {datetime.date(datetime.now())}.xlsx')
       link = f'/app/{answer}'
       link = link.replace('\\', '/')      
       return FileResponse(open(os.path.join(answer), "rb"))
     else:
       return redirect('/master', permanent=True)
-  
   else:
     return HttpResponse('Только GET-запрос')  
 
@@ -231,9 +266,6 @@ def dates_to_time(date1, date2):
       hourse_string = f'0{hours}'
   else:
       hourse_string = f'{hours}'  
-  
-     
-       
   minutes_sum = math.modf(sum_difference[0] * 60)
   minutes = abs(int(minutes_sum[1]))
   if minutes  < 10:

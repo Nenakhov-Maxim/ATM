@@ -2,6 +2,8 @@
 //Панель мастера
 //История задачи приклике на стрелку вниз
 
+// const { createElement } = require("react");
+
 let cards_task = document.querySelectorAll('.task-card-item')
 for (const key in cards_task) {
   if (Object.prototype.hasOwnProperty.call(cards_task, key)) {
@@ -250,6 +252,47 @@ function add_profile_length(event, elem) {
     amount_profile.remove()
   })  
 }
+
+// добавление материалов при выборе профиля при созхдании новой заявки
+
+let type_profile_input = new_task_popup.querySelector('.popup-content-block__type-profile')
+console.log(type_profile_input)
+type_profile_input.addEventListener('change', (event)=> {
+  profile_id = event.target.value
+  // Отправка id на сервер и получение списка материалов для выбранного профиля
+  fetch('get-material/', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+          profile_id: profile_id
+      })
+  })
+  .then(response => response.json())
+  .then(data => {
+      if (data.success) {
+          type_material_select = new_task_popup.querySelector('#id_task_type_material')
+          type_material_select.innerHTML = ""
+          for (const key in data.data) {
+            console.log(data.data)
+            if (Object.prototype.hasOwnProperty.call(data.data, key)) {
+              const element = data.data[key];
+              new_option = document.createElement('option')
+              new_option.innerHTML = element
+              new_option.value = key
+              type_material_select.append(new_option)
+            }
+          }
+          
+      } else {
+          console.log(data);
+      }
+  })
+  .catch(error => {
+      console.error('Ошибка:', error);
+  });
+})
 
 
 //Запуск, приостановка, удаление задачи

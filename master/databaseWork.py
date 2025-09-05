@@ -10,10 +10,10 @@ class DatabaseWork:
     self.history_id = -1
     self.new_task_id = -1
     self.tz = pytz.timezone('UTC')
-    self.now = self.tz.localize(datetime.datetime.now()) + timedelta(hours=5) 
+    self.now = self.tz.localize(datetime.datetime.now())
   
   # Добавить новую задачу (мастер)  
-  def add_new_task_data(self, user_name):
+  def add_new_task_data(self, user_name, material, user):
     try:            
       new_task = Tasks.objects.create(
         task_name = self.data['task_name'],
@@ -25,100 +25,37 @@ class DatabaseWork:
         task_comments = self.data['task_comments'],
         task_status_id = 1,
         task_user_created = user_name,
-        task_history_id = self.history_id,
-        task_profile_length = self.data['task_profile_length']
+        task_profile_length = self.data['task_profile_length'],
+        task_profile_material = SteelType.objects.get(id=material),
         )
-      self.new_task_id = new_task.id
+      
+      new_task.history_event_messages.create(user=user, type_event=TypeEvent.objects.get(id=1), message=new_task.task_comments)
       return True
     except Exception as e:
+      print(e)
       return f'Ошибка создания новой задачи: {e}'
   
-  # Добавить новое значение в лог задачи
-  def add_new_history_data(self,user_name, user_position, comment):
-    # now = datetime.datetime.now()
-    try:
-      history_task = TaskHistory.objects.create(history_name={1:f"{self.now};Задача создана;{user_position} - {user_name}, комментарий: {comment}"})
-      self.history_id = history_task.id      
-      return True
-    except Exception as e:
-      return f'Ошибка создания истории: {e}'
-  
-  # Отправить задачу на выпонение рабочему (мастер) 
-  def push_to_workers(self, user_name, user_position):
-    # now = datetime.datetime.now()
+  def push_to_workers(self, user):
     task = Tasks.objects.get(id=self.data['id_task'])
-    history_task = TaskHistory.objects.get(id=task.task_history_id)    
-    new_event = history_task.history_name
-    max_key = max(new_event, key=new_event.get)
-    new_event[int(max_key) + 1] = f'{self.now};Отправлена рабочему;{user_position} - {user_name}'
-    history_check = [False, '']
-    try:
-      history_task.history_name = new_event
-      history_task.save(update_fields=['history_name'])
-      history_check = [True, '']            
-    except Exception as e:
-      history_check = [False, f'Ошибка изменения истории: {e}']    
+    task.history_event_messages.create(user=user, type_event=TypeEvent.objects.get(id=2), message=f"Задача отправлена на '{task.task_workplace.workplace_name}' для выполнения")
+    task.task_status_id = 4
+    task.save(update_fields=['task_status_id'])
     
-    if history_check[0] ==  True:      
-      try:
-        task.task_status_id = 4
-        task.save(update_fields=['task_status_id'])
-        return  True
-      except Exception as e:
-        return f'Ошибка изменения статуса задачи: {e}'
-    else:
-      return history_check[1]
-  
-  # Приостановить выполнение задачи (мастер, рабочий)
-  def paused_task(self, user_name, user_position, id_task):
-    # now = datetime.datetime.now()
-    print(id_task)
+  def paused_task(self, id_task, user):
     task = Tasks.objects.get(id=id_task) 
-    profile_amount = task.profile_amount_now          
-    profile_index = 0
-    my_str = task.worker_accepted_task
-    arr_str = my_str.split(', ')
-    worker_now = ''
-    for value in arr_str:      
-      start_i = value.find('(')
-      end_i = value.find(')')
-      try:
-        int_data = int(value[start_i + 1:end_i])
-        profile_index = profile_index + int_data           
-      except Exception as e:
-        int_data = int(profile_amount) - int(profile_index)        
-        worker_now = task.worker_accepted_task + f'({int_data} - {self.now})'
-        
-    history_task = TaskHistory.objects.get(id=task.task_history_id)
-    new_event = history_task.history_name
-    max_key = max(new_event, key=new_event.get)
-    new_event[int(max_key) + 1] = f"{self.now};Задача приостановлена;{user_position} - {user_name}, категория проблемы: {self.data['problem_type']}, комментарий: {self.data['problem_comments']}"
-    history_check = [False, '']
+    task.history_event_messages.create(user=user, type_event=TypeEvent.objects.get(id=5), message=f"Выполнение задачи приостановлено. Категория проблемы: {self.data['problem_type']}, комментарий: {self.data['problem_comments']}")        
     try:
-      history_task.history_name = new_event
-      history_task.save(update_fields=['history_name'])
-      history_check = [True, '']            
+      task.task_status_id = 6
+      task.save(update_fields=['task_status_id'])
+      return  True
     except Exception as e:
-      history_check = [False, f'Ошибка изменения истории: {e}']    
-    
-    if history_check[0] ==  True:      
-      try:
-        task.worker_accepted_task = worker_now
-        task.task_status_id = 6
-        task.save(update_fields=['task_status_id', 'worker_accepted_task'])
-        return  True
-      except Exception as e:
-        return f'Ошибка изменения статуса задачи: {e}'
-    else:
-      return history_check[1]
+      return f'Ошибка изменения статуса задачи: {e}'
   
   # Удалить задачу (мастер) 
   def delete_task(self):
     try:
       task = Tasks.objects.get(id=self.data['id_task'])
-      history_task = TaskHistory.objects.get(id=task.task_history_id)
       task.delete()
-      history_task.delete()
     except Exception as e:
        return f'Ошибка удаления задачи: {e}'
   
@@ -128,107 +65,52 @@ class DatabaseWork:
       task = Tasks.objects.get(id=self.data['id_task'])     
       return task
     except Exception as e:
-      return f'Ошибка удаления задачи: {e}'
+      return f'Ошибка получения данных по задаче: {e}'
   
   # Изменить задачу (Мастер)
-  def edit_data_from_task(self, user_name, user_position, id_task):
-    # now = datetime.datetime.now()  
+  def edit_data_from_task(self, id_task, user): 
     task = Tasks.objects.get(id=id_task)
-    history_task = TaskHistory.objects.get(id=task.task_history_id)
-    new_event = history_task.history_name
-    max_key = max(new_event, key=new_event.get)
-    new_event[int(max_key) + 1] = f'{self.now};Задача отредактирована;{user_position} - {user_name}'
-    history_check = [False, '']
+    task.history_event_messages.create(user=user, type_event=TypeEvent.objects.get(id=9), message=f"Задача изменена пользователем {user.last_name} {user.first_name}")
     try:
-      history_task.history_name = new_event
-      history_task.save(update_fields=['history_name'])
-      history_check = [True, '']            
+      number = Tasks.objects.filter(id=id_task).update(
+      task_name = self.data['task_name'],
+      task_timedate_start = self.data['task_timedate_start'],
+      task_timedate_end = self.data['task_timedate_end'],
+      task_profile_type_id = self.data['task_profile_type'].id,
+      task_workplace_id = self.data['task_workplace'].id,
+      task_profile_amount = self.data['task_profile_amount'],
+      task_comments = self.data['task_comments'],
+      task_timedate_start_fact = None     
+    )
+      return  True
     except Exception as e:
-      history_check = [False, f'Ошибка изменения истории: {e}']
-    
-    if history_check[0] ==  True:      
-      try:
-        number = Tasks.objects.filter(id=id_task).update(
-        task_name = self.data['task_name'],
-        task_timedate_start = self.data['task_timedate_start'],
-        task_timedate_end = self.data['task_timedate_end'],
-        task_profile_type_id = self.data['task_profile_type'].id,
-        task_workplace_id = self.data['task_workplace'].id,
-        task_profile_amount = self.data['task_profile_amount'],
-        task_comments = self.data['task_comments'],
-        task_timedate_start_fact = None     
-      )
-        # number - количество обновленных строк
-        return  True
-      except Exception as e:
-        return f'Ошибка изменения статуса задачи: {e}'
-    else:
-      return history_check[1]
+      return f'Ошибка изменения статуса задачи: {e}'
   
   # Старт выполнения работы рабочим  
-  def start_working(self, id_task, user_name, user_position):
-    # Получаем запись задачи, ее истории
-    # now = datetime.datetime.now()  
+  def start_working(self, id_task, user):
     task = Tasks.objects.get(id=id_task)
-    history_task = TaskHistory.objects.get(id=task.task_history_id)
-    # генерируем новою запись в истории
-    new_event = history_task.history_name
-    max_key = max(new_event, key=new_event.get)
-    new_event[int(max_key) + 1] = f'{self.now};Старт выполнения задачи;{user_position} - {user_name}, фактическое время начала - {self.now}'
-    history_check = [False, '']
-    # пробуем переписать историю
+    task.history_event_messages.create(user=user, type_event=TypeEvent.objects.get(id=3),
+                                       message=f"Задача принята рабочим {user.last_name} {user.first_name}. Старт изготовления продукции.")
     try:
-      history_task.history_name = new_event
-      history_task.save(update_fields=['history_name'])
-      history_check = [True, '']            
+      number = Tasks.objects.filter(id=id_task).update(        
+      task_timedate_start_fact = self.now,
+      task_status_id = 3,     
+    )
+      return  True
     except Exception as e:
-      history_check = [False, f'Ошибка изменения истории: {e}']
-    #  пробуем изменить статус и фактическое время начала задачи     
-    if history_check[0] ==  True:
-      worker_now = task.worker_accepted_task
-      if len(worker_now) > 0:
-          worker_now = worker_now + ', ' + user_name
-      else:
-          worker_now = user_name
-      try:
-        number = Tasks.objects.filter(id=id_task).update(        
-        task_timedate_start_fact = self.now,
-        task_status_id = 3,
-        worker_accepted_task = worker_now     
-      )
-        # number - количество обновленных строк
-        return  True
-      except Exception as e:
-        return f'Ошибка изменения статуса задачи: {e}'
-    else:
-      return history_check[1] 
+      return f'Ошибка изменения статуса задачи: {e}'
     
   # Отмена выполнения работы рабочим  
-  def deny_task(self, user_name, user_position, id_task):
-    # now = datetime.datetime.now()
+  def deny_task(self, id_task, user):
     task = Tasks.objects.get(id=id_task)
-    history_task = TaskHistory.objects.get(id=task.task_history_id)
-    new_event = history_task.history_name
-    max_key = max(new_event, key=new_event.get)
-    new_event[int(max_key) + 1] = f"{self.now};Выполнение задачи невозможно;{user_position} - {user_name}, категория проблемы: {self.data['problem_type']}, комментарий: {self.data['problem_comments']}"
-    history_check = [False, '']
+    task.history_event_messages.create(user=user, type_event=TypeEvent.objects.get(id=4),
+                                       message=f"Задача отклонена рабочим {user.last_name} {user.first_name}. Категория проблемы: {self.data['problem_type']} Сообщение от рабочего: {self.data['problem_comments']}")      
     try:
-      history_task.history_name = new_event
-      history_task.save(update_fields=['history_name'])
-      history_check = [True, '']            
+      task.task_status_id = 5
+      task.save(update_fields=['task_status_id'])
+      return  True
     except Exception as e:
-      history_check = [False, f'Ошибка изменения истории: {e}']    
-    
-    if history_check[0] ==  True:      
-      try:
-        task.task_status_id = 5
-        task.worker_accepted_task = ''
-        task.save(update_fields=['task_status_id'])
-        return  True
-      except Exception as e:
-        return f'Ошибка изменения статуса задачи: {e}'
-    else:
-      return history_check[1]
+      return f'Ошибка изменения статуса задачи: {e}'
     
   # Скрыть задачу (мастер)
   def hide_task(self):
@@ -241,78 +123,30 @@ class DatabaseWork:
         return f'Ошибка изменения статуса задачи: {e}'
       
   # Завершение задачи
-  def complete_task(self, id_task, user_name, user_position):
-    # now = datetime.datetime.now()
+  def complete_task(self, id_task, user):
     task = Tasks.objects.get(id=id_task)
-    history_task = TaskHistory.objects.get(id=task.task_history_id)
-    new_event = history_task.history_name
-    max_key = max(new_event, key=new_event.get)
-    new_event[int(max_key) + 1] = f"{self.now};Задача № {id_task} выполнена;{user_position} - {user_name}, фактическое время выполнения - {self.now}"
-    history_check = [False, '']
+    task.history_event_messages.create(user=user, type_event=TypeEvent.objects.get(id=8),
+                                       message=f"Рабочий {user.last_name} {user.first_name}' закончил изготовление. Фактически изготовлено: {task.profile_amount_now} ед.")     
     try:
-      history_task.history_name = new_event
-      history_task.save(update_fields=['history_name'])
-      history_check = [True, '']            
+      task.task_status_id = 2
+      task.task_timedate_end_fact = self.now
+      task.save(update_fields=['task_status_id', 'task_timedate_end_fact']) #'worker_accepted_task'
+      return  True
     except Exception as e:
-      history_check = [False, f'Ошибка изменения истории: {e}']    
-    
-    if history_check[0] ==  True:      
-      try:
-         # Кашапов Салават(55), Кашапов Салават(0), Кашапов Салават(55), Кашапов Салават(351)
-        total_profile_amout = task.profile_amount_now
-        profile_index = 0
-        my_str = task.worker_accepted_task
-        arr_str = my_str.split(', ')
-        worker_now = ''
-        for value in arr_str:
-          start_i = value.find('(')
-          end_i = value.find(')')
-          try:            
-            int_data = value[start_i + 1:end_i]
-            int_data = int(int_data.split(' - ')[0])
-            profile_index = profile_index + int_data                      
-          except Exception as e:
-            int_data = total_profile_amout - profile_index
-            worker_now = task.worker_accepted_task + f'({int_data} - {self.now})'
-            # print(f'{value[0:start_i]} изготовил {int_data} ед. профиля')
-          
-        task.worker_accepted_task = worker_now
-        task.task_status_id = 2
-        task.task_timedate_end_fact = self.now
-        task.save(update_fields=['task_status_id', 'task_timedate_end_fact', 'worker_accepted_task'])
-        return  True
-      except Exception as e:
-        return f'Ошибка завершения задачи: {e}'
-      
-    else:
-      return history_check[1]
+      return f'Ошибка завершения задачи: {e}'
     
   # Старт переналадки
-  def start_settingUp(self, id_task, user_name):
-    # now = datetime.datetime.now()
+  def start_settingUp(self, id_task, user):
     task = Tasks.objects.get(id=id_task)
-    history_task = TaskHistory.objects.get(id=task.task_history_id)
-    new_event = history_task.history_name
-    max_key = max(new_event, key=new_event.get)
-    new_event[int(max_key) + 1] = f"{self.now};Задача № {id_task};{user_name}, Старт наладки оборудования"
-    history_check = [False, '']
+    task.history_event_messages.create(user=user, type_event=TypeEvent.objects.get(id=6),
+                                       message=f"Рабочий {user.last_name} {user.first_name}' приступил к выполнению пусконалодчных работ.")    
     try:
-      history_task.history_name = new_event
-      history_task.save(update_fields=['history_name'])
-      history_check = [True, '']            
+      task.task_status_id = 7
+      task.task_time_settingUp = self.now
+      task.save(update_fields=['task_status_id', 'task_time_settingUp'])
+      return  f'Задача № {id_task}. Старт переналадки'
     except Exception as e:
-      history_check = [False, f'Ошибка изменения истории: {e}']    
-    
-    if history_check[0] ==  True:      
-      try:
-        task.task_status_id = 7
-        task.task_time_settingUp = self.now
-        task.save(update_fields=['task_status_id', 'task_time_settingUp'])
-        return  f'Задача № {id_task}. Старт переналадки'
-      except Exception as e:
-        return f'Ошибка изменения статуса задачи: {e}'
-    else:
-      return history_check[1]
+      return f'Ошибка изменения статуса задачи: {e}'
     
   # Изменяем данные для пользовательской аналитики   
   def add_data_to_user_analytics(self, user_id, id_task): 
@@ -412,51 +246,35 @@ class DatabaseWork:
                                      work_time ={string_date_key:new_task_woktime})   
  
   # Изменение профиля
-  def change_profile_amount(self, id_task, value):
+  def change_profile_amount(self, id_task, value, user):
     task = Tasks.objects.get(id=id_task)
     try:
-      task.profile_amount_now = int(value)      
-      task.save(update_fields=['profile_amount_now'])
+      last_row_records = task.history_profile_records.latest()
+    except Exception as e:
+      last_row_records= None  
+    try:
+      if last_row_records:
+        diff = int(value) - last_row_records.profile_sum
+        task.history_profile_records.create(user=user, amount=diff, profile_sum=int(value))
+      else:
+        task.history_profile_records.create(user=user, amount=int(value), profile_sum=int(value))  
+      task.profile_amount_now = int(value)
+      task.last_update = self.now  
+      task.save(update_fields=['profile_amount_now', 'last_update'])
       return True
     except Exception as e:
       print(f'Ошибка изменения текущего количества профиля в задаче: {e}') 
       return False 
  
  # Пересменка
-  def shiftChange(self, id_task, profile_amount):
+  def shiftChange(self, id_task, user):
     task = Tasks.objects.get(id= id_task)       
-    profile_index = 0
-    my_str = task.worker_accepted_task
-    arr_str = my_str.split(', ')
-    worker_now = ''
-    for value in arr_str:      
-      start_i = value.find('(')
-      end_i = value.find(')')
-      try:
-        int_data = value[start_i + 1:end_i]
-        int_data = int(int_data.split(' - ')[0])
-        profile_index = profile_index + int_data           
-      except Exception as e:
-        int_data = int(profile_amount) - int(profile_index)        
-        worker_now = task.worker_accepted_task + f'({int_data} - {self.now})'        
-    history_task = TaskHistory.objects.get(id=task.task_history_id)
-    new_event = history_task.history_name
-    max_key = max(new_event, key=new_event.get)
-    new_event[int(max_key) + 1] = f"{self.now};Для задачи № {id_task} выполняется пересменка; Фактическое время приостановки - {self.now}"
-    history_check = [False, '']
+    task.history_event_messages.create(user=user, type_event=TypeEvent.objects.get(id=7),
+                                       message=f"Рабочий {user.last_name} {user.first_name} приступил к пересменке. Текущее количество изготовленной продукции: {task.profile_amount_now} ед.")
     try:
-      history_task.history_name = new_event
-      history_task.save(update_fields=['history_name'])
-      history_check = [True, '']            
+      task.task_status_id = 8
+      task.save(update_fields=['task_status_id'])
+      return True
     except Exception as e:
-      history_check = [False, f'Ошибка изменения истории: {e}']    
-    
-    if history_check[0] ==  True:      
-      try:
-        task.worker_accepted_task = worker_now
-        task.task_status_id = 8
-        task.save(update_fields=['worker_accepted_task', 'task_status_id'])
-        return True
-      except Exception as e:
-        print(f'Ошибка при выполнении пересменки: {e}') 
-        return False
+      print(f'Ошибка при выполнении пересменки: {e}') 
+      return False

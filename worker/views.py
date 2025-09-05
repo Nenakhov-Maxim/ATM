@@ -51,7 +51,7 @@ def start_working(request):
     user_name = f'{request.user.last_name} {request.user.first_name}'
     user_position = request.user.position_id_id
     data_task = DatabaseWork({'id_task':id_task})
-    result = data_task.start_working(id_task, user_name, user_position)
+    result = data_task.start_working(id_task, request.user)
     
     return HttpResponse(result)
   
@@ -90,10 +90,8 @@ def pause_task(request):
     adr_lib = {'192.168.211.10': 1, '192.168.211.11': 2, '192.168.211.12': 3, '192.168.211.13': 4, '192.168.211.14': 5, '192.168.211.15': 6}
     new_paused_form = PauseTaskForm(request.POST)
     if new_paused_form.is_valid():
-      user_name = f'{request.user.last_name} {request.user.first_name}'
-      user_position =f'{request.user.position_id_id}'
       new_data_file = DatabaseWork(new_paused_form.cleaned_data)        
-      new_task_file = new_data_file.paused_task(user_name, user_position, new_paused_form.cleaned_data['task_id']) 
+      new_task_file = new_data_file.paused_task(new_paused_form.cleaned_data['task_id'], request.user) 
       if  new_task_file == True:
         if new_paused_form.cleaned_data['problem_type'].id == 1:
           if request.META['REMOTE_ADDR'] in adr_lib.keys():
@@ -119,10 +117,8 @@ def deny_task(request):
     adr_lib = {'192.168.211.10': 1, '192.168.211.11': 2, '192.168.211.12': 3, '192.168.211.13': 4, '192.168.211.14': 5, '192.168.211.15': 6}    
     new_deny_form = DenyTaskForm(request.POST)    
     if new_deny_form.is_valid():      
-      user_name = f'{request.user.last_name} {request.user.first_name}'
-      user_position =f'{request.user.position_id_id}'
       new_data_file = DatabaseWork(new_deny_form.cleaned_data)         
-      new_task_file = new_data_file.deny_task(user_name, user_position, new_deny_form.cleaned_data['task_id'])        
+      new_task_file = new_data_file.deny_task(new_deny_form.cleaned_data['task_id'], request.user)        
       if  new_task_file == True:
         if new_deny_form.cleaned_data['problem_type'].id == 1:
           if request.META['REMOTE_ADDR'] in adr_lib.keys():
@@ -130,7 +126,10 @@ def deny_task(request):
           else:
             area_id = 99
           comment = new_deny_form.cleaned_data['problem_comments']  
-          TelegramBot().send_text(f'На линии {area_id} произошла неисправность.  Комментарий рабочего: "{comment}"')
+          try:
+            TelegramBot().send_text(f'На линии {area_id} произошла неисправность.  Комментарий рабочего: "{comment}"')
+          except Exception as e:
+            print(e)
         return redirect('/worker', permanent=True)
       else:        
         return HttpResponse(f'Ошибка: {new_task_file}')
@@ -147,22 +146,19 @@ def complete_task(request):
   if request.method == 'GET':    
     # Получаем id задачи
     id_task = request.GET.get('id_task')
-    user_name = f'{request.user.last_name} {request.user.first_name}'
-    user_position = request.user.position_id_id
     id_user = request.user.id
     data_task = DatabaseWork({'id_task':id_task})
-    result = data_task.complete_task(id_task, user_name, user_position)
+    result = data_task.complete_task(id_task, request.user)
     data_task.add_data_to_user_analytics(int(id_user), int(id_task))
-    return HttpResponse('') #result
+    return HttpResponse('')
   
 # Старт наладки/переналадки
 @login_required
 @permission_required(perm='worker.change_workertypeproblem', raise_exception=True)
 def start_settingUp(request):
   id_task = request.GET.get('id_task')
-  user_name = f'{request.user.last_name} {request.user.first_name}'  
   data_task = DatabaseWork({'id_task':id_task})
-  result = data_task.start_settingUp(id_task, user_name)  
+  result = data_task.start_settingUp(id_task, request.user)  
   return JsonResponse({'answer':result})
 
 # Изменение текущего количества профиля в БД
@@ -172,21 +168,22 @@ def edit_profile_amount(request):
   task_id = request.GET.get('id_task')
   value = request.GET.get('value')
   data_task = DatabaseWork({'id_task':task_id})
-  result = data_task.change_profile_amount(task_id, value)
+  result = data_task.change_profile_amount(task_id, value, request.user)
   if result:
     return JsonResponse({'answer':'ОК'})
   else:
     return JsonResponse({'answer':'Error'})
   
+  # Пересменка 
 @login_required
 @permission_required(perm='worker.change_workertypeproblem', raise_exception=True)
 def shiftChange(request):  
   task_id = request.GET.get('id_task')
-  profile_amount = request.GET.get('profile_amount')
   data_task = DatabaseWork({'id_task':task_id})
-  result = data_task.shiftChange(task_id, profile_amount)
+  result = data_task.shiftChange(task_id, request.user)
   return JsonResponse({'answer':'ОК'})
 
+# Списание штрипса
 @csrf_exempt
 @require_http_methods(["POST"])
 def shtripsOffs(request):

@@ -68,6 +68,18 @@
   color: #C21500;
 }
 
+.task-information__right-side__shtrips-type {
+  display: flex;
+  flex-wrap: nowrap;
+  flex-direction: column;
+  text-align: center;
+}
+
+.right-side__shtrips-type__value {
+  font-size: 24px;
+  color: #C21500;
+}
+
 .task-information__right-side__current-quantity {
   display: flex;
   flex-wrap: nowrap;
