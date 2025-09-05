@@ -148,11 +148,7 @@ function update_chart(block, data_values) {
       if (Object.prototype.hasOwnProperty.call(data_values.answer, key)) {
         const time_rework= data_values.answer[key];
         labels.push(key)
-        let sum_perfomance = 0        
-        time_rework.forEach(element => {
-          sum_perfomance += element
-        });
-        date_value.push(sum_perfomance / time_rework.length)
+        date_value.push(time_rework)
       }
     }
     label = 'Среднее время переналадки/наладки'
@@ -163,19 +159,15 @@ function update_chart(block, data_values) {
     labels = []
     date_value = []
     for (const key in data_values.answer) {
+      // console.log('start')
+      // console.log(data_values.answer)
       if (Object.prototype.hasOwnProperty.call(data_values.answer, key)) {
-        const coef_array= data_values.answer[key];
+        const coef= data_values.answer[key];
         labels.push(key)
-        let sum_perfomance = 0        
-        coef_array.forEach(element => {
-          sum_perfomance += element
-        });
-        date_value.push(sum_perfomance / coef_array.length)
+        date_value.push(coef)
         
       }            
     }
-    console.log(labels)
-    console.log(date_value)
     label = 'Коэффициент работы'
     type_chart = 'bar'
     indexAxis_value = 'x'
@@ -187,11 +179,7 @@ function update_chart(block, data_values) {
       if (Object.prototype.hasOwnProperty.call(data_values.answer, key)) {
         const profile_amount= data_values.answer[key];
         labels.push(key)
-        let sum_perfomance = 0        
-        profile_amount.forEach(element => {
-          sum_perfomance += element
-        });
-        date_value.push(sum_perfomance)
+        date_value.push(profile_amount)
       }
     }
     label = 'Изготовлено профиля'
@@ -205,11 +193,7 @@ function update_chart(block, data_values) {
       if (Object.prototype.hasOwnProperty.call(data_values.answer, key)) {
         const effect= data_values.answer[key];
         labels.push(key)
-        let sum_perfomance = 0        
-        effect.forEach(element => {
-          sum_perfomance += element
-        });
-        date_value.push(sum_perfomance / effect.length)
+        date_value.push(effect)
         
       }            
     }

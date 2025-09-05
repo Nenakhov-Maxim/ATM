@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
-from master.models import Tasks, Workplace
+from master.models import Tasks
+from login.models import Workplace
 from login.models import User
 from django.contrib.auth.decorators import login_required, permission_required
 import datetime
@@ -21,7 +22,7 @@ def get_home_page(request):
     line_number = task.task_workplace_id    
     if line_number in work_task_lib.keys():
       old_value = work_task_lib[line_number]
-      new_str = f'Здание №{task.id}, профиль "{task.task_profile_type}", требуется: {task.task_profile_amount} шт., текущее количество: {task.profile_amount_now} шт. ({task.task_status})'
+      new_str = f'Задание №{task.id}, профиль "{task.task_profile_type}", требуется: {task.task_profile_amount} шт., текущее количество: {task.profile_amount_now} шт. ({task.task_status})'
       
       old_value.append(new_str) 
       work_task_lib[line_number] = old_value
@@ -29,7 +30,7 @@ def get_home_page(request):
       if task.task_status_id == 3:
         koef_success = round(task.profile_amount_now / task.task_profile_amount * 100, 2)
         koef_success_lib[line_number] = koef_success
-      new_str = f'Здание №{task.id}, профиль "{task.task_profile_type}", требуется: {task.task_profile_amount} шт., текущее количество: {task.profile_amount_now} шт. ({task.task_status})'
+      new_str = f'Задание №{task.id}, профиль "{task.task_profile_type}", требуется: {task.task_profile_amount} шт., текущее количество: {task.profile_amount_now} шт. ({task.task_status})'
       work_task_lib[line_number] = [new_str]
   
   for task in tasks_in_flow:
@@ -37,11 +38,11 @@ def get_home_page(request):
     line_number = task.task_workplace_id
     if line_number in flow_task_lib.keys():
       old_value = flow_task_lib[line_number]
-      new_str = f'Здание №{task.id}, профиль "{task.task_profile_type}", требуется: {task.task_profile_amount} шт., текущее количество: {task.profile_amount_now} шт.'
+      new_str = f'Задание №{task.id}, профиль "{task.task_profile_type}", требуется: {task.task_profile_amount} шт., текущее количество: {task.profile_amount_now} шт.'
       old_value.append(new_str) 
       flow_task_lib[line_number] = old_value
     else:
-      new_str = f'Здание №{task.id}, профиль "{task.task_profile_type}", требуется: {task.task_profile_amount} шт., текущее количество: {task.profile_amount_now} шт.'
+      new_str = f'Задание №{task.id}, профиль "{task.task_profile_type}", требуется: {task.task_profile_amount} шт., текущее количество: {task.profile_amount_now} шт.'
       flow_task_lib[line_number] = [new_str]
 
   return render(request, 'analitycs.html', {'work_task_lib': work_task_lib, 'flow_task_lib': flow_task_lib, 'koef_success_lib': koef_success_lib})
@@ -84,30 +85,14 @@ def update_current_profile(param):
     data = {}    
     tasks_in_work = Tasks.objects.all().filter(task_status_id__in=[3]).order_by('task_status_id')
     for task in tasks_in_work:
-      profile_amount = task.profile_amount_now
-      workers = task.worker_accepted_task
-      names_worker_list = workers.split(', ')
-      
-      for worker in names_worker_list:          
-        start_i = worker.find('(')
-        end_i = worker.find(')')      
-        try:
-          int_data = worker[start_i + 1:end_i]
-          amount = int(int_data.split(' - ')[0])
-          worker_name = worker[0:start_i]
-          if worker_name in data.keys():
-            old_value = data[worker_name]
-            data[worker_name] = old_value + amount
-          else:
-            data[worker_name] = amount
-        except Exception as e:
-          worker_name = worker
-          amount = profile_amount
-          if worker_name in data.keys():
-            old_value = data[worker_name]
-            data[worker_name] = old_value + amount
-          else:
-            data[worker_name] = amount      
+      profile_making_list = task.history_profile_records.all()
+      for record in profile_making_list:
+        user_key = f'{record.user.last_name} {record.user.first_name}'
+        if user_key in data.keys():
+          old_value = data[user_key]
+          data[user_key] = old_value + record.amount
+        else:
+          data[user_key] = record.amount       
   if param == 3:
     data = {}    
     tasks_in_work = Tasks.objects.all().filter(task_status_id__in=[3]).order_by('task_status_id')
@@ -125,8 +110,7 @@ def update_current_profile(param):
     tasks_in_work = Tasks.objects.all().filter(task_status_id__in=[3]).order_by('task_status_id')
     for task in tasks_in_work:
       profile_amount = task.profile_amount_now
-      profile_type = task.task_profile_type 
-      print(profile_type)       
+      profile_type = task.task_profile_type       
       if profile_type in data.keys():
         old_value = data[profile_type]
         data[profile_type] = old_value + profile_amount
@@ -161,7 +145,7 @@ def update_current_performance():
 #Обновление графика переналадки оборудования
 def update_setup_speed(param):  
   data = {}
-  date_end = datetime.datetime.now() + datetime.timedelta(days=1) 
+  date_end = datetime.datetime.now().date() + datetime.timedelta(days=1) 
   if param == 1:
     date_start = date_end - datetime.timedelta(days=1)
   elif param == 2:
@@ -173,41 +157,29 @@ def update_setup_speed(param):
   elif param == 5:
     date_start = date_end - datetime.timedelta(weeks=48)
   else: 
-    date_start = date_end - datetime.timedelta(weeks=4800)       
+    date_start = date_end - datetime.timedelta(weeks=4800)    
   tasks_in_work = Tasks.objects.all().filter(task_time_settingUp__isnull = False) & Tasks.objects.all().filter(task_time_settingUp__range = [date_start, date_end])
-  workers_summary = User.objects.all().filter(position_id_id = 2)
-  
-  for worker in workers_summary:    
-    if worker.position_id_id == 2:
-      worker_name = f'{worker.last_name} {worker.first_name}'
-      data[worker_name] = []
   
   for task in tasks_in_work:
-    date_start_sup = task.task_timedate_start_fact
-    if date_start_sup ==  None:
-      date_start_sup = datetime.datetime.now()  
-    date_end_sup = task.task_time_settingUp          
-    time_to_work = date_start_sup.replace(tzinfo=None) - date_end_sup.replace(tzinfo=None)  
-    tasks_in_work_day = time_to_work.days   
-    tasks_in_work_min = round((time_to_work.seconds / 60) + (tasks_in_work_day * 24 * 60), 2)   
-    name_how_accept_task = (task.worker_accepted_task.split(', ')[0]).split('(')[0]
-    if name_how_accept_task in data.keys():
-      old_value = data[name_how_accept_task]
-      old_value.append(tasks_in_work_min)
-      data[name_how_accept_task] = old_value
-    else:
-      if 'Неизвестный пользователь' in data.keys():
-        old_value = data['Неизвестный пользователь']
-        old_value.append(tasks_in_work_min)
-        data['Неизвестный пользователь'] = old_value
+    profile_making_list = task.history_profile_records.first()
+    if profile_making_list != None:
+      timedate_start_fact = task.task_timedate_start_fact
+      timedate_setting_up = task.task_time_settingUp
+      user_making_setting_up = f'{profile_making_list.user.last_name} {profile_making_list.user.first_name}'
+      seconds_in_day = 24 * 60 * 60
+      dif_timedate_minute = round((timedate_setting_up - timedate_start_fact).seconds / 60, 2)
+      
+      if user_making_setting_up in data.keys():
+        old_value = data[user_making_setting_up]
+        data[user_making_setting_up] = (old_value + dif_timedate_minute) / 2
       else:
-        data['Неизвестный пользователь'] = [tasks_in_work_min]         
+        data[user_making_setting_up] = dif_timedate_minute
   return data
 
 #Обновление графика количества изготовленного профиля
 def update_profile_amount(param):
   data = {}
-  date_end = datetime.datetime.now() + datetime.timedelta(days=1)   
+  date_end = datetime.datetime.now().date() + datetime.timedelta(days=1)   
   if param == 1:
     date_start = date_end - datetime.timedelta(days=1)
   elif param == 2:
@@ -222,47 +194,21 @@ def update_profile_amount(param):
     date_start = date_end - datetime.timedelta(weeks=4800) 
         
   tasks_in_work = Tasks.objects.all().filter(task_timedate_end_fact__isnull = False) & Tasks.objects.all().filter(task_timedate_end_fact__range = [date_start, date_end])
-  workers_summary = User.objects.all().filter(position_id_id = 2)
   
-  for worker in workers_summary:    
-    if worker.position_id_id == 2:
-      worker_name = f'{worker.last_name} {worker.first_name}'
-      data[worker_name] = []
-  
-  for task in tasks_in_work:    
-    array_workers_sum_inf = task.worker_accepted_task.split(', ')    
-    for worker_sum_inf in array_workers_sum_inf:
-      if worker_sum_inf.find('(') != -1 & worker_sum_inf.find(')') != -1:
-        pos1 = worker_sum_inf.find('(')
-        pos2 = worker_sum_inf.find(')')
-        name_worker = worker_sum_inf[0:pos1]
-        amount_profile = int(worker_sum_inf[pos1 + 1:pos2].split(' - ')[0])        
-        if name_worker in data.keys():
-          old_value = data[name_worker]
-          old_value.append(amount_profile)
-          data[name_worker] = old_value
-        else:
-          data['Неизвестный пользователь'] = [amount_profile]
+  for task in tasks_in_work:
+    profile_making_list = task.history_profile_records.all()
+    for record in profile_making_list:
+      user_key = f'{record.user.last_name} {record.user.first_name}'
+      if user_key in data.keys():
+        old_value = data[user_key]
+        data[user_key] = old_value + record.amount
       else:
-        if worker_sum_inf != "":
-          if worker_sum_inf in data.keys():
-            old_value = data[worker_sum_inf]
-            old_value.append(task.profile_amount_now)
-            data[worker_sum_inf] = old_value
-          else:
-            data['Неизвестный пользователь'] = [int(task.profile_amount_now)]
-        else:
-          if 'Неизвестный пользователь' in data.keys():
-            old_value = data['Неизвестный пользователь']
-            old_value.append(task.profile_amount_now)
-            data['Неизвестный пользователь'] = old_value
-          else:
-            data['Неизвестный пользователь'] = [int(task.profile_amount_now)]    
+        data[user_key] = record.amount   
   return data
 
 def update_hours_worked(param):
   data = {}
-  date_end = datetime.datetime.now() + datetime.timedelta(days=1)  
+  date_end = datetime.datetime.now().date() + datetime.timedelta(days=1)  
   if param == 1:
     date_start = date_end - datetime.timedelta(days=1)
   elif param == 2:
@@ -276,79 +222,31 @@ def update_hours_worked(param):
   else: 
     date_start = date_end - datetime.timedelta(weeks=4800) 
         
-  tasks_in_work = Tasks.objects.all().filter(task_timedate_end_fact__isnull = False) & Tasks.objects.all().filter(task_timedate_end_fact__range = [date_start, date_end]) & Tasks.objects.all().filter(task_time_settingUp__isnull = False)
-  workers_summary = User.objects.all().filter(position_id_id = 2)
-  
-  for worker in workers_summary:    
-    if worker.position_id_id == 2:
-      worker_name = f'{worker.last_name} {worker.first_name}'
-      data[worker_name] = []
-  
+  tasks_in_work = Tasks.objects.all().filter(task_timedate_end_fact__isnull = False) & \
+                  Tasks.objects.all().filter(task_timedate_end_fact__range = [date_start, date_end]) & \
+                  Tasks.objects.all().filter(task_time_settingUp__isnull = False)
+
   for task in tasks_in_work:
-    array_workers_sum_inf = task.worker_accepted_task.split(', ')
-    i = 0 
-    time_start = task.task_timedate_start_fact       
-    for worker_sum_inf in array_workers_sum_inf:      
-      if worker_sum_inf.find('(') != -1 & worker_sum_inf.find(')') != -1:
-        pos1 = worker_sum_inf.find('(')
-        pos2 = worker_sum_inf.find(')')
-        name_worker = worker_sum_inf[0:pos1]
-        try:
-          time_to_end = worker_sum_inf[pos1 + 1:pos2].split(' - ')[1]
-          time_to_end = datetime.datetime.strptime(time_to_end, "%Y-%m-%d %H:%M:%S.%f%z")
-        except Exception as e:
-          time_to_end = task.task_timedate_end_fact      
-        
-                  
-        if time_to_end.replace(tzinfo=None) >= time_start.replace(tzinfo=None):
-          time_work = time_to_end.replace(tzinfo=None) - time_start.replace(tzinfo=None)
-          time_work_day = time_work.days
-          time_work_min = round((time_work.seconds / 60) + (time_work_day * 24 * 60), 2)
-        else:
-           time_work_min = 0    
-        if i == 0: 
-          time_to_reload = task.task_timedate_start_fact.replace(tzinfo=None) - task.task_time_settingUp.replace(tzinfo=None)  
-          time_to_reload_day = time_to_reload.days             
-          time_to_reload_min = round((time_to_reload.seconds / 60) + (time_to_reload_day * 24 * 60), 2)
-        else:
-          time_to_reload_min = 0        
-        if (time_work_min + time_to_reload_min) != 0: 
-          coef_work = round(((time_work_min + time_to_reload_min) - time_to_reload_min) / (time_work_min + time_to_reload_min), 2)               
-        else:
-          coef_work = 0.0
-        if name_worker in data.keys():
-          old_value = data[name_worker]
-          old_value.append(coef_work)
-          data[name_worker] = old_value
-        else:
-          data['Неизвестный пользователь'] = [coef_work]
-        time_start = time_to_end
+    profile_making_list = task.history_profile_records.first()
+    if profile_making_list != None:
+      timedate_start_fact = task.task_timedate_start_fact
+      timedate_setting_up = task.task_time_settingUp
+      user_making_setting_up = f'{profile_making_list.user.last_name} {profile_making_list.user.first_name}'
+      seconds_in_day = 24 * 60 * 60
+      dif_timedate_minute = round((timedate_setting_up - timedate_start_fact).seconds / 60, 2)
+      timedate_work_task = round((task.task_timedate_end_fact - task.task_timedate_start_fact).seconds / 60, 2)
+      coef = round((timedate_work_task - dif_timedate_minute) / timedate_work_task, 2)
+      if user_making_setting_up in data.keys():
+        old_value = data[user_making_setting_up]
+        data[user_making_setting_up] = (old_value + coef) / 2
       else:
-        if worker_sum_inf != "":
-          time_to_reload = task.task_timedate_start_fact.replace(tzinfo=None) - task.task_time_settingUp.replace(tzinfo=None)
-          time_to_work = datetime.datetime.now().replace(tzinfo=None) - task.task_timedate_start_fact.replace(tzinfo=None)
-          time_to_reload_day = time_to_reload.days
-          time_to_work_day =  time_to_work.days
-          time_to_reload_min = round((time_to_reload.seconds / 60) + (time_to_reload_day * 24 * 60), 2)
-          time_work_min = round((time_to_work.seconds / 60) + (time_to_work_day * 24 * 60), 2)
-          if (time_work_min + time_to_reload_min) != 0:
-            coef_work = round(((time_work_min + time_to_reload_min) - time_to_reload_min) / (time_work_min + time_to_reload_min), 2)
-          else:
-            coef_work = 0.0   
-          if worker_sum_inf in data.keys():
-            old_value = data[worker_sum_inf]
-            old_value.append(coef_work)
-            data[worker_sum_inf] = old_value
-          else:
-            data['Неизвестный пользователь'] = [coef_work] 
-      i += 1
-         
+        data[user_making_setting_up] = coef
   return data
 
 # Обновление графика эффективности  
 def update_effectiveness(param):
   data = {}
-  date_end = datetime.datetime.now() + datetime.timedelta(days=1)  
+  date_end = datetime.datetime.now().date() + datetime.timedelta(days=1)  
   if param == 1:
     date_start = date_end - datetime.timedelta(days=1)
   elif param == 2:
@@ -362,85 +260,23 @@ def update_effectiveness(param):
   else: 
     date_start = date_end - datetime.timedelta(weeks=4800) 
         
-  tasks_in_work = Tasks.objects.all().filter(task_timedate_end_fact__isnull = False) & Tasks.objects.all().filter(task_timedate_end_fact__range = [date_start, date_end])
-  workers_summary = User.objects.all().filter(position_id_id = 2)
-  for worker in workers_summary:    
-    if worker.position_id_id == 2:
-      worker_name = f'{worker.last_name} {worker.first_name}'
-      data[worker_name] = []
-  
+  tasks_in_work = Tasks.objects.all().filter(task_timedate_end_fact__isnull = False) & \
+                  Tasks.objects.all().filter(task_timedate_end_fact__range = [date_start, date_end])
+                
   for task in tasks_in_work:
-    array_workers_sum_inf = task.worker_accepted_task.split(', ')
-    i = 0 
-    time_start = task.task_timedate_start_fact       
-    for worker_sum_inf in array_workers_sum_inf:      
-      if worker_sum_inf.find('(') != -1 & worker_sum_inf.find(')') != -1:
-        pos1 = worker_sum_inf.find('(')
-        pos2 = worker_sum_inf.find(')')
-        name_worker = worker_sum_inf[0:pos1]
-        try:
-          time_to_end = worker_sum_inf[pos1 + 1:pos2].split(' - ')[1]
-          time_to_end = datetime.datetime.strptime(time_to_end, "%Y-%m-%d %H:%M:%S.%f%z")
-        except Exception as e:
-          time_to_end = task.task_timedate_end_fact
-        try:
-          profile_amount = int(worker_sum_inf[pos1 + 1:pos2].split(' - ')[0])          
-        except Exception as e:
-          profile_amount = task.profile_amount_now        
-        
-                  
-        if time_to_end.replace(tzinfo=None) >= time_start.replace(tzinfo=None):
-          time_work = time_to_end.replace(tzinfo=None) - time_start.replace(tzinfo=None)
-          time_work_day = time_work.days
-          time_work_min = round((time_work.seconds / 60) + (time_work_day * 24 * 60), 2)
+    timedate_start = task.task_timedate_start_fact
+    profile_making_list = task.history_profile_records.all()
+    for record in profile_making_list:
+      user = f'{record.user.last_name} {record.user.first_name}'
+      amount_profile = record.amount
+      timedate_end = record.created_at
+      time_to_work_hour = round((timedate_end - timedate_start).seconds / 60 / 60, 2)
+      if time_to_work_hour != 0 and amount_profile != 0:
+        effective = round(amount_profile / time_to_work_hour, 2)
+        if user in data.keys():
+          old_value = data[user]
+          data[user] = (old_value + effective) / 2
         else:
-           time_work_min = 0    
-        if i == 0: 
-          time_set_up = task.task_time_settingUp
-          if time_set_up != None:             
-            time_to_reload = task.task_timedate_start_fact.replace(tzinfo=None) - task.task_time_settingUp.replace(tzinfo=None)  
-            time_to_reload_day = time_to_reload.days             
-            time_to_reload_min = round((time_to_reload.seconds / 60) + (time_to_reload_day * 24 * 60), 2)
-          else:
-            time_to_reload_min = 0.00
-        else:
-          time_to_reload_min = 0.00     
-        if (time_work_min - time_to_reload_min) != 0: 
-          effect = round(profile_amount/(time_work_min - time_to_reload_min), 2)               
-        else:
-          effect = 0.00
-        if name_worker in data.keys():
-          old_value = data[name_worker]
-          old_value.append(effect)
-          data[name_worker] = old_value
-        else:
-          data['Неизвестный пользователь'] = [effect]
-        time_start = time_to_end
-      else:
-        if worker_sum_inf != '':
-          time_set_up = task.task_time_settingUp
-          if time_set_up != None:             
-            time_to_reload = task.task_timedate_start_fact.replace(tzinfo=None) - task.task_time_settingUp.replace(tzinfo=None)
-            time_to_reload_day = time_to_reload.days
-            time_to_reload_min = round((time_to_reload.seconds / 60) + (time_to_reload_day * 24 * 60), 2)
-          else:
-            time_to_reload_min = 0.00
-              
-          time_to_work = datetime.datetime.now().replace(tzinfo=None) - task.task_timedate_start_fact.replace(tzinfo=None)
-          time_to_work_day =  time_to_work.days
-          time_work_min = round((time_to_work.seconds / 60) + (time_to_work_day * 24 * 60), 2)
-          profile_amount = task.profile_amount_now
-          if (time_work_min - time_to_reload_min) != 0:
-            effect = round(profile_amount/(time_work_min - time_to_reload_min), 2)
-          else:
-            effect = 0.00   
-          if worker_sum_inf in data.keys():
-            old_value = data[worker_sum_inf]
-            old_value.append(effect)
-            data[worker_sum_inf] = old_value
-          else:
-            data['Неизвестный пользователь'] = [effect] 
-      i += 1
-  
-  print(data)
+          data[user] = effective 
+      timedate_start = timedate_end
   return data

@@ -213,7 +213,7 @@ def new_report(request):
               # Находим запись в таблице соответствий, указывающую на кг в погонном метре
               value_kg_m = SteelTypeProfile.objects.get(type_profile=type_profile, type_steel=material)
               # Вес профиля умножаем на длину остатка и добавляем в общую строку
-              value_to_add = value_kg_m.weight * shtrips.value
+              value_to_add = round(value_kg_m.weight * shtrips.value, 2)
               shtrips_list_str = shtrips_list_str + str(shtrips.value) + "(п.м.)" + str(value_to_add) + "(кг.)" + "; "
         
         # Дописываем какие штрипсы были списаны по задаче
