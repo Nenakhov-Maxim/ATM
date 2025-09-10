@@ -11,6 +11,27 @@ document.addEventListener('DOMContentLoaded', function() {
     let isScanning = false;
     let scanTimeout = null;
 
+    // Карта соответствия русских символов английским (QWERTY раскладка)
+    const ruToEnMap = {
+        'й': 'q', 'ц': 'w', 'у': 'e', 'к': 'r', 'е': 't', 'н': 'y', 'г': 'u', 'ш': 'i', 'щ': 'o', 'з': 'p',
+        'х': '[', 'ъ': ']', 'ф': 'a', 'ы': 's', 'в': 'd', 'а': 'f', 'п': 'g', 'р': 'h', 'о': 'j', 'л': 'k',
+        'д': 'l', 'ж': ';', 'э': "'", 'я': 'z', 'ч': 'x', 'с': 'c', 'м': 'v', 'и': 'b', 'т': 'n', 'ь': 'm',
+        'б': ',', 'ю': '.', '.': '/', 'Й': 'Q', 'Ц': 'W', 'У': 'E', 'К': 'R', 'Е': 'T', 'Н': 'Y', 'Г': 'U',
+        'Ш': 'I', 'Щ': 'O', 'З': 'P', 'Х': '{', 'Ъ': '}', 'Ф': 'A', 'Ы': 'S', 'В': 'D', 'А': 'F', 'П': 'G',
+        'Р': 'H', 'О': 'J', 'Л': 'K', 'Д': 'L', 'Ж': ':', 'Э': '"', 'Я': 'Z', 'Ч': 'X', 'С': 'C', 'М': 'V',
+        'И': 'B', 'Т': 'N', 'Ь': 'M', 'Б': '<', 'Ю': '>', ',': '?'
+    };
+
+    // Функция конвертации русского текста в английский
+    function convertRuToEn(text) {
+        return text.split('').map(char => ruToEnMap[char] || char).join('');
+    }
+
+    // Функция определения, содержит ли текст русские символы
+    function hasRussianChars(text) {
+        return /[а-яё]/i.test(text);
+    }
+
     // Открытие модального окна
     qrButton.addEventListener('click', function(e) {
         console.log('button__qr-code')
@@ -51,6 +72,16 @@ document.addEventListener('DOMContentLoaded', function() {
     manualQrInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             manualQrSubmit.click();
+        }
+    });
+
+    // Автоматическая конвертация в поле ручного ввода при вводе
+    manualQrInput.addEventListener('input', function(e) {
+        const value = e.target.value;
+        if (hasRussianChars(value)) {
+            const convertedValue = convertRuToEn(value);
+            e.target.value = convertedValue;
+            console.log('Ручной ввод конвертирован с русской раскладки:', value, '->', convertedValue);
         }
     });
 
@@ -144,6 +175,14 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Автоматическая конвертация русской раскладки в английскую
+        let processedQrCode = qrCode;
+        if (hasRussianChars(qrCode)) {
+            processedQrCode = convertRuToEn(qrCode);
+            updateStatus('Конвертация раскладки...', 'qr-loading');
+            console.log('QR-код конвертирован с русской раскладки:', qrCode, '->', processedQrCode);
+        }
+
         updateStatus('Проверка QR-кода...', 'qr-loading');
         
         // Отправка QR-кода на сервер
@@ -153,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                qr_code: qrCode
+                qr_code: processedQrCode
             })
         })
         .then(response => response.json())

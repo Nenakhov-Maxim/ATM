@@ -107,8 +107,8 @@ def new_task(request):
 
 # Получение списка материалов для поля "Материал" при создании заявки
 @csrf_exempt
-@login_required
-@permission_required(perm='master.change_task', raise_exception=True)
+# @login_required
+# @permission_required(perm='master.change_task', raise_exception=True)
 @require_http_methods(["POST"])
 def get_material(request):
   try:
