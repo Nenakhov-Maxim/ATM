@@ -111,8 +111,8 @@
               </div>
             </div>
             <div class="card-item__task-name">
-                <span class="card-item__title">Время начала: {{ el.task_timedate_start }}</span><br>
-                <span class="card-item__title">Время окончания: {{ el.task_timedate_end }}</span><br>
+                <span class="card-item__title">Время начала: {{ el.task_timedate_start | date_to_chel}}</span><br>
+                <span class="card-item__title">Время окончания: {{ el.task_timedate_end | date_to_chel}}</span><br>
                 <span class="card-item__title">Время на работу: {% dates_to_time el.task_timedate_start el.task_timedate_end %}</span><br>                
             </div>
             <div class="card-item__position-quantity">
@@ -123,7 +123,7 @@
               <div class="task-status-widget">              
                 <span class="task-status-widget__text task_added">{{el.task_status}}</span>
               </div>             
-              <span class="task-status__text">Дата начала: {{el.task_timedate_start}}</span>
+              <span class="task-status__text">Дата начала: {{el.task_timedate_start | date_to_chel}}</span>
             </div>
             {% elif el.task_status_id == 4 %}
             <div class="card-item__task-status">
@@ -137,7 +137,7 @@
               <div class="task-status-widget">              
                 <span class="task-status-widget__text working">{{el.task_status}}</span>
               </div>             
-              <span class="task-status__text">Старт выполнения <br> Факт. время начала: <br> {{el.task_timedate_start_fact}}</span>
+              <span class="task-status__text">Старт выполнения <br> Факт. время начала: <br> {{el.task_timedate_start_fact | date_to_chel}}</span>
             </div>
             {% elif el.task_status_id == 6 %}
             <div class="card-item__task-status">
@@ -158,14 +158,14 @@
               <div class="task-status-widget">              
                 <span class="task-status-widget__text well_done">{{el.task_status}}</span>
               </div>             
-              <span class="task-status__text">Выполнено. Фактическая дата выполнения: {{el.task_timedate_end_fact}}</span>
+              <span class="task-status__text">Выполнено. Фактическая дата выполнения: {{el.task_timedate_end_fact | date_to_chel}}</span>
             </div>
             {% elif el.task_status_id == 7 %}
             <div class="card-item__task-status">
               <div class="task-status-widget">              
                 <span class="task-status-widget__text settingUp">{{el.task_status}}</span>
               </div>             
-              <span class="task-status__text">Наладка оборудования. Старт: {{el.task_time_settingUp}}</span>
+              <span class="task-status__text">Наладка оборудования. Старт: {{el.task_time_settingUp | date_to_chel}}</span>
             </div>
             {% elif el.task_status_id == 8 %}
             <div class="card-item__task-status">
@@ -206,11 +206,11 @@
               <div class="worker-event-leftside">
                 <div class="event-leftside__task-information">
                   <div class="task-information__left-side">
-                    <span class="task-information__left-side__text" data-dateStart="{{ el.task_timedate_start|date:'c' }}">Время начала: не позднее {{ el.task_timedate_start }}</span>
+                    <span class="task-information__left-side__text" data-dateStart="{{ el.task_timedate_start|date:'c' }}">Время начала: не позднее {{ el.task_timedate_start | date_to_chel}}</span>
                     {% if el.task_timedate_start_fact %}
-                    <span class="task-information__left-side__text" data-dateStartFact="{{ el.task_timedate_start_fact|date:'c' }}">Фактическое время начала: {{ el.task_timedate_start_fact }}</span>
+                    <span class="task-information__left-side__text" data-dateStartFact="{{ el.task_timedate_start_fact|date:'c' }}">Фактическое время начала: {{ el.task_timedate_start_fact | date_to_chel}}</span>
                     {%endif%}
-                    <span class="task-information__left-side__text" data-dateEnd="{{ el.task_timedate_end|date:'c' }}">Закончить до: {{ el.task_timedate_end }}</span>
+                    <span class="task-information__left-side__text" data-dateEnd="{{ el.task_timedate_end|date:'c' }}">Закончить до: {{ el.task_timedate_end | date_to_chel}}</span>
                     <span class="task-information__left-side__text">План времени: <span>{% dates_to_time el.task_timedate_start el.task_timedate_end %}</span></span>
                     {% if el.task_timedate_start_fact %}
                     <span class="task-information__left-side__text">Осталось времени: <span>{% dates_to_time el.task_timedate_start_fact el.task_timedate_end %}</span></span>
