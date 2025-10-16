@@ -22,6 +22,7 @@ from django.urls import path, include
 import django
 from django.conf.urls import include
 from django.contrib import admin
+from app import views
 
 
 urlpatterns = [
@@ -29,5 +30,6 @@ urlpatterns = [
     path('', include('login.urls', namespace='users')),
     path('master/', include('master.urls'), name='master'),
     path('worker/', include('worker.urls'), name='worker'),
-    path('analytics/', include('analytics.urls'), name='analytics'),    
+    path('analytics/', include('analytics.urls'), name='analytics'),
+    path('api/arduino/', views.arduino_data, name="arduino_data"), 
 ]

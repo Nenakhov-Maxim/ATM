@@ -5,7 +5,7 @@ $(document).ready(function() {
   let name_line = document.querySelectorAll(".person-info__department")[1].dataset.line
   let tasks_list = document.querySelectorAll(".task-card-item")
   const socket_task = new WebSocket(`ws://192.168.211.1/ws/task-transfer/${name_line}`); //На сервере
-  //const socket_task = new WebSocket(`ws://127.0.0.1:8000/ws/task-transfer/${name_line}`); //На домашней машине
+  // const socket_task = new WebSocket(`ws://127.0.0.1:8000/ws/task-transfer/${name_line}`); //На домашней машине
 
   for (const key in tasks_list) {
     if (Object.prototype.hasOwnProperty.call(tasks_list, key)) {
@@ -15,6 +15,7 @@ $(document).ready(function() {
   }
 
   socket_task.onopen = function() {
+
     socket_task.send(JSON.stringify({message:"start", task_list:task_id_list}))
 
   socket_task.onmessage = function(event) {
@@ -28,6 +29,10 @@ $(document).ready(function() {
       if (data['content']['task_status_id']==5 || data['content']['task_status_id']==6) {
         document.querySelector(`.task-card-item[data-itemId="${data['content']['id']}"]`).remove()  
       }
+    } else if (data.type == 'change_profile_amount') {
+      profile_now = data.content
+      active_item = document.querySelector('.task-card-item[data-category-id="3"]');
+      active_input = active_item.querySelector('.right-side__current-quantity__amount').value = profile_now;
     }
 
   };

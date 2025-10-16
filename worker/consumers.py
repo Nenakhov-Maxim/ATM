@@ -373,6 +373,7 @@ class TaskTransferConsumer(AsyncWebsocketConsumer):
         self.client = self.scope['client']
         self.area_id = self.scope['url_route']['kwargs']
         self.task_list = []
+        self.profile_quantity_old = 0
 
     async def disconnect(self, close_code):
         """Отключение клиента от WebSocket"""
@@ -384,12 +385,14 @@ class TaskTransferConsumer(AsyncWebsocketConsumer):
         if data['message'] == "start":         
             self.task_list = data['task_list']            
             await self.check_new_task()
+            
     
     async def check_new_task(self):
         """Проверяет новые задачи и изменения в существующих задачах каждые 10 секунд"""        
         global task_list                     
         while True:
-            await asyncio.sleep(10)
+            await self.check_profile_amount()
+            await asyncio.sleep(1)
             
             # Проверяем новые задачи
             db_task = await self.get_all_task()                        
@@ -410,7 +413,29 @@ class TaskTransferConsumer(AsyncWebsocketConsumer):
                         'type': 'change_task',
                         'content': task            
                     }, default=str))
-                        
+   
+    async def check_profile_amount(self):
+        profile_amount = await self.get_only_working_task()
+        if not self.profile_quantity_old == int(profile_amount):
+            self.profile_quantity_old = int(profile_amount)
+            await self.send(text_data=json.dumps({
+                        'type': 'change_profile_amount',
+                        'content': profile_amount            
+                    }, default=str))
+                         
+    # Смотрим сколько профиля в данный момент в выполняемой задаче
+    @sync_to_async
+    def get_only_working_task(self):
+        profile_amount = 0
+        tasks = Tasks.objects.filter(
+                task_workplace=self.area_id['line_name'], 
+                task_status_id__in=[3]
+            )
+        for task in tasks:
+            profile_amount = task.profile_amount_now
+        return profile_amount
+        
+    
     @sync_to_async
     def get_all_task(self):
         """Получает все новые задачи для данной производственной линии"""
