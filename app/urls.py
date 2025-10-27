@@ -32,4 +32,5 @@ urlpatterns = [
     path('worker/', include('worker.urls'), name='worker'),
     path('analytics/', include('analytics.urls'), name='analytics'),
     path('api/arduino/', views.arduino_data, name="arduino_data"), 
+    path('change-task-automatic-vision/<int:task_id>/<str:bool_val>', views.activate_sensor, name="activate_sensor"), 
 ]

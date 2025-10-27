@@ -218,6 +218,14 @@
                     <span class="task-information__left-side__text">Осталось времени: <span>00:00:00</span></span>
                     {% endif %}
                     <div class="task-information-history-shtrips-offs">
+                      <div class="task-information-automatic-vision">
+                        {% if el.sensor_true %}
+                        <input type="checkbox" name="automatic-vision" id="automatic-vision-checkbox" checked>
+                        {% else %}
+                        <input type="checkbox" name="automatic-vision" id="automatic-vision-checkbox">
+                        {% endif %}
+                        <label for="automatic-vision">Включить автоматическое распознование</label>
+                      </div>
                       <button id="shtrips-offs-btn" type="button">Списать штрипс</button>
                       <h3 class="history-shtrips-offs-title">История списания штрипсов</h3>
                       <div class="history-shtrips-offs-wrapper">

@@ -959,3 +959,46 @@ function ajax_request(url, type,  data) {
   });
 }
 
+// Работа чекбокса "включить автоматическое распознование"
+
+$(document).ready(function() {
+
+  const auto_vision_checkbox = document.querySelectorAll('#automatic-vision-checkbox');
+  
+  for (checkbox of auto_vision_checkbox) {
+    input_profile_amount = document.querySelector('.task-card-item[data-category-id="3"]').querySelector('.right-side__current-quantity__amount')
+    if (checkbox) {
+      if (checkbox.checked) {
+          input_profile_amount.disabled = true
+          
+        } else {
+            input_profile_amount.disabled = false
+        }
+      checkbox.addEventListener('change', (event)=> {
+        task_id = document.querySelector('.task-card-item[data-category-id="3"]').dataset.itemid
+        fetch(`/change-task-automatic-vision/${task_id}/${checkbox.checked}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({})
+          })
+          .then(response=>{
+            response.json()
+          })
+          .then(data=> {
+            console.log(data)
+          })
+        if (checkbox.checked) {
+          input_profile_amount.disabled = true
+          
+        } else {
+            input_profile_amount.disabled = false
+        }
+      });
+
+    } else {
+      console.warn('Element with id "automatic-vision-checkbox" not found');
+    }
+  }
+});

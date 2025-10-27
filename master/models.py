@@ -153,6 +153,7 @@ class Tasks(models.Model):
     task_profile_material = models.ForeignKey('SteelType', null=True, on_delete=models.SET_NULL, verbose_name='Тип материала')
     history_event_messages = models.ManyToManyField(HistoryEvent)
     history_profile_records = models.ManyToManyField(HistoryProfileRecords)
+    sensor_true = models.BooleanField(default=False)
     last_update = models.DateTimeField('Последнее изменение количества профиля в задаче', null=True, blank=True)
     created_at = models.DateTimeField('Дата создания задачи', default=django.utils.timezone.now)
     

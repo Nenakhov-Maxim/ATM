@@ -429,7 +429,7 @@ class TaskTransferConsumer(AsyncWebsocketConsumer):
         profile_amount = 0
         tasks = Tasks.objects.filter(
                 task_workplace=self.area_id['line_name'], 
-                task_status_id__in=[3]
+                task_status_id__in=[3],
             )
         for task in tasks:
             profile_amount = task.profile_amount_now
