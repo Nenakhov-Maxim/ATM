@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const manualStripsSelect = document.getElementById('manual-shtrips-input-type');
     const manualShtripsSubmit = document.getElementById('manual-shtrips-submit');
     const errorInput = document.querySelector('.error_input');
-    // console.log(work_task)
+
     if (work_task) {
         shtripsButton = work_task.querySelector('#shtrips-offs-btn');
         
@@ -47,12 +47,15 @@ document.addEventListener('DOMContentLoaded', function() {
         manualShtripsSubmit.addEventListener('click', function() {
             const val = manualStripsInput.value.trim();
             const type = manualStripsSelect.value
+            const amount = document.getElementById('manual-shtrips-input-amount').value;
             if (isNaN(Number(val)) || val == '') {
                 errorInput.innerHTML = "Допускаются только числовые значения"
             } else {
-                console.log(work_task)
                 data = {val_num: Number(val), type: type, task_id: work_task.dataset.itemid}
-                processOffShtrips(data)
+                for (let index = 0; index < Number(amount); index++) {
+                    processOffShtrips(data); 
+                }
+                
             }
         });
 
@@ -78,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             
-            // Отправка QR-кода на сервер
+            // Отправка shtrips на сервер
             fetch('shtrips-offs/', {
                 method: 'POST',
                 headers: {

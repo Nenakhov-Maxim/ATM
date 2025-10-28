@@ -579,17 +579,17 @@ $(document).ready(function() {
     if (Object.prototype.hasOwnProperty.call(list_task, elem)) {
       const task = list_task[elem];
       let task_id = task.dataset.itemid
-      if (task.dataset.video == 'True') {
-        if(confirm('Включить автоматическое определение количества профиля?')) {
-          alert('В данный момент осуществляется автоматическое определение количества профиля')
-          videoStream(task_id)  
-        } else {
-          alert('В данный момент осуществляется ручное определение количества профиля')  
-        }
+      // if (task.dataset.video == 'True') {
+      //   if(confirm('Включить автоматическое определение количества профиля?')) {
+      //     alert('В данный момент осуществляется автоматическое определение количества профиля')
+      //     videoStream(task_id)  
+      //   } else {
+      //     alert('В данный момент осуществляется ручное определение количества профиля')  
+      //   }
         
-      } else {
-        alert('Автоматическое определение количества профиля для текущего типа недоступно. Пожалуйста, добавляйте вручную')
-      }   
+      // } else {
+      //   alert('Автоматическое определение количества профиля для текущего типа недоступно. Пожалуйста, добавляйте вручную')
+      // }   
       
     }
   }
@@ -1002,3 +1002,21 @@ $(document).ready(function() {
     }
   }
 });
+
+
+// При нажатии Shift + фокус на окне добавления и поставить плюс
+
+document.addEventListener('DOMContentLoaded', (event)=> {
+  document.addEventListener('keypress', (event)=> {
+    if (event.shiftKey) {
+      if (event.key == '+') {
+        event.preventDefault();
+        value_input = document.querySelector('.task-card-item[data-category-id="3"').querySelector('.right-side__current-quantity__amount');
+        value_input.focus();
+        old_value = value_input.value;
+        new_value = String(old_value) + '+';
+        value_input.value = new_value
+      }
+    }
+  })
+})
