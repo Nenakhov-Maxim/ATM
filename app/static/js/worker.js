@@ -30,6 +30,7 @@ $(document).ready(function() {
         document.querySelector(`.task-card-item[data-itemId="${data['content']['id']}"]`).remove()  
       }
     } else if (data.type == 'change_profile_amount') {
+      
       profile_now = data.content
       active_item = document.querySelector('.task-card-item[data-category-id="3"]');
       active_input = active_item.querySelector('.right-side__current-quantity__amount').value = profile_now;

@@ -11,8 +11,6 @@ def arduino_data(request):
         
         value = data['data']
         line_id = data['line_id']
-        print("📥 Получено от агента: изготовлен 1 профиль")
-
         # Ищем активную задачу на линии
         task = Tasks.objects.get(task_workplace_id=line_id, task_status_id=3)
         if task.sensor_true:
