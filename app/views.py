@@ -22,7 +22,7 @@ def arduino_data(request):
                 return JsonResponse({"status": "Пользователь отключил автоматическую фиксацию"}) 
         except Exception:
             print('Нет активной задачи')
-            pass
+            return JsonResponse({"status": "Пользователь не начал выполнение задания"})
     return JsonResponse({"error": "invalid request"}, status=400)
 
 @csrf_exempt
