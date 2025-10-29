@@ -417,16 +417,9 @@ class TaskTransferConsumer(AsyncWebsocketConsumer):
                     }, default=str))
    
     async def check_profile_amount(self):
-        print('Начали собирать информацию о изгоотвленном профиле на линии: ', self.area_id['line_name'])
-        print('==============================================================')     
         profile_amount = await self.get_only_working_task()
-        print('Количество профиля стало: ', profile_amount)
-        print('Количество профиля было: ', self.profile_quantity_old)
-        print('==============================================================') 
         if not self.profile_quantity_old == int(profile_amount):
             self.profile_quantity_old = int(profile_amount)
-            print('Отправляем клиенту')
-            print('==============================================================') 
             await self.send(text_data=json.dumps({
                         'type': 'change_profile_amount',
                         'content': profile_amount            
