@@ -220,9 +220,9 @@
                     <div class="task-information-history-shtrips-offs">
                       <div class="task-information-automatic-vision">
                         {% if el.sensor_true %}
-                        <input type="checkbox" name="automatic-vision" id="automatic-vision-checkbox" checked>
+                        <input type="checkbox" name="automatic-vision" id="automatic-vision-checkbox" data-statusId="{{el.task_status_id}}" checked>
                         {% else %}
-                        <input type="checkbox" name="automatic-vision" id="automatic-vision-checkbox">
+                        <input type="checkbox" name="automatic-vision" id="automatic-vision-checkbox" data-statusId="{{el.task_status_id}}">
                         {% endif %}
                         <label for="automatic-vision">Включить автоматическое распознование</label>
                       </div>

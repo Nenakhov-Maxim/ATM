@@ -964,11 +964,13 @@ function ajax_request(url, type,  data) {
 
 $(document).ready(function() {
 
-  const auto_vision_checkbox = document.querySelectorAll('#automatic-vision-checkbox');
+  const auto_vision_checkbox = document.querySelectorAll('#automatic-vision-checkbox[data-statusId="3"]');
+  // console.log(auto_vision_checkbox)
   
   for (checkbox of auto_vision_checkbox) {
     input_profile_amount = document.querySelector('.task-card-item[data-category-id="3"]').querySelector('.right-side__current-quantity__amount')
     if (checkbox) {
+
       if (checkbox.checked) {
           input_profile_amount.disabled = true
           
