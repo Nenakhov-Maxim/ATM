@@ -299,7 +299,8 @@
                   </div>
                   <div>
                     <h3>Видео с сервера</h3>
-                    <video id="remoteVideo" autoplay playsinline width="640" height="480"></video>
+                    <div id="remoteVideo" data-profileType="{{el.task_profile_type}}"></div>
+                    <!-- <video id="remoteVideo" autoplay playsinline width="640" height="480"></video> -->
                   </div>
                 {% else %}
                 <img id="video_stream" src="{% static "img/video-disabled.svg" %}" alt="Изображение с камеры" />

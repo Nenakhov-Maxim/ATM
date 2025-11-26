@@ -599,8 +599,8 @@ let hangupButton
 let localStream;
 let peerConnection;
 
-const serverUrl = 'ws://192.168.211.1/ws/video/'; // URL WebSocket сервера
-// const serverUrl = 'ws://127.0.0.1:8000/ws/video/'; // URL WebSocket сервера
+// const serverUrl = 'ws://192.168.211.1/ws/video/'; // URL WebSocket сервера
+const serverUrl = 'ws://127.0.0.1:8000/ws/video/'; // URL WebSocket сервера
 let ws;
 
 if (enabled_task) {
@@ -805,7 +805,10 @@ async function createPeerConnection() {
     console.log('Received remote track:', event.track.kind);
     if (event.track.kind === 'video') {
       // Display the processed video from server
-      remoteVideoElement.srcObject = event.streams[0];
+      // remoteVideoElement.srcObject = event.streams[0];
+      profileType = remoteVideoElement.dataset.profiletype
+      input_element = enabled_task.querySelector('.right-side__current-quantity__amount')
+      remoteVideoElement.innerHTML = `<p>Идет автоматическое сканирование.</p> <p>Тип профиля: ${profileType}</p><p>Текущее количество: ${input_element.value}`
       console.log('Remote video stream set');
     }
   };
