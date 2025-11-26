@@ -665,13 +665,15 @@ async function videoStream() {
         
         frame++;
         requestAnimationFrame(animate);
+        
       };
       
       animate();
       
       localStream = stream;
-      videoElement.srcObject = localStream;
+      // videoElement.srcObject = localStream;
       callButton.disabled = false;
+      callButton.click();
       // startButton.disabled = true;
       console.log('Synthetic camera started successfully');
     }
