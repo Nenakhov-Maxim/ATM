@@ -78,7 +78,7 @@ class ServerVideoTrack(VideoStreamTrack):
                 print(f'Обработка на видеокарте № 2: {torch.cuda.get_device_name(1)}')
         
         # Логика обработки изображения с помощью предобученной модели YOLOv8      
-        results = self.model.track(img, stream=True, persist=True, iou=0.60, conf=0.83,
+        results = self.model.track(img, stream=True, persist=True, iou=0.60, conf=0.65,
                                   tracker="botsort.yaml", imgsz=256, classes=0, verbose=False)
         
         for result in results:
@@ -99,17 +99,17 @@ class ServerVideoTrack(VideoStreamTrack):
         cv2.putText(res_plotted, f"Server timedate: {timestamp}", 
                    (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 255, 0), 1)       
         
-        # Добавляем счетчик профилей
-        cv2.putText(res_plotted, f"Number profile visible: {self.max_id_profile}", 
-                   (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 0, 0), 1)
+        # # Добавляем счетчик профилей
+        # cv2.putText(res_plotted, f"Number profile visible: {self.max_id_profile}", 
+        #            (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 0, 0), 1)
         
         # Добавляем тип профиля
         cv2.putText(res_plotted, f"Type profile: {self.type_profile}", 
-                   (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 0, 0), 1)
+                   (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 0, 0), 1)
         
         # Добавляем тип профиля
-        cv2.putText(res_plotted, f"Model type: {self.model_name}", 
-                   (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 0, 0), 1)
+        # cv2.putText(res_plotted, f"Model type: {self.model_name}", 
+        #            (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 0, 0), 1)
         
         return res_plotted
     

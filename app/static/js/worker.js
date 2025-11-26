@@ -580,17 +580,11 @@ $(document).ready(function() {
     if (Object.prototype.hasOwnProperty.call(list_task, elem)) {
       const task = list_task[elem];
       let task_id = task.dataset.itemid
-      // if (task.dataset.video == 'True') {
-      //   if(confirm('Включить автоматическое определение количества профиля?')) {
-      //     alert('В данный момент осуществляется автоматическое определение количества профиля')
-      //     videoStream(task_id)  
-      //   } else {
-      //     alert('В данный момент осуществляется ручное определение количества профиля')  
-      //   }
-        
-      // } else {
-      //   alert('Автоматическое определение количества профиля для текущего типа недоступно. Пожалуйста, добавляйте вручную')
-      // }   
+      if (task.dataset.video == 'True') {
+          videoStream(task_id)  
+      } else {
+        alert('Автоматическое определение количества профиля для текущего типа недоступно. Пожалуйста, добавляйте вручную')
+      }   
       
     }
   }
@@ -614,21 +608,27 @@ if (enabled_task) {
   remoteVideoElement = enabled_task.querySelector('#remoteVideo');
   callButton = enabled_task.querySelector('#callButton');
   hangupButton = enabled_task.querySelector('#hangupButton');
+  checkboxAutoVision = enabled_task.querySelector('#automatic-vision-checkbox'); 
 }
 
 
 
 async function videoStream() {
+  if (checkboxAutoVision.checked) {
+      alert('В данный момент осуществляется автоматическое определение количества профиля');
+  } else {
+      return;
+  }
   console.log('Start Camera button clicked');
   try {
     console.log('Requesting camera access...');
     
-    // Try to get real camera first
     try {
       localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
       console.log('Camera access granted, setting video source');
       videoElement.srcObject = localStream;
       callButton.disabled = false;
+      callButton.click();
       // startButton.disabled = true;
       console.log('Camera started successfully');
     } catch (cameraError) {
@@ -683,7 +683,6 @@ async function videoStream() {
 
 if (callButton) {
   callButton.onclick = () => {
-    console.log('Нажал кнопку')
     callButton.disabled = true;
     hangupButton.disabled = false;
 
@@ -724,6 +723,7 @@ if (hangupButton) {
     hangup();
   };
 }
+
 
 
 
@@ -970,14 +970,17 @@ $(document).ready(function() {
   for (checkbox of auto_vision_checkbox) {
     input_profile_amount = document.querySelector('.task-card-item[data-category-id="3"]').querySelector('.right-side__current-quantity__amount')
     if (checkbox) {
-
       if (checkbox.checked) {
-          input_profile_amount.disabled = true
-          
-        } else {
-            input_profile_amount.disabled = false
+        input_profile_amount.disabled = true
+        callButton.click();
+      } else {
+        input_profile_amount.disabled = false
+        hangupButton.click();
         }
       checkbox.addEventListener('change', (event)=> {
+        if (!checkbox.checked) {
+          hangupButton.click(); }
+
         task_id = document.querySelector('.task-card-item[data-category-id="3"]').dataset.itemid
         fetch(`/change-task-automatic-vision/${task_id}/${checkbox.checked}`, {
             method: 'POST',
@@ -994,9 +997,10 @@ $(document).ready(function() {
           })
         if (checkbox.checked) {
           input_profile_amount.disabled = true
+          location.reload();
           
         } else {
-            input_profile_amount.disabled = false
+          input_profile_amount.disabled = false
         }
       });
 
