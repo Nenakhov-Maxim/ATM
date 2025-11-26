@@ -599,8 +599,8 @@ let hangupButton
 let localStream;
 let peerConnection;
 
-// const serverUrl = 'ws://192.168.211.1/ws/video/'; // URL WebSocket сервера
-const serverUrl = 'ws://127.0.0.1:8000/ws/video/'; // URL WebSocket сервера
+const serverUrl = 'ws://192.168.211.1/ws/video/'; // URL WebSocket сервера
+// const serverUrl = 'ws://127.0.0.1:8000/ws/video/'; // URL WebSocket сервера
 let ws;
 
 if (enabled_task) {
