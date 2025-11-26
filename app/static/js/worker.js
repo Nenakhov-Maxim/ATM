@@ -599,8 +599,8 @@ let hangupButton
 let localStream;
 let peerConnection;
 
-const serverUrl = 'ws://192.168.211.1/ws/video/'; // URL WebSocket сервера
-// const serverUrl = 'ws://127.0.0.1:8000/ws/video/'; // URL WebSocket сервера
+// const serverUrl = 'ws://192.168.211.1/ws/video/'; // URL WebSocket сервера
+const serverUrl = 'ws://127.0.0.1:8000/ws/video/'; // URL WebSocket сервера
 let ws;
 
 if (enabled_task) {
@@ -810,7 +810,7 @@ async function createPeerConnection() {
       // remoteVideoElement.srcObject = event.streams[0];
       profileType = remoteVideoElement.dataset.profiletype
       input_element = enabled_task.querySelector('.right-side__current-quantity__amount')
-      remoteVideoElement.innerHTML = `<p>Идет автоматическое сканирование.</p> <p>Тип профиля: ${profileType}</p><p>Текущее количество: ${input_element.value}`
+      remoteVideoElement.innerHTML = `<p>Ведется работа...</p> <p>Тип профиля: ${profileType}</p><p>Для отмены снимите галочку с поля "Включить автоматическое распознование"</p>`
       console.log('Remote video stream set');
     }
   };
@@ -981,10 +981,13 @@ $(document).ready(function() {
       } else {
         input_profile_amount.disabled = false
         hangupButton.click();
+        remoteVideoElement.innerHTML = `<p>Автоматическая фиксация выключена....</p> <p>Количество изготовленного профиля нужно вводить самостоятельно</p><p>Для старта автоматической фиксации поставьте галочку в поле "Включить автоматическое распознование"</p>`
         }
       checkbox.addEventListener('change', (event)=> {
         if (!checkbox.checked) {
-          hangupButton.click(); }
+          remoteVideoElement.innerHTML = `<p>Автоматическая фиксация выключена....</p> <p>Количество изготовленного профиля нужно вводить самостоятельно</p><p>Для старта автоматической фиксации поставьте галочку в поле "Включить автоматическое распознование"</p>`
+          hangupButton.click(); 
+        }
 
         task_id = document.querySelector('.task-card-item[data-category-id="3"]').dataset.itemid
         fetch(`/change-task-automatic-vision/${task_id}/${checkbox.checked}`, {
