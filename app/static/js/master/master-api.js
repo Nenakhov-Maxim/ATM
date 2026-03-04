@@ -69,30 +69,23 @@ function master_ajax_request(url, data, onSuccess) {
 }
 
 $(document).ready(function() {
-
   $('.more-info-popup__start-task').click(function(){
-
     let task = this;
     let id_task = task.dataset.itemid;
-    if (task.id == "start") {      
+    if (task.id == "start") {
       master_ajax_request('start_task/', {'id_task': id_task});
     } else if (task.id == "pause") {
       let paused_popup = document.querySelector('.pause_task_popup')
-      let pause_task_popup_form = document.querySelector('.pause_task_popup_form')     
+      let pause_task_popup_form = document.querySelector('.pause_task_popup_form')
       paused_popup.classList.toggle('disable')
-      paused_popup.querySelector('.pause_task_popup_cansel-button').addEventListener('click', ()=>{paused_popup.classList.add('disable')})     
-      pause_task_popup_form.action = `/master/pause_task/${id_task}`     
-      
-    } 
+      paused_popup.querySelector('.pause_task_popup_cansel-button').addEventListener('click', ()=>{paused_popup.classList.add('disable')})
+      pause_task_popup_form.action = `/master/pause_task/${id_task}`
+    }
   });
-});
 
-// ===== Task Delete =====
-// Удаление задачи
-$(document).ready(function() {
-
+  // ===== Task Delete =====
+  // Удаление задачи
   $('.more-info-popup__delete-task').click(function(){
-
     let task = this;
     let id_task = task.dataset.itemid;
     if (task.id == "delete") {
@@ -100,30 +93,24 @@ $(document).ready(function() {
       if (isUserReady) {
         master_ajax_request('delete_task/', {'id_task': id_task});
       }
-    } 
+    }
   });
-});
 
-// ===== Task Hide =====
-// Cкрыть задачу
-$(document).ready(function() {
-
+  // ===== Task Hide =====
+  // Cкрыть задачу
   $('.more-info-popup__hide-task').click(function(){
-
     let task = this;
     let id_task = task.dataset.itemid;
     if (task.id == "hide") {
       let isUserReady = confirm("Вы уверены, что хотите скрыть задачу? Задача перестанет отображаться, но будет учитываться в статистике");
       if (isUserReady) {
         master_ajax_request('hide_task/', {'id_task': id_task});
-      }  
-    } 
+      }
+    }
   });
-});
 
-// ===== Task Edit =====
-// Открытие окна редактирования задачи
-$(document).ready(function() {
+  // ===== Task Edit =====
+  // Открытие окна редактирования задачи
   $('.more-info-popup__edit-task').click(function(){
     edit_task_popup.classList.toggle('disable')
     edit_task_popup.querySelector('.edit-task-popup__exit-popup').addEventListener('click', ()=>{edit_task_popup.classList.add('disable')})
@@ -131,19 +118,19 @@ $(document).ready(function() {
     let id_task = task.dataset.itemid;
     if (task.id == "edit") {
       master_ajax_request('edit_task/', {'id_task': id_task}, function(data) {
-          edit_task_popup.querySelector('#id_task_name').value = data['task_name']
-          let date_start = new Date(Date.parse(data['task_timedate_start'])).toISOString().slice(0,16)
-          let date_end = new Date(Date.parse(data['task_timedate_end'])).toISOString().slice(0,16);
-          edit_task_popup.querySelector('#id_task_timedate_start').value = date_start
-          edit_task_popup.querySelector('#id_task_timedate_end').value = date_end
-          edit_task_popup.querySelector('#id_task_profile_type').value = data['task_profile_type']
-          edit_task_popup.querySelector('#id_task_workplace').value = data['task_workplace']
-          edit_task_popup.querySelector('#id_task_profile_amount').value = data['task_profile_amount']
-          edit_task_popup.querySelector('#id_task_profile_length').value = data['task_profile_length']
-          edit_task_popup.querySelector('#id_task_comments').value = data['task_comments']
-          edit_task_popup.querySelector('.edit-task-popup__title-text').innerText = `Редактировать задачу № ${id_task}`          
-          //location.reload();            
+        edit_task_popup.querySelector('#id_task_name').value = data['task_name']
+        let date_start = new Date(Date.parse(data['task_timedate_start'])).toISOString().slice(0,16)
+        let date_end = new Date(Date.parse(data['task_timedate_end'])).toISOString().slice(0,16);
+        edit_task_popup.querySelector('#id_task_timedate_start').value = date_start
+        edit_task_popup.querySelector('#id_task_timedate_end').value = date_end
+        edit_task_popup.querySelector('#id_task_profile_type').value = data['task_profile_type']
+        edit_task_popup.querySelector('#id_task_workplace').value = data['task_workplace']
+        edit_task_popup.querySelector('#id_task_profile_amount').value = data['task_profile_amount']
+        edit_task_popup.querySelector('#id_task_profile_length').value = data['task_profile_length']
+        edit_task_popup.querySelector('#id_task_comments').value = data['task_comments']
+        edit_task_popup.querySelector('.edit-task-popup__title-text').innerText = `Редактировать задачу № ${id_task}`
+        //location.reload();
       });
-    } 
+    }
   });
 });
