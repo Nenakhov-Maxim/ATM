@@ -41,6 +41,29 @@ type_profile_input.addEventListener('change', (event)=> {
 
 // ===== Task Start/Pause =====
 // Запуск, приостановка, удаление задачи
+function master_ajax_request(url, data, onSuccess) {
+  $.ajax({
+    url: url,
+    type: 'GET',
+    data: data,
+    headers: {
+      "Accept": "network/json",
+      "Content-Type": "network/json",
+    },
+    success: function(answer) {
+      if (typeof onSuccess === 'function') {
+        onSuccess(answer);
+      } else {
+        console.log(answer)
+        location.reload();
+      }
+    },
+    error: function() {
+      alert('Error!');
+    }
+  });
+}
+
 $(document).ready(function() {
 
   $('.more-info-popup__start-task').click(function(){
@@ -48,28 +71,7 @@ $(document).ready(function() {
     let task = this;
     let id_task = task.dataset.itemid;
     if (task.id == "start") {      
-      $.ajax({
-  
-        url: 'start_task/',
-        
-        type: 'GET',
-        
-        data: {'id_task': id_task},
-    
-        headers: {
-            "Accept": "network/json",
-            "Content-Type": "network/json",        
-        },
-        
-        success: function(data){ 
-          console.log(data)
-          location.reload();  
-        },
-      
-        error: function(){  
-        alert('Error!');  
-        }      
-      });  
+      master_ajax_request('start_task/', {'id_task': id_task});
     } else if (task.id == "pause") {
       let paused_popup = document.querySelector('.pause_task_popup')
       let pause_task_popup_form = document.querySelector('.pause_task_popup_form')     
@@ -92,28 +94,7 @@ $(document).ready(function() {
     if (task.id == "delete") {
       let isUserReady = confirm("Вы уверены, что хотите удалить задачу? Восстановление будет невозможно");
       if (isUserReady) {
-        $.ajax({
-    
-          url: 'delete_task/',
-          
-          type: 'GET',
-          
-          data: {'id_task': id_task},
-      
-          headers: {
-              "Accept": "network/json",
-              "Content-Type": "network/json",        
-          },
-          
-          success: function(data){ 
-            console.log(data)
-            location.reload(); 
-          },
-        
-          error: function(){  
-          alert('Error!');  
-          }      
-        });  
+        master_ajax_request('delete_task/', {'id_task': id_task});
       }
     } 
   });
@@ -130,28 +111,7 @@ $(document).ready(function() {
     if (task.id == "hide") {
       let isUserReady = confirm("Вы уверены, что хотите скрыть задачу? Задача перестанет отображаться, но будет учитываться в статистике");
       if (isUserReady) {
-        $.ajax({
-    
-          url: 'hide_task/',
-          
-          type: 'GET',
-          
-          data: {'id_task': id_task},
-      
-          headers: {
-              "Accept": "network/json",
-              "Content-Type": "network/json",        
-          },
-          
-          success: function(data){ 
-            console.log(data)
-            location.reload();               
-          },
-        
-          error: function(){  
-          alert('Error!');  
-          }      
-        });  
+        master_ajax_request('hide_task/', {'id_task': id_task});
       }  
     } 
   });
@@ -166,21 +126,7 @@ $(document).ready(function() {
     let task = this;
     let id_task = task.dataset.itemid;
     if (task.id == "edit") {
-         
-      $.ajax({
-  
-        url: 'edit_task/',
-        
-        type: 'GET',
-        
-        data: {'id_task': id_task},
-    
-        headers: {
-            "Accept": "network/json",
-            "Content-Type": "network/json",        
-        },
-        
-        success: function(data){ 
+      master_ajax_request('edit_task/', {'id_task': id_task}, function(data) {
           edit_task_popup.querySelector('#id_task_name').value = data['task_name']
           let date_start = new Date(Date.parse(data['task_timedate_start'])).toISOString().slice(0,16)
           let date_end = new Date(Date.parse(data['task_timedate_end'])).toISOString().slice(0,16);
@@ -193,11 +139,7 @@ $(document).ready(function() {
           edit_task_popup.querySelector('#id_task_comments').value = data['task_comments']
           edit_task_popup.querySelector('.edit-task-popup__title-text').innerText = `Редактировать задачу № ${id_task}`          
           //location.reload();            
-        },
-        error: function(){  
-        alert('Error!');  
-        }      
-      });    
+      });
     } 
   });
 });
