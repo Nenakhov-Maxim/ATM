@@ -45,7 +45,7 @@
 
       <div class="services-grid">
         {% if is_admin or is_master %}
-        <a class="service-card" href="/master">
+        <a class="service-card" href="{% url 'master' %}">
           <div class="service-card__head">
             <div class="service-card__icon-wrap">
               <img src="{% static "img/Master.svg" %}" alt="Master">
@@ -59,7 +59,7 @@
         {% endif %}
 
         {% if is_admin %}
-        <a class="service-card" href="/worker">
+        <a class="service-card" href="{% url 'worker' %}">
           <div class="service-card__head">
             <div class="service-card__icon-wrap">
               <img src="{% static "img/device-electronic-machine.svg" %}" alt="Worker">
@@ -73,7 +73,7 @@
         {% endif %}
 
         {% if is_admin or is_master %}
-        <a class="service-card" href="/analytics">
+        <a class="service-card" href="{% url 'analytics:analytics-home' %}">
           <div class="service-card__head">
             <div class="service-card__icon-wrap">
               <img src="{% static "img/analytics.svg" %}" alt="Analytics">
