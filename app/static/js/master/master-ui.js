@@ -6,11 +6,10 @@
 
 let cards_task = document.querySelectorAll('.task-card-item')
 for (const card_item of cards_task) {
-  let id_task = card_item.dataset.itemid    
-  card_item.querySelector('.toolbar-item__history__svg').addEventListener('click', () => open_task_history(id_task, card_item))
+  card_item.querySelector('.toolbar-item__history__svg').addEventListener('click', () => open_task_history(card_item))
 }
 
-function open_task_history(id_task, card_item) {
+function open_task_history(card_item) {
   let popup_history = card_item.querySelector('.task-card__more-information__wrapper')  
   if (popup_history.classList.contains('disable')) {
     popup_history.classList.remove('disable')
@@ -25,7 +24,6 @@ function open_task_history(id_task, card_item) {
 // Опции по задаче
 
 for (const card_item of cards_task) {
-  let id_task = card_item.dataset.itemid    
   card_item.querySelector('.more-info__text, .actions__more-info').addEventListener('click', () => open_actions(card_item))
 }
 //Скрытие опций при клике в любом другом месте
@@ -40,7 +38,6 @@ document.addEventListener('mouseup', function (e) {
 
 function open_actions(card_item) {
   let popup_action = card_item.querySelector('.more-info-popup')
-  let close_button = card_item.querySelector('.close-popup')
    
 
   if (popup_action.classList.contains('disable')) {
