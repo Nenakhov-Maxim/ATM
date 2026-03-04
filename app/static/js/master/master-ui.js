@@ -6,7 +6,10 @@
 
 let cards_task = document.querySelectorAll('.task-card-item')
 for (const card_item of cards_task) {
-  card_item.querySelector('.toolbar-item__history__svg').addEventListener('click', () => open_task_history(card_item))
+  const historyToggle = card_item.querySelector('.toolbar-item__history__svg')
+  if (historyToggle) {
+    historyToggle.addEventListener('click', () => open_task_history(card_item))
+  }
 }
 
 function open_task_history(card_item) {
@@ -24,13 +27,16 @@ function open_task_history(card_item) {
 // Опции по задаче
 
 for (const card_item of cards_task) {
-  card_item.querySelector('.more-info__text, .actions__more-info').addEventListener('click', () => open_actions(card_item))
+  const actionsToggle = card_item.querySelector('.more-info__text, .actions__more-info')
+  if (actionsToggle) {
+    actionsToggle.addEventListener('click', () => open_actions(card_item))
+  }
 }
 //Скрытие опций при клике в любом другом месте
 document.addEventListener('mouseup', function (e) {   
   let popup_action = document.querySelectorAll('.more-info-popup');
   for (const element of popup_action) {
-    if (e.target.closest(".more-info-popup") && (e.target.classList != 'close-popup')) return;
+    if (e.target.closest(".more-info-popup") && !e.target.classList.contains('close-popup')) return;
     element.classList.add("disable");
   }  
   
@@ -99,7 +105,7 @@ function filter_task(filter)  {
           if (item.classList.contains('disable')) {
             item.classList.remove('disable')
           }            
-          if (item.dataset.category != 'Выполняется') {              
+          if (item.dataset.category !== 'Выполняется') {              
             item.classList.add('disable')
           }
         }
@@ -109,7 +115,7 @@ function filter_task(filter)  {
         if (item.classList.contains('disable')) {
           item.classList.remove('disable')
         }
-        if (item.dataset.category != 'Ожидание') {
+        if (item.dataset.category !== 'Ожидание') {
           item.classList.add('disable')
         }
       }
@@ -119,7 +125,7 @@ function filter_task(filter)  {
         if (item.classList.contains('disable')) {
           item.classList.remove('disable')
         }
-        if (item.dataset.category != 'Приостановлена') {
+        if (item.dataset.category !== 'Приостановлена') {
           item.classList.add('disable')
         }
       }
@@ -129,7 +135,7 @@ function filter_task(filter)  {
         if (item.classList.contains('disable')) {
           item.classList.remove('disable')
         }
-        if (item.dataset.category != 'Выполнено') {
+        if (item.dataset.category !== 'Выполнено') {
           item.classList.add('disable')
         }
       }
@@ -139,7 +145,7 @@ function filter_task(filter)  {
         if (item.classList.contains('disable')) {
           item.classList.remove('disable')
         }
-        if (item.dataset.category != 'Создана') {
+        if (item.dataset.category !== 'Создана') {
           item.classList.add('disable')
         }
       }
@@ -157,11 +163,23 @@ let input_index = 2
 let new_task_button = document.querySelector('.toolbars__new-task')
 let new_task_popup = document.querySelector('.new-task-popup')
 let edit_task_popup = document.querySelector('.edit-task-popup')
-      
-new_task_button.addEventListener('click', ()=>open_new_task_popup(new_task_popup))
-new_task_popup.querySelector('.new-task-popup__exit-popup').addEventListener('click', ()=>open_new_task_popup(new_task_popup))
-new_task_popup.querySelectorAll('.popup-button')[2].addEventListener('click', ()=>open_new_task_popup(new_task_popup))
-edit_task_popup.querySelectorAll('.popup-button')[2].addEventListener('click', ()=>open_new_task_popup(edit_task_popup))
+
+if (new_task_button && new_task_popup && edit_task_popup) {
+  const newPopupExit = new_task_popup.querySelector('.new-task-popup__exit-popup')
+  const newPopupButtons = new_task_popup.querySelectorAll('.popup-button')
+  const editPopupButtons = edit_task_popup.querySelectorAll('.popup-button')
+
+  new_task_button.addEventListener('click', ()=>open_new_task_popup(new_task_popup))
+  if (newPopupExit) {
+    newPopupExit.addEventListener('click', ()=>open_new_task_popup(new_task_popup))
+  }
+  if (newPopupButtons[2]) {
+    newPopupButtons[2].addEventListener('click', ()=>open_new_task_popup(new_task_popup))
+  }
+  if (editPopupButtons[2]) {
+    editPopupButtons[2].addEventListener('click', ()=>open_new_task_popup(edit_task_popup))
+  }
+}
 
 function open_new_task_popup(elem) {  
   elem.classList.toggle('disable')
@@ -171,7 +189,7 @@ function open_new_task_popup(elem) {
 // ===== Dynamic Form Rows =====
 // Добавление длины профиля в форму
 
-function add_profile_length(event, elem) {
+function add_profile_length(event) {
   event.preventDefault()
   const new_br = document.createElement('br')
   const new_div_length = document.createElement('div')
@@ -195,7 +213,7 @@ function add_profile_length(event, elem) {
   new_div_length.innerHTML = inner_html_length
   new_div_amount.innerHTML = inner_html_amount
   new_div_close.innerHTML = inner_html_close
-  if (input_index == 2){
+  if (input_index === 2){
     $('div.new-task-popup__content-block')[0].append(new_br)
   }  
   $('div.new-task-popup__content-block')[0].append(new_div_amount)
@@ -223,8 +241,12 @@ let start_value = 0
 let all_cards = document.querySelectorAll('.task-card-item')
 
 $(document).ready(function() {
-  
-  document.querySelector('.quality-position__title').value = 10
+  const qualityInput = document.querySelector('.quality-position__title')
+  if (!qualityInput) {
+    return;
+  }
+
+  qualityInput.value = 10
   change_block_in_page()
 
 
@@ -236,7 +258,7 @@ $(document).ready(function() {
 // Изменение количества отображаемых задач на странице
 function change_block_in_page(pos)  {
 
-  if (pos == true) {
+  if (pos === true) {
     start_value = 0
   }
 
@@ -285,34 +307,53 @@ function left_in_page() {
 }
 
 function menu_click () {
-  const screenWidth = window.screen.width
+  const screenWidth = window.innerWidth
+  const headerMenuList = document.querySelector('.header-menu-list')
+  if (!headerMenuList) {
+    return;
+  }
   if (screenWidth <= 800) {
-    if (document.querySelector('.header-menu-list').style.display == 'flex') {
-      document.querySelector('.header-menu-list').style.display = 'none'
+    if (headerMenuList.style.display === 'flex') {
+      headerMenuList.style.display = 'none'
       // document.querySelector('.header-menu-wrapper::after').style.display = 'block' 
     } else {
-      document.querySelector('.header-menu-list').style.display = 'flex'
+      headerMenuList.style.display = 'flex'
       // document.querySelector('.header-menu-wrapper::after').style.display = 'none'
     }
     
   }
 }
 
-document.addEventListener("resize", (event) => {
-  const screenWidth = window.screen.width
+window.addEventListener("resize", (event) => {
+  const screenWidth = window.innerWidth
+  const headerMenuList = document.querySelector('.header-menu-list')
+  if (!headerMenuList) {
+    return;
+  }
   if (screenWidth > 800)  {
-    document.querySelector('.header-menu-list').style.display = 'flex'
+    headerMenuList.style.display = 'flex'
   }
 });
 
 // ===== Report Modal =====
 // Открытие и закрытие модального окна нового отчета
 function action_report_popup(e) {
-  document.querySelector('.new_report_popup').classList.toggle('disable')
-  document.querySelector('.new_report_cansel-button').addEventListener('click', ()=>{
-    document.querySelector('.new_report_popup').classList.add('disable')
-  })
-  document.querySelector('.new_report_accept-button').addEventListener('click', ()=>{
-    document.querySelector('.new_report_popup').classList.add('disable')
-  })
+  const reportPopup = document.querySelector('.new_report_popup')
+  const cancelButton = document.querySelector('.new_report_cansel-button')
+  const acceptButton = document.querySelector('.new_report_accept-button')
+  if (!reportPopup) {
+    return;
+  }
+
+  reportPopup.classList.toggle('disable')
+  if (cancelButton) {
+    cancelButton.addEventListener('click', ()=> {
+      reportPopup.classList.add('disable')
+    })
+  }
+  if (acceptButton) {
+    acceptButton.addEventListener('click', ()=> {
+      reportPopup.classList.add('disable')
+    })
+  }
 }

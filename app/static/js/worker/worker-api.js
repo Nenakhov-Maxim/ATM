@@ -1,4 +1,25 @@
 // ===== Task Actions API =====
+function build_request_error_message(source, fallbackMessage) {
+  if (typeof source === 'string' && source.trim()) {
+    return source;
+  }
+  if (source && typeof source === 'object') {
+    if (typeof source.message === 'string' && source.message.trim()) {
+      return source.message;
+    }
+    if (typeof source.error === 'string' && source.error.trim()) {
+      return source.error;
+    }
+    if (source.responseJSON) {
+      return build_request_error_message(source.responseJSON, fallbackMessage);
+    }
+    if (typeof source.responseText === 'string' && source.responseText.trim()) {
+      return source.responseText;
+    }
+  }
+  return fallbackMessage;
+}
+
 // Запуск задачи в работу
 function start_working(e) {
   let elem = e.closest(".task-card-item")  
@@ -11,7 +32,7 @@ function start_working(e) {
     alert('Нельзя запустить несколько задач одновременно. Пожалуйста завершите другие задачи.')
   } else {
     let isUserReady = true    
-    if (elem.dataset.category == 'Ожидание') {
+    if (elem.dataset.category === 'Ожидание') {
       isUserReady = confirm("Вы уверены, что хотите начать выполнения задания без переналадки? Время на переналадку будет равно 0");
     }    
     if (isUserReady) {ajax_request(link, type_request, data)} 
@@ -67,7 +88,7 @@ function complete_task(e) {
   let data = {'id_task': id_task}
   let type_request = 'GET'
   clearInterval(interval);  
-  if (Number(plan_profile_amount) != Number(fact_profile_amount)) {
+  if (Number(plan_profile_amount) !== Number(fact_profile_amount)) {
     let isUserReady = confirm("Вы уверены, что хотите завершить задачу? Плановое и фактическое количество профиля не совпадают");
     if (isUserReady) {ajax_request(link, type_request, data)}
   } else {ajax_request(link, type_request, data)}
@@ -109,14 +130,16 @@ function ajax_request(url, type,  data) {
       if (url.indexOf('pause_task') !== -1 || url.indexOf('deny_task') !== -1 || url.indexOf('edit-profile-amount-value') !== -1) {
 
       } else {
-        console.log(answer)
         location.reload()
       }
         
     },
   
-    error: function(){  
-    alert('Error!');  
+    error: function(xhr, textStatus, errorThrown){  
+    alert(build_request_error_message(
+      xhr || errorThrown || textStatus,
+      'Ошибка запроса к серверу.'
+    ));  
     }      
   });
 }

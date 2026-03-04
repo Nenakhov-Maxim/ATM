@@ -14,21 +14,21 @@ function ws_add_new_task(data){
   };
 
   let date_hour = (date_end - date_start)/1000/60/60
-  console.log(date_hour)
+
   if (date_hour < 10) {
     date_hour = `0${Math.trunc(date_hour)}`
   } else {
     date_hour = `${Math.trunc(date_hour)}`
   }
   let date_minute = (date_hour - Math.trunc(date_hour)) * 60
-  console.log(date_minute)
+
   if (date_minute < 10) {
     date_minute = `0${Math.trunc(date_minute)}`
   } else {
     date_minute = `${Math.trunc(date_minute)}`
   }
   let date_seconds = Math.trunc((date_minute - Math.trunc(date_minute)) * 60)
-  console.log(date_seconds)
+
   if (date_seconds < 10) {
     date_seconds = `0${Math.trunc(date_seconds)}`
   } else {
@@ -69,69 +69,53 @@ function ws_add_new_task(data){
   // card-item__task-status
   let div_task_status = document.createElement('div');
   div_task_status.className = "card-item__task-status"
-  if (data['task_status_id'] == 1) {
-    div_task_status.innerHTML = 
-    `
-    <div class="task-status-widget">              
-      <span class="task-status-widget__text task_added">${data['task_status']}</span>
-    </div>             
-    <span class="task-status__text">Дата начала: ${data['task_timedate_start']}</span>
-    
-    `  
-  } else if (data['task_status_id'] == 4) {
-    div_task_status.innerHTML =
-    `
-    <div class="task-status-widget">              
-      <span class="task-status-widget__text falling-off">${data['task_status']}</span>
-     </div>             
-    <span class="task-status__text">Принято исполнетелем. Ожидает начала</span>
-    
-    `
-  } else if(data['task_status_id'] == 3) {
-    div_task_status.innerHTML =
-    `
-    <div class="task-status-widget">              
-      <span class="task-status-widget__text working">${data['task_status']}</span>
-    </div>             
-    <span class="task-status__text">Старт выполнения <br> Факт. время начала: <br> ${data['task_timedate_start_fact']}</span>
-    
-    `
-  } else if(data['task_status_id'] == 6) {
-    div_task_status.innerHTML =
-    `
-    <div class="task-status-widget">              
-      <span class="task-status-widget__text paused">${data['task_status']}</span>
-    </div>                         
-    <span class="task-status__text">Задача приостановлена. <br> Расскройте историю, чтобы узнать подробнее</span>
-    
-    `
-  } else if(data['task_status_id'] == 5) {
-    div_task_status.innerHTML =
-    `
-    <div class="task-status-widget">              
-      span class="task-status-widget__text paused">${data['task_status']}</span>
-    </div>             
-    <span class="task-status__text">Задача отменена. <br> Расскройте историю, чтобы узнать подробнее</span>
-    
-    `
-  } else if (data['task_status_id'] == 2) {
-    div_task_status.innerHTML =
-    `
-    <div class="task-status-widget">              
-      <span class="task-status-widget__text well_done">${data['task_status']}</span>
-    </div>             
-    <span class="task-status__text">Выполнено. Фактическая дата выполнения: {{el.task_timedate_end_fact}}</span>
-    
-    `
-  } else if (data['task_status_id'] == 7) {
-    div_task_status.innerHTML =
-    `
-    <div class="task-status-widget">              
-      <span class="task-status-widget__text settingUp">${data['task_status']}</span>
-    </div>             
-    <span class="task-status__text">Наладка оборудования. Старт: ${data['task_time_settingUp']}</span>
-    
-    `
+  const taskStatusTemplates = {
+    1: () => `
+      <div class="task-status-widget">
+        <span class="task-status-widget__text task_added">${data['task_status']}</span>
+      </div>
+      <span class="task-status__text">Дата начала: ${data['task_timedate_start']}</span>
+      `,
+    2: () => `
+      <div class="task-status-widget">
+        <span class="task-status-widget__text well_done">${data['task_status']}</span>
+      </div>
+      <span class="task-status__text">Выполнено. Фактическая дата выполнения: {{el.task_timedate_end_fact}}</span>
+      `,
+    3: () => `
+      <div class="task-status-widget">
+        <span class="task-status-widget__text working">${data['task_status']}</span>
+      </div>
+      <span class="task-status__text">Старт выполнения <br> Факт. время начала: <br> ${data['task_timedate_start_fact']}</span>
+      `,
+    4: () => `
+      <div class="task-status-widget">
+        <span class="task-status-widget__text falling-off">${data['task_status']}</span>
+      </div>
+      <span class="task-status__text">Принято исполнетелем. Ожидает начала</span>
+      `,
+    5: () => `
+      <div class="task-status-widget">
+        <span class="task-status-widget__text paused">${data['task_status']}</span>
+      </div>
+      <span class="task-status__text">Задача отменена. <br> Расскройте историю, чтобы узнать подробнее</span>
+      `,
+    6: () => `
+      <div class="task-status-widget">
+        <span class="task-status-widget__text paused">${data['task_status']}</span>
+      </div>
+      <span class="task-status__text">Задача приостановлена. <br> Расскройте историю, чтобы узнать подробнее</span>
+      `,
+    7: () => `
+      <div class="task-status-widget">
+        <span class="task-status-widget__text settingUp">${data['task_status']}</span>
+      </div>
+      <span class="task-status__text">Наладка оборудования. Старт: ${data['task_time_settingUp']}</span>
+      `,
+  };
+  const taskStatusTemplate = taskStatusTemplates[data['task_status_id']];
+  if (taskStatusTemplate) {
+    div_task_status.innerHTML = taskStatusTemplate();
   }
 
   div_wrapper.append(div_task_status)
@@ -143,29 +127,30 @@ function ws_add_new_task(data){
   let div_more_info = document.createElement('div')
   div_more_info.className = 'actions__more-info'
 
-  if (data['task_status_id'] == 4 || data['task_status_id'] == 6) {
-    div_more_info.innerHTML = 
-    `
-    <span class="more-info__text__accept" data-itemId=${data['id']} onclick="start_working(this)"></span>
-    <span class="more-info__text__deny" data-itemId=${data['id']} onclick="deny_task(this)"></span>
-    <span class="more-info__text__setting-up" data-itemId=${data['id']} onclick="start_settingUp(this)"></span>
-    
-    `  
-  } else if (data['task_status_id'] == 3) {
-    div_more_info.innerHTML =
-    `
-    <span class="more-info__text__complete" data-itemId=${data['id']} onclick="complete_task(this)"></span>
-    <span class="more-info__text__paused" data-itemId=${data['id']} onclick="paused_task(this)"></span>
-    
-    `
-  } else if (data['task_status_id'] == 7)  {
-    div_more_info.innerHTML =
-    `
-    <span class="more-info__text__accept" data-itemId=${data['id']} onclick="start_working(this)"></span>
-    <span class="more-info__text__deny" data-itemId=${data['id']} onclick="deny_task(this)"></span>
-    
-    `
-  } 
+  const taskActionsTemplates = {
+    4: () => `
+      <span class="more-info__text__accept" data-itemId=${data['id']} onclick="start_working(this)"></span>
+      <span class="more-info__text__deny" data-itemId=${data['id']} onclick="deny_task(this)"></span>
+      <span class="more-info__text__setting-up" data-itemId=${data['id']} onclick="start_settingUp(this)"></span>
+      `,
+    6: () => `
+      <span class="more-info__text__accept" data-itemId=${data['id']} onclick="start_working(this)"></span>
+      <span class="more-info__text__deny" data-itemId=${data['id']} onclick="deny_task(this)"></span>
+      <span class="more-info__text__setting-up" data-itemId=${data['id']} onclick="start_settingUp(this)"></span>
+      `,
+    3: () => `
+      <span class="more-info__text__complete" data-itemId=${data['id']} onclick="complete_task(this)"></span>
+      <span class="more-info__text__paused" data-itemId=${data['id']} onclick="paused_task(this)"></span>
+      `,
+    7: () => `
+      <span class="more-info__text__accept" data-itemId=${data['id']} onclick="start_working(this)"></span>
+      <span class="more-info__text__deny" data-itemId=${data['id']} onclick="deny_task(this)"></span>
+      `,
+  };
+  const taskActionsTemplate = taskActionsTemplates[data['task_status_id']];
+  if (taskActionsTemplate) {
+    div_more_info.innerHTML = taskActionsTemplate();
+  }
 
   div_item_action.append(div_more_info)
   div_wrapper.append(div_item_action)
@@ -174,7 +159,7 @@ function ws_add_new_task(data){
   //task-card__more-information__wrapper
   let div_more_imformation_wrapper = document.createElement('div')
   div_more_imformation_wrapper.className = 'task-card__more-information__wrapper'
-  if (data['task_status_id'] != 3) {
+  if (data['task_status_id'] !== 3) {
     div_more_imformation_wrapper.classList.add('disable')
   }
 
@@ -227,63 +212,59 @@ function ws_add_new_task(data){
   // task-information__right-side
   let div_ti_rs = document.createElement('div')
   div_ti_rs.className = 'task-information__right-side'
-  if  (data['task_status_id'] != 7 || data['task_status_id'] != 3) {
-    div_ti_rs.innerHTML =
-    `
-
-    <div class="task-information__right-side__required-quantity">
-      <span class="right-side__required-quantity__text">Необходимое количество</span>
-      <span class="right-side__required-quantity__amount">${data['task_profile_amount']}</span>
-    </div>
-    <div class="task-information__right-side__current-quantity">
-      <span class="right-side__current-quantity__text">Текущее количество</span>      
-      <input class="right-side__current-quantity__amount" type="number" value="${data['profile_amount_now']}"></input>      
-    </div>
-    
-    `
-  } else {
-    div_ti_rs.innerHTML =
-    `
-    <div class="task-information__right-side__required-quantity">
-      <span class="right-side__required-quantity__text">Необходимое количество</span>
-      <span class="right-side__required-quantity__amount">${data['task_profile_amount']}</span>
-    </div>
-    <div class="task-information__right-side__current-quantity">
-      <span class="right-side__current-quantity__text">Текущее количество</span>
-      <input class="right-side__current-quantity__amount" type="number" value="0"></input>
-    </div>
-    
-    `
-  }
+  div_ti_rs.innerHTML =
+  `
+  <div class="task-information__right-side__required-quantity">
+    <span class="right-side__required-quantity__text">Необходимое количество</span>
+    <span class="right-side__required-quantity__amount">${data['task_profile_amount']}</span>
+  </div>
+  <div class="task-information__right-side__current-quantity">
+    <span class="right-side__current-quantity__text">Текущее количество</span>
+    <input class="right-side__current-quantity__amount" type="number" value="${[3, 7].includes(data['task_status_id']) ? data['profile_amount_now'] : 0}"></input>
+  </div>
+  
+  `
   div_task_information.append(div_ti_rs)
   div_event_leftside.append(div_task_information)
 
   //event-leftside__buttons
   let div_leftside_buttons = document.createElement('div')
   div_leftside_buttons.className = 'event-leftside__buttons'
-  if (data['task_status_id'] != 4 || data['task_status_id'] != 6 || data['task_status_id'] != 7) {
-    div_leftside_buttons.innerHTML =
-    `
-    <div class="event-leftside__button-accept__inner" >
-      <input class="event-leftside__button-accept" name="event-leftside__button-accept" type="button" value="Начать выполнение" data-itemId=${data['id']} onclick="start_working(this)">                    
-    </div>
-    <div class="event-leftside__button-stop__inner">
-      <input class="event-leftside__button-deny" name="event-leftside__button-deny" type="button" value="Отменить" data-itemId=${data['id']} onclick="deny_task(this)">
-    </div>
-
-    ` 
-  } else {
-    div_leftside_buttons.innerHTML =
-    `
-    <div class="event-leftside__button-accept__inner">                    
-      <input class="event-leftside__button-complete-task" name="event-leftside__button-complete-task" type="button" value="Завершить задание" data-itemId=${data['id']} onclick="complete_task(this)">
-    </div>
-    <div class="event-leftside__button-stop__inner" >
-      <input class="event-leftside__button-pause" name="event-leftside__button-pause" type="button" value="Приостановить" data-itemId=${data['id']}  onclick="paused_task(this)"> 
-    </div>
-    
-    ` 
-  }
+  const leftButtonsTemplates = {
+    4: () => `
+      <div class="event-leftside__button-accept__inner" >
+        <input class="event-leftside__button-accept" name="event-leftside__button-accept" type="button" value="Начать выполнение" data-itemId=${data['id']} onclick="start_working(this)">
+      </div>
+      <div class="event-leftside__button-stop__inner">
+        <input class="event-leftside__button-deny" name="event-leftside__button-deny" type="button" value="Отменить" data-itemId=${data['id']} onclick="deny_task(this)">
+      </div>
+      `,
+    6: () => `
+      <div class="event-leftside__button-accept__inner" >
+        <input class="event-leftside__button-accept" name="event-leftside__button-accept" type="button" value="Начать выполнение" data-itemId=${data['id']} onclick="start_working(this)">
+      </div>
+      <div class="event-leftside__button-stop__inner">
+        <input class="event-leftside__button-deny" name="event-leftside__button-deny" type="button" value="Отменить" data-itemId=${data['id']} onclick="deny_task(this)">
+      </div>
+      `,
+    7: () => `
+      <div class="event-leftside__button-accept__inner" >
+        <input class="event-leftside__button-accept" name="event-leftside__button-accept" type="button" value="Начать выполнение" data-itemId=${data['id']} onclick="start_working(this)">
+      </div>
+      <div class="event-leftside__button-stop__inner">
+        <input class="event-leftside__button-deny" name="event-leftside__button-deny" type="button" value="Отменить" data-itemId=${data['id']} onclick="deny_task(this)">
+      </div>
+      `,
+    default: () => `
+      <div class="event-leftside__button-accept__inner">
+        <input class="event-leftside__button-complete-task" name="event-leftside__button-complete-task" type="button" value="Завершить задание" data-itemId=${data['id']} onclick="complete_task(this)">
+      </div>
+      <div class="event-leftside__button-stop__inner" >
+        <input class="event-leftside__button-pause" name="event-leftside__button-pause" type="button" value="Приостановить" data-itemId=${data['id']}  onclick="paused_task(this)">
+      </div>
+      `,
+  };
+  div_leftside_buttons.innerHTML = (leftButtonsTemplates[data['task_status_id']] || leftButtonsTemplates.default)();
   div_event_leftside.append(div_leftside_buttons)
   div_worker_event.append(div_event_leftside)
 
@@ -291,7 +272,7 @@ function ws_add_new_task(data){
   let div_event_rightside = document.createElement('div')
   div_event_rightside.className = 'worker-event-rightside'
   div_event_rightside.setAttribute("data-workplace", `workpalce-${data['task_workplace_id']}`)
-  if (data['task_status_id'] == 3) {
+  if (data['task_status_id'] === 3) {
     div_event_rightside.innerHTML =
     `
     <h1>Видеопоток с веб-камеры</h1>
@@ -324,7 +305,11 @@ let start_value = 0
 let all_cards = document.querySelectorAll('.task-card-item')
 
 $(document).ready(function() {
-  document.querySelector('.quality-position__title').value = 10
+  const qualityInput = document.querySelector('.quality-position__title')
+  if (!qualityInput) {
+    return;
+  }
+  qualityInput.value = 10
   change_block_in_page()
   $('.quality-position__title').change(() => change_block_in_page(true));
   $('.navigation__right').click(() => right_in_page());
@@ -333,11 +318,16 @@ $(document).ready(function() {
 });
 
 function change_block_in_page(pos)  {
-  if (pos == true) {start_value = 0}
-  let value_re = document.querySelector('.quality-position__title').value
+  if (pos === true) {start_value = 0}
+  const qualityInput = document.querySelector('.quality-position__title')
+  const allTaskInfoRange = document.querySelector('.all-task-info__range')
+  if (!qualityInput || !allTaskInfoRange) {
+    return;
+  }
+  let value_re = qualityInput.value
   let second_value_for_visible = Number(start_value) + Number(value_re)
   if  (second_value_for_visible > all_cards.length)  {second_value_for_visible = all_cards.length}
-  document.querySelector('.all-task-info__range').innerText = `${start_value + 1}-${second_value_for_visible} из ${all_cards.length}` 
+  allTaskInfoRange.innerText = `${start_value + 1}-${second_value_for_visible} из ${all_cards.length}` 
   for (let i = 0; i < all_cards.length; i++) {
     const element = all_cards[i]; 
     if (i >= Number(value_re) + Number(start_value) || i < start_value) {element.classList.add('disable')} else 
@@ -348,7 +338,11 @@ function change_block_in_page(pos)  {
 } 
 
 function right_in_page() {
-  let value_res = document.querySelector('.quality-position__title').value
+  const qualityInput = document.querySelector('.quality-position__title')
+  if (!qualityInput) {
+    return;
+  }
+  let value_res = qualityInput.value
   if (Number(start_value) + Number(value_res) < all_cards.length) {    
     start_value = start_value + Number(value_res)
     change_block_in_page(false)
@@ -357,7 +351,11 @@ function right_in_page() {
 }
 
 function left_in_page() {
-  let value_res = document.querySelector('.quality-position__title').value
+  const qualityInput = document.querySelector('.quality-position__title')
+  if (!qualityInput) {
+    return;
+  }
+  let value_res = qualityInput.value
   if (Number(start_value) - Number(value_res) < 0) {      
     start_value = (all_cards.length - 1) - ((all_cards.length - 1) % value_res)
     change_block_in_page(false)
@@ -434,7 +432,10 @@ function updateTime_end() {
 // Открытие и закрытие дополнительной информации по задаче
 function more_information_click(e) {  
   let card_item = e.closest(".task-card-item")
-  card_item.querySelector('.task-card__more-information__wrapper').classList.toggle('disable')  
+  const moreInformationWrapper = card_item.querySelector('.task-card__more-information__wrapper')
+  if (moreInformationWrapper) {
+    moreInformationWrapper.classList.toggle('disable')
+  }
 }
 
 
@@ -447,10 +448,13 @@ $(document).ready(function(){
   for (const card_element of profile_amount_input) {
     let id_task = card_element.dataset.itemid                
     const input_element = card_element.querySelector('.right-side__current-quantity__amount')
+    if (!input_element) {
+      continue;
+    }
              
     input_element.addEventListener('keypress', function(e){        
       var key = e.which;
-      if(key == 13)  {
+      if(key === 13)  {
         e.target.blur()}})
     input_element.addEventListener('blur', (e) =>{
       let value = 0        
@@ -486,9 +490,16 @@ $(document).ready(function(){
 document.addEventListener('DOMContentLoaded', (event)=> {
   document.addEventListener('keypress', (event)=> {
     if (event.shiftKey) {
-      if (event.key == '+') {
+      if (event.key === '+') {
         event.preventDefault();
-        const value_input = document.querySelector('.task-card-item[data-category-id="3"').querySelector('.right-side__current-quantity__amount');
+        const activeTask = document.querySelector('.task-card-item[data-category-id="3"]');
+        if (!activeTask) {
+          return;
+        }
+        const value_input = activeTask.querySelector('.right-side__current-quantity__amount');
+        if (!value_input) {
+          return;
+        }
         value_input.focus();
         const old_value = value_input.value;
         const new_value = String(old_value) + '+';

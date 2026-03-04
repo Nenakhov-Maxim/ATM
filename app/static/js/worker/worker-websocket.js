@@ -3,7 +3,11 @@
 
 $(document).ready(function() {
   let task_id_list = {}
-  let name_line = document.querySelectorAll(".person-info__department")[1].dataset.line
+  const personDepartments = document.querySelectorAll(".person-info__department")
+  if (!personDepartments[1]) {
+    return;
+  }
+  let name_line = personDepartments[1].dataset.line
   let tasks_list = document.querySelectorAll(".task-card-item")
   const socket_task = new WebSocket(`ws://192.168.211.1/ws/task-transfer/${name_line}`); //На сервере
   // const socket_task = new WebSocket(`ws://127.0.0.1:8000/ws/task-transfer/${name_line}`); //На домашней машине
@@ -18,21 +22,28 @@ $(document).ready(function() {
 
   socket_task.onmessage = function(event) {
     const data = JSON.parse(event.data);
-    if (data.type == "Welcome"){
+    if (data.type === "Welcome"){
       // alert(`Успешно подключились к серверу AT-Manager. Производственная линия № ${name_line}`)
-    } else if (data.type == "new_task") {
+    } else if (data.type === "new_task") {
       ws_add_new_task(data['content'])
-    } else if  (data.type == 'change_task') {
+    } else if  (data.type === 'change_task') {
       alert(`Статус задачи "${data['content']['task_name']}" № ${data['content']['id']} от ${data['content']['task_timedate_start']} изменен на "${data['content']['task_status']}"`)
-      if (data['content']['task_status_id']==5 || data['content']['task_status_id']==6) {
-        document.querySelector(`.task-card-item[data-itemId="${data['content']['id']}"]`).remove()  
+      if (data['content']['task_status_id']===5 || data['content']['task_status_id']===6) {
+        const taskCard = document.querySelector(`.task-card-item[data-itemId="${data['content']['id']}"]`)
+        if (taskCard) {
+          taskCard.remove()
+        }
       }
-    } else if (data.type == 'change_profile_amount') {
+    } else if (data.type === 'change_profile_amount') {
       
       const profile_now = data.content
       const active_item = document.querySelector('.task-card-item[data-category-id="3"]');
-      const active_input = active_item.querySelector('.right-side__current-quantity__amount')
-      active_input.value = profile_now;
+      if (active_item) {
+        const active_input = active_item.querySelector('.right-side__current-quantity__amount')
+        if (active_input) {
+          active_input.value = profile_now;
+        }
+      }
     }
 
   };
@@ -56,7 +67,7 @@ $(document).ready(function() {
   let list_task = document.querySelectorAll('.task-card-item[data-category="Выполняется"]')
   for (const task of list_task) {
     const task_id = task.dataset.itemid
-    if (task.dataset.video == 'True') {
+    if (task.dataset.video === 'True') {
         videoStream(task_id)
     } else {
       alert('Автоматическое определение количества профиля для текущего типа недоступно. Пожалуйста, добавляйте вручную')
@@ -89,26 +100,22 @@ if (enabled_task) {
 
 
 async function videoStream() {
+  if (!checkboxAutoVision || !callButton) {
+    return;
+  }
   if (checkboxAutoVision.checked) {
       alert('В данный момент осуществляется автоматическое определение количества профиля');
   } else {
       return;
   }
-  console.log('Start Camera button clicked');
   try {
-    console.log('Requesting camera access...');
-    
     try {
       localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-      console.log('Camera access granted, setting video source');
       videoElement.srcObject = localStream;
       callButton.disabled = false;
       callButton.click();
       // startButton.disabled = true;
-      console.log('Camera started successfully');
     } catch (cameraError) {
-      console.log('Camera not available, creating synthetic video stream');
-      
       // Create synthetic video stream for testing
       const canvas = document.createElement('canvas');
       canvas.width = 320;
@@ -150,7 +157,6 @@ async function videoStream() {
       callButton.disabled = false;
       callButton.click();
       // startButton.disabled = true;
-      console.log('Synthetic camera started successfully');
     }
   } catch (e) {
     console.error('Error starting video:', e);
@@ -167,7 +173,6 @@ if (callButton) {
     ws = new WebSocket(serverUrl);
 
     ws.onopen = () => {
-      console.log('WebSocket connected');
       // Отправляем предложение SDP на сервер
       createOfferAndSend();
     };
@@ -181,13 +186,11 @@ if (callButton) {
         addIceCandidate(message.candidate);
       } else if (message.type === 'detection_result') {
         // Обрабатываем результаты обнаружения объектов
-        console.log('Обнаруженные объекты:', message.objects);
         // TODO: Если требуется, то отражаем результаты на странице
       }
     };
 
     ws.onclose = () => {
-      console.log('WebSocket disconnected');
     };
 
     ws.onerror = (error) => {
@@ -238,55 +241,43 @@ async function createPeerConnection() {
   };
   
   peerConnection = new RTCPeerConnection(configuration);
-  console.log('PeerConnection created with STUN/TURN servers');
-
   peerConnection.onicecandidate = (event) => {
     if (event.candidate) {
-      console.log('Generated ICE candidate:', event.candidate.type, event.candidate.candidate);
         sendIceCandidate(event.candidate);
       // Отправляем ICE candidate на сервер
       
     } else {
-      console.log('ICE candidate gathering completed');
     }
   };
 
   peerConnection.oniceconnectionstatechange = () => {
-    console.log('ICE connection state changed to:', peerConnection.iceConnectionState);
     if (peerConnection.iceConnectionState === 'failed') {
       console.error('ICE connection failed - NAT traversal unsuccessful');
     } else if (peerConnection.iceConnectionState === 'connected') {
-      console.log('ICE connection established successfully!');
     } else if (peerConnection.iceConnectionState === 'disconnected') {
       console.warn('ICE connection disconnected');
     }
   };
 
   peerConnection.onicegatheringstatechange = () => {
-    console.log('ICE gathering state changed to:', peerConnection.iceGatheringState);
     if (peerConnection.iceGatheringState === 'complete') {
-      console.log('All ICE candidates have been gathered');
     }
   };
 
   peerConnection.onconnectionstatechange = () => {
-    console.log('Connection state changed to:', peerConnection.connectionState);
     if (peerConnection.connectionState === 'failed') {
       console.error('Peer connection failed completely');
     } else if (peerConnection.connectionState === 'connected') {
-      console.log('Peer connection established successfully!');
     }
   };
 
   peerConnection.ontrack = (event) => {
-    console.log('Received remote track:', event.track.kind);
     if (event.track.kind === 'video') {
       // Display the processed video from server
       // remoteVideoElement.srcObject = event.streams[0];
       const profileType = remoteVideoElement.dataset.profiletype
       const input_element = enabled_task.querySelector('.right-side__current-quantity__amount')
       remoteVideoElement.innerHTML = `<p>Ведется работа...</p> <p>Тип профиля: ${profileType}</p><p>Для отмены снимите галочку с поля "Включить автоматическое распознование"</p>`
-      console.log('Remote video stream set');
     }
   };
 
@@ -355,9 +346,12 @@ function hangup() {
     ws.close();
     ws = null;
   }
-  callButton.disabled = false;
-  hangupButton.disabled = true;
-  startButton.disabled = false;
+  if (callButton) {
+    callButton.disabled = false;
+  }
+  if (hangupButton) {
+    hangupButton.disabled = true;
+  }
 }
 
 
@@ -367,26 +361,43 @@ function hangup() {
 $(document).ready(function() {
 
   const auto_vision_checkbox = document.querySelectorAll('#automatic-vision-checkbox[data-statusId="3"]');
+  const activeTask = document.querySelector('.task-card-item[data-category-id="3"]')
+  if (!activeTask) {
+    return;
+  }
   // console.log(auto_vision_checkbox)
   
   for (const checkbox of auto_vision_checkbox) {
-    const input_profile_amount = document.querySelector('.task-card-item[data-category-id="3"]').querySelector('.right-side__current-quantity__amount')
+    const input_profile_amount = activeTask.querySelector('.right-side__current-quantity__amount')
+    if (!input_profile_amount) {
+      continue;
+    }
     if (checkbox) {
       if (checkbox.checked) {
         input_profile_amount.disabled = true
-        callButton.click();
+        if (callButton) {
+          callButton.click();
+        }
       } else {
         input_profile_amount.disabled = false
-        hangupButton.click();
-        remoteVideoElement.innerHTML = `<p>Автоматическая фиксация выключена....</p> <p>Количество изготовленного профиля нужно вводить самостоятельно</p><p>Для старта автоматической фиксации поставьте галочку в поле "Включить автоматическое распознование"</p>`
+        if (hangupButton) {
+          hangupButton.click();
+        }
+        if (remoteVideoElement) {
+          remoteVideoElement.innerHTML = `<p>Автоматическая фиксация выключена....</p> <p>Количество изготовленного профиля нужно вводить самостоятельно</p><p>Для старта автоматической фиксации поставьте галочку в поле "Включить автоматическое распознование"</p>`
+        }
         }
       checkbox.addEventListener('change', (event)=> {
         if (!checkbox.checked) {
-          remoteVideoElement.innerHTML = `<p>Автоматическая фиксация выключена....</p> <p>Количество изготовленного профиля нужно вводить самостоятельно</p><p>Для старта автоматической фиксации поставьте галочку в поле "Включить автоматическое распознование"</p>`
-          hangupButton.click(); 
+          if (remoteVideoElement) {
+            remoteVideoElement.innerHTML = `<p>Автоматическая фиксация выключена....</p> <p>Количество изготовленного профиля нужно вводить самостоятельно</p><p>Для старта автоматической фиксации поставьте галочку в поле "Включить автоматическое распознование"</p>`
+          }
+          if (hangupButton) {
+            hangupButton.click();
+          }
         }
 
-        const task_id = document.querySelector('.task-card-item[data-category-id="3"]').dataset.itemid
+        const task_id = activeTask.dataset.itemid
         fetch(`/change-task-automatic-vision/${task_id}/${checkbox.checked}`, {
             method: 'POST',
             headers: {
@@ -398,7 +409,6 @@ $(document).ready(function() {
             response.json()
           })
           .then(data=> {
-            console.log(data)
           })
         if (checkbox.checked) {
           input_profile_amount.disabled = true
