@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+{% load static %}
+{% if user.is_authenticated %}
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{% static "css/normalize.css" %}">
+  <link rel="stylesheet" href="{% static "css/style.css" %}">
+  <link rel="stylesheet" href="{% static "css/master.css" %}">
+  <link rel="stylesheet" href="{% static "css/services_panel.css" %}">
+  <link rel="stylesheet" href="{% static "css/services_panel_media.css" %}">
+  <title>AT-Manager (Панель сервисов)</title>
+</head>
+<body>
+  <header class="header">
+    <div class="wrapper">
+      <div class="header-content">
+        <div class="header__lef-side">
+          <div class="header-logo">
+            <span class="logo-title">AT-Manager</span>
+          </div>
+        </div>
+        <div class="header__right__side">
+          <div class="person-info">
+            <span class="person-info__name">{{ user.last_name }} {{ user.first_name }}</span>
+            <span class="person-info__department">{{ user.position_id.position }}</span>
+            <span class="person-info__department">{{ user.production_area }}</span>
+          </div>
+          <div class="logout">
+            <a href="{% url 'users:logout' %}" class="logout-link">Выход</a>
+          </div>
+        </div>
+      </div>
+      <div class="header-border"></div>
+    </div>
+  </header>
+
+  <section class="main services-main">
+    <div class="wrapper">
+      <div class="services-intro">
+        <h1 class="services-intro__title">Панель сервисов</h1>
+        <p class="services-intro__subtitle">Выберите рабочую область для продолжения работы.</p>
+      </div>
+
+      <div class="services-grid">
+        {% if is_admin or is_master %}
+        <a class="service-card" href="/master">
+          <div class="service-card__head">
+            <div class="service-card__icon-wrap">
+              <img src="{% static "img/Master.svg" %}" alt="Master">
+            </div>
+            <span class="service-card__status service-card__status--ok">Доступно</span>
+          </div>
+          <h2 class="service-card__title">Master</h2>
+          <p class="service-card__desc">Управление заданиями, запуск и контроль выполнения по линии.</p>
+          <span class="service-card__action">Открыть</span>
+        </a>
+        {% endif %}
+
+        {% if is_admin %}
+        <a class="service-card" href="/worker">
+          <div class="service-card__head">
+            <div class="service-card__icon-wrap">
+              <img src="{% static "img/device-electronic-machine.svg" %}" alt="Worker">
+            </div>
+            <span class="service-card__status service-card__status--ok">Доступно</span>
+          </div>
+          <h2 class="service-card__title">Worker</h2>
+          <p class="service-card__desc">Рабочее место исполнителя: выполнение сменного задания, списание штрипсов, AI-vision</p>
+          <span class="service-card__action">Открыть</span>
+        </a>
+        {% endif %}
+
+        {% if is_admin or is_master %}
+        <a class="service-card" href="/analytics">
+          <div class="service-card__head">
+            <div class="service-card__icon-wrap">
+              <img src="{% static "img/analytics.svg" %}" alt="Analytics">
+            </div>
+            <span class="service-card__status service-card__status--ok">Доступно</span>
+          </div>
+          <h2 class="service-card__title">Analytics</h2>
+          <p class="service-card__desc">Метрики, отчеты и аналитика производственного процесса.</p>
+          <span class="service-card__action">Открыть</span>
+        </a>
+        {% endif %}
+
+        {% if is_admin %}
+        <a class="service-card" href="{% url 'admin:index' %}">
+          <div class="service-card__head">
+            <div class="service-card__icon-wrap">
+              <img src="{% static "img/setting-configuration.svg" %}" alt="Admin Tools">
+            </div>
+            <span class="service-card__status service-card__status--ok">Доступно</span>
+          </div>
+          <h2 class="service-card__title">Admin Tools</h2>
+          <p class="service-card__desc">Сервисный раздел для расширенных операций и конфигурации.</p>
+          <span class="service-card__action">Открыть</span>
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+</body>
+</html>
+{% endif %}

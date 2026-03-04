@@ -9,5 +9,5 @@ from django.contrib import admin
 from . import views
 
 urlpatterns = [
-    # path('', include('login.urls', namespace='users')),
+    path('', views.services_panel_home, name='services_panel'),
 ]

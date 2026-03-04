@@ -13,7 +13,7 @@ app_name = 'users'
 
 urlpatterns = [    
     path('login/', views.LoginUser.as_view(redirect_authenticated_user=True), name='login'),
-    path('', views.LoginUser.as_view(redirect_authenticated_user=True), name='login'),
+    path('', views.root_redirect, name='root'),
     path('logout/', views.logout_user, name='logout'),
     path('qr-login/', views.qr_login, name='qr_login'),
 ]

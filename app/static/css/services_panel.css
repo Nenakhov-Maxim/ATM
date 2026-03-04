@@ -1,0 +1,119 @@
+.services-main {
+  padding: 20px 15px 30px 15px;
+}
+
+.services-intro {
+  background: #000;
+  color: #fff;
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 18px;
+}
+
+.services-intro__title {
+  font-family: 'Rosatom-bold';
+  font-size: 26px;
+  margin: 0 0 8px 0;
+}
+
+.services-intro__subtitle {
+  margin: 0;
+  color: #D9D5EC;
+  font-size: 14px;
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.service-card {
+  display: block;
+  text-decoration: none;
+  color: #111;
+  border: 1px solid #D9D5EC;
+  border-radius: 14px;
+  background: #fff;
+  padding: 16px;
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+
+.service-card:hover {
+  transform: translateY(-2px);
+  border-color: #C21500;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+}
+
+.service-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.service-card__icon-wrap {
+  width: 42px;
+  height: 42px;
+  background: #000;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.service-card__icon-wrap img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.service-card__status {
+  font-size: 11px;
+  border-radius: 999px;
+  padding: 4px 8px;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  font-family: 'Rosatom-bold';
+}
+
+.service-card__status--ok {
+  color: #fff;
+  background: #C21500;
+}
+
+.service-card__status--limited {
+  color: #333;
+  background: #D9D5EC;
+}
+
+.service-card__title {
+  margin: 0 0 8px 0;
+  font-family: 'Rosatom-bold';
+  font-size: 22px;
+}
+
+.service-card__desc {
+  margin: 0 0 14px 0;
+  color: #555;
+  font-size: 14px;
+  line-height: 1.35;
+  min-height: 38px;
+}
+
+.service-card__action {
+  display: inline-block;
+  background: #000;
+  color: #fff;
+  border-radius: 9px;
+  font-size: 12px;
+  padding: 7px 10px;
+  text-transform: uppercase;
+  font-family: 'Rosatom-bold';
+}
+
+.service-card--disabled {
+  pointer-events: none;
+  opacity: .62;
+  filter: grayscale(.1);
+}

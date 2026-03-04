@@ -3,7 +3,7 @@ from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonRes
 from django.shortcuts import redirect
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.forms import AuthenticationForm
-from django.urls import reverse_lazy, reverse
+from django.urls import reverse
 from .forms import LoginForm
 from .utils import DataMixin
 from django.contrib.auth import authenticate, login, logout
@@ -13,6 +13,20 @@ import json
 from .models import User
 
 
+def get_redirect_url_for_user(user):
+  """Return start page by role: worker-only -> worker app, others -> services panel."""
+  if is_worker_only(user):
+    return reverse('worker')
+  return reverse('services_panel')
+
+
+def is_worker_only(user):
+  perms = user.get_group_permissions()
+  has_worker_perm = 'worker.change_workertypeproblem' in perms
+  has_master_perms = any(perm.startswith('master.') for perm in perms)
+  return has_worker_perm and not has_master_perms and not user.is_superuser and not user.is_staff
+
+
 class LoginUser(LoginView):
   form_class = LoginForm
   template_name = 'login.html'
@@ -20,15 +34,13 @@ class LoginUser(LoginView):
     
   
   def get_success_url(self):    
-    if self.request.user.is_superuser:
-      # 'Перенаправляем на admin-панель'
-      return reverse_lazy('admin:index')
-    elif 'master.view_tasks' in self.request.user.get_group_permissions():      
-      # 'Перенаправляем на master'
-      return reverse_lazy('master')
-    elif 'worker.change_workertypeproblem' in self.request.user.get_group_permissions():      
-      # 'Перенаправляем на worker'
-      return reverse_lazy('worker')    
+    return get_redirect_url_for_user(self.request.user)
+
+
+def root_redirect(request):
+  if not request.user.is_authenticated:
+    return redirect('users:login')
+  return redirect(get_redirect_url_for_user(request.user))
  
 
 @csrf_exempt
@@ -60,14 +72,7 @@ def qr_login(request):
         login(request, user)
         
         # Определение URL для перенаправления
-        if user.is_superuser:
-            redirect_url = reverse('admin:index')
-        elif 'master.view_tasks' in user.get_group_permissions():
-            redirect_url = reverse('master')
-        elif 'worker.change_workertypeproblem' in user.get_group_permissions():
-            redirect_url = reverse('worker')
-        else:
-            redirect_url = reverse('users:login')
+        redirect_url = get_redirect_url_for_user(user)
         
         return JsonResponse({
             'success': True,
