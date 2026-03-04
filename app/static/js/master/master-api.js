@@ -1,9 +1,7 @@
 // ===== Materials Fetch API =====
 let type_profile_input = new_task_popup.querySelector('.popup-content-block__type-profile')
 console.log(type_profile_input)
-type_profile_input.addEventListener('change', (event)=> {
-  const profile_id = event.target.value
-  // Отправка id на сервер и получение списка материалов для выбранного профиля
+function load_materials_by_profile(profile_id) {
   fetch('get-material/', {
       method: 'POST',
       headers: {
@@ -36,6 +34,12 @@ type_profile_input.addEventListener('change', (event)=> {
   .catch(error => {
       console.error('Ошибка:', error);
   });
+}
+
+type_profile_input.addEventListener('change', (event)=> {
+  const profile_id = event.target.value
+  // Отправка id на сервер и получение списка материалов для выбранного профиля
+  load_materials_by_profile(profile_id)
 })
 
 
