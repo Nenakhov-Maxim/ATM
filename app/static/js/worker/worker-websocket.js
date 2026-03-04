@@ -1,4 +1,5 @@
-//Взаимодействие клиента с сервером по вебсоккету
+// ===== Task WebSocket =====
+// Взаимодействие клиента с сервером по вебсоккету
 
 $(document).ready(function() {
   let task_id_list = {}
@@ -7,11 +8,8 @@ $(document).ready(function() {
   const socket_task = new WebSocket(`ws://192.168.211.1/ws/task-transfer/${name_line}`); //На сервере
   // const socket_task = new WebSocket(`ws://127.0.0.1:8000/ws/task-transfer/${name_line}`); //На домашней машине
 
-  for (const key in tasks_list) {
-    if (Object.prototype.hasOwnProperty.call(tasks_list, key)) {
-      const element = tasks_list[key];      
-      task_id_list[element.dataset.itemid] = element.dataset.categoryId      
-    }
+  for (const element of tasks_list) {
+    task_id_list[element.dataset.itemid] = element.dataset.categoryId
   }
 
   socket_task.onopen = function() {
@@ -31,9 +29,10 @@ $(document).ready(function() {
       }
     } else if (data.type == 'change_profile_amount') {
       
-      profile_now = data.content
-      active_item = document.querySelector('.task-card-item[data-category-id="3"]');
-      active_input = active_item.querySelector('.right-side__current-quantity__amount').value = profile_now;
+      const profile_now = data.content
+      const active_item = document.querySelector('.task-card-item[data-category-id="3"]');
+      const active_input = active_item.querySelector('.right-side__current-quantity__amount')
+      active_input.value = profile_now;
     }
 
   };
@@ -50,20 +49,17 @@ $(document).ready(function() {
  //  
 })
 
+// ===== Video WebSocket / WebRTC =====
 // Передача видео через websocket (Необходимо раскомментить, как только подключу камеру!)
 
 $(document).ready(function() {
   let list_task = document.querySelectorAll('.task-card-item[data-category="Выполняется"]')
-  for (const elem in list_task) {
-    if (Object.prototype.hasOwnProperty.call(list_task, elem)) {
-      const task = list_task[elem];
-      let task_id = task.dataset.itemid
-      if (task.dataset.video == 'True') {
-          videoStream(task_id)  
-      } else {
-        alert('Автоматическое определение количества профиля для текущего типа недоступно. Пожалуйста, добавляйте вручную')
-      }   
-      
+  for (const task of list_task) {
+    const task_id = task.dataset.itemid
+    if (task.dataset.video == 'True') {
+        videoStream(task_id)
+    } else {
+      alert('Автоматическое определение количества профиля для текущего типа недоступно. Пожалуйста, добавляйте вручную')
     }
   }
 })
@@ -74,6 +70,7 @@ let videoElement
 let remoteVideoElement 
 let callButton
 let hangupButton
+let checkboxAutoVision
 let localStream;
 let peerConnection;
 
@@ -286,8 +283,8 @@ async function createPeerConnection() {
     if (event.track.kind === 'video') {
       // Display the processed video from server
       // remoteVideoElement.srcObject = event.streams[0];
-      profileType = remoteVideoElement.dataset.profiletype
-      input_element = enabled_task.querySelector('.right-side__current-quantity__amount')
+      const profileType = remoteVideoElement.dataset.profiletype
+      const input_element = enabled_task.querySelector('.right-side__current-quantity__amount')
       remoteVideoElement.innerHTML = `<p>Ведется работа...</p> <p>Тип профиля: ${profileType}</p><p>Для отмены снимите галочку с поля "Включить автоматическое распознование"</p>`
       console.log('Remote video stream set');
     }
@@ -312,7 +309,7 @@ async function createOfferAndSend() {
 
 async function setRemoteDescription(sdp) {
   try {
-    remote_answer = {type: 'answer', sdp: sdp}
+    const remote_answer = {type: 'answer', sdp: sdp}
     await peerConnection.setRemoteDescription(remote_answer);
     // ws.send(JSON.stringify(remote_answer))
   } catch (e) {
@@ -329,7 +326,7 @@ async function addIceCandidate(candidate) {
 }
 
 function sendIceCandidate(candidate) {
-  candidate_new = {
+  const candidate_new = {
     'candidate': candidate.candidate,
     'foundation': candidate.foundation,
     'ip': candidate.address || candidate.ip,
@@ -364,6 +361,7 @@ function hangup() {
 }
 
 
+// ===== Auto Vision Toggle =====
 // Работа чекбокса "включить автоматическое распознование"
 
 $(document).ready(function() {
@@ -371,8 +369,8 @@ $(document).ready(function() {
   const auto_vision_checkbox = document.querySelectorAll('#automatic-vision-checkbox[data-statusId="3"]');
   // console.log(auto_vision_checkbox)
   
-  for (checkbox of auto_vision_checkbox) {
-    input_profile_amount = document.querySelector('.task-card-item[data-category-id="3"]').querySelector('.right-side__current-quantity__amount')
+  for (const checkbox of auto_vision_checkbox) {
+    const input_profile_amount = document.querySelector('.task-card-item[data-category-id="3"]').querySelector('.right-side__current-quantity__amount')
     if (checkbox) {
       if (checkbox.checked) {
         input_profile_amount.disabled = true
@@ -388,7 +386,7 @@ $(document).ready(function() {
           hangupButton.click(); 
         }
 
-        task_id = document.querySelector('.task-card-item[data-category-id="3"]').dataset.itemid
+        const task_id = document.querySelector('.task-card-item[data-category-id="3"]').dataset.itemid
         fetch(`/change-task-automatic-vision/${task_id}/${checkbox.checked}`, {
             method: 'POST',
             headers: {

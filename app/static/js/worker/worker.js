@@ -1,5 +1,5 @@
 // Worker entrypoint.
-// Functional code is split into:
-// - worker/worker-api.js
-// - worker/worker-ui.js
-// - worker/worker-websocket.js
+// Module map:
+// - worker/worker-api.js: server requests and task action API
+// - worker/worker-ui.js: rendering, pagination, timers, UI handlers
+// - worker/worker-websocket.js: task websocket + video websocket/webrtc

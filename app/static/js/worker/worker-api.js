@@ -1,11 +1,12 @@
-//Запуск задачи в работу
+// ===== Task Actions API =====
+// Запуск задачи в работу
 function start_working(e) {
   let elem = e.closest(".task-card-item")  
   let task_id = elem.dataset.itemid
   let link = 'start_working/'
   let data = {'id_task':task_id}
   let type_request = 'GET'
-  start_time_from_data = document.querySelectorAll('.task-card-item[data-category="Выполняется"]')    
+  const start_time_from_data = document.querySelectorAll('.task-card-item[data-category="Выполняется"]')
   if (start_time_from_data.length > 0)  {
     alert('Нельзя запустить несколько задач одновременно. Пожалуйста завершите другие задачи.')
   } else {
@@ -57,7 +58,7 @@ function paused_task(e) {
 
 // Завершение выпонения задания
 function complete_task(e) {
-  let task = e.closest(".task-card-item");  ;    
+  let task = e.closest(".task-card-item")
   let id_task = task.dataset.itemid;
   let main_block_task = $(`.task-card-item[data-itemid=${id_task}]`)[0]    
   let plan_profile_amount = main_block_task.querySelector('.right-side__required-quantity__amount').innerText
@@ -74,7 +75,7 @@ function complete_task(e) {
 
 //Пересменка
 function shiftChange(e) {
-  let task = e.closest(".task-card-item");  ;    
+  let task = e.closest(".task-card-item")
   let id_task = task.dataset.itemid;
   let main_block_task = $(`.task-card-item[data-itemid=${id_task}]`)[0]
   let fact_profile_amount = main_block_task.querySelector('.right-side__current-quantity__amount').value
@@ -85,7 +86,8 @@ function shiftChange(e) {
   ajax_request(link, type_request, data)
 }
 
-//Функция отправки запросов серверу
+// ===== Shared AJAX =====
+// Функция отправки запросов серверу
 function ajax_request(url, type,  data) {  
   // console.log(url)
   $.ajax({

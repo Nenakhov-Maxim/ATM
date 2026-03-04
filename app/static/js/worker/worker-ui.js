@@ -1,3 +1,4 @@
+// ===== Task Card Rendering =====
 function ws_add_new_task(data){
   let date_start = new Date(data['task_timedate_start']) 
   let date_end = new Date(data['task_timedate_end']) 
@@ -317,7 +318,8 @@ function ws_add_new_task(data){
   cards_wrapper.prepend(div_main)
 }
 
-//Действие при измнении количества записей на листе
+// ===== Pagination =====
+// Действие при измнении количества записей на листе
 let start_value = 0
 let all_cards = document.querySelectorAll('.task-card-item')
 
@@ -365,6 +367,7 @@ function left_in_page() {
   } 
 }
 
+// ===== Timers =====
 // работа таймера
 let seconds = 0;
 let minutes = 0;
@@ -379,7 +382,7 @@ let timer_end_split
 
 
 $(document).ready(function() {  
-  start_time_from_data = document.querySelectorAll('span[data-datestartfact]:not([data-datestartfact=""])')
+  const start_time_from_data = document.querySelectorAll('span[data-datestartfact]:not([data-datestartfact=""])')
   for (let i = 0; i < start_time_from_data.length; i++) {
     let now = new Date();
     const element = start_time_from_data[i];
@@ -427,57 +430,57 @@ function updateTime_end() {
   timer_end.textContent = `Осталось времени: ${hours_end.toString().padStart(2, '0')}:${minutes_end.toString().padStart(2, '0')}:${seconds_end.toString().padStart(2, '0')}`;
 }
 
-//Открытие и закрытие дополнительной информации по задаче
+// ===== Card UI Events =====
+// Открытие и закрытие дополнительной информации по задаче
 function more_information_click(e) {  
   let card_item = e.closest(".task-card-item")
   card_item.querySelector('.task-card__more-information__wrapper').classList.toggle('disable')  
 }
 
 
+// ===== Manual Profile Amount Input =====
 // Изменение количества профиля вручную на наладке (на выполнении меняется через вебсоккет)
 $(document).ready(function(){
   //С камерой - document.querySelectorAll('.task-card-item[data-category="Наладка"]')
   // Без камеры - document.querySelectorAll('.task-card-item[data-category="Выполняется"], .task-card-item[data-category="Наладка"]')
   let profile_amount_input = document.querySelectorAll('.task-card-item[data-category="Выполняется"], .task-card-item[data-category="Наладка"]')
-  for (const item in profile_amount_input) {
-    if (Object.prototype.hasOwnProperty.call(profile_amount_input, item)) {
-      const card_element = profile_amount_input[item];
-      let id_task = card_element.dataset.itemid                
-      input_element = card_element.querySelector('.right-side__current-quantity__amount')
-               
-      input_element.addEventListener('keypress', function(e){        
-        var key = e.which;
-        if(key == 13)  {
-          e.target.blur()}})
-      input_element.addEventListener('blur', (e) =>{
-        let value = 0        
-        let input_data = e.target.value
-        if (input_data.includes('+')) {
-          let arr_data = input_data.split('+')
-          for (let i = 0; i < arr_data.length; i++) {
-            const element = Number(arr_data[i]);
-            value = value + element
-          }
-          // value = Number(arr_data[0]) + Number(arr_data[1])
-        } else {
-          value = e.target.value          
+  for (const card_element of profile_amount_input) {
+    let id_task = card_element.dataset.itemid                
+    const input_element = card_element.querySelector('.right-side__current-quantity__amount')
+             
+    input_element.addEventListener('keypress', function(e){        
+      var key = e.which;
+      if(key == 13)  {
+        e.target.blur()}})
+    input_element.addEventListener('blur', (e) =>{
+      let value = 0        
+      let input_data = e.target.value
+      if (input_data.includes('+')) {
+        let arr_data = input_data.split('+')
+        for (let i = 0; i < arr_data.length; i++) {
+          const element = Number(arr_data[i]);
+          value = value + element
         }
-       
-        if (Number.isNaN(Number(value))) {
-          alert('Неверное значение количества профиля. Допустимы числа и операция сложения')
-        } else {
-          let link = 'edit-profile-amount-value/'
-          let data = {'id_task': id_task, 'value':Number(value)}
-          let type_request = 'GET'         
-          ajax_request(link, type_request, data)
-          e.target.value = value    
-        }
-            
-      })
-    }
+        // value = Number(arr_data[0]) + Number(arr_data[1])
+      } else {
+        value = e.target.value          
+      }
+     
+      if (Number.isNaN(Number(value))) {
+        alert('Неверное значение количества профиля. Допустимы числа и операция сложения')
+      } else {
+        let link = 'edit-profile-amount-value/'
+        let data = {'id_task': id_task, 'value':Number(value)}
+        let type_request = 'GET'         
+        ajax_request(link, type_request, data)
+        e.target.value = value    
+      }
+          
+    })
   }
 })
 
+// ===== Keyboard Shortcut =====
 // При нажатии Shift + фокус на окне добавления и поставить плюс
 
 document.addEventListener('DOMContentLoaded', (event)=> {
@@ -485,10 +488,10 @@ document.addEventListener('DOMContentLoaded', (event)=> {
     if (event.shiftKey) {
       if (event.key == '+') {
         event.preventDefault();
-        value_input = document.querySelector('.task-card-item[data-category-id="3"').querySelector('.right-side__current-quantity__amount');
+        const value_input = document.querySelector('.task-card-item[data-category-id="3"').querySelector('.right-side__current-quantity__amount');
         value_input.focus();
-        old_value = value_input.value;
-        new_value = String(old_value) + '+';
+        const old_value = value_input.value;
+        const new_value = String(old_value) + '+';
         value_input.value = new_value
       }
     }
