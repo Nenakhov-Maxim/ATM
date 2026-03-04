@@ -1,7 +1,8 @@
+// ===== Materials Fetch API =====
 let type_profile_input = new_task_popup.querySelector('.popup-content-block__type-profile')
 console.log(type_profile_input)
 type_profile_input.addEventListener('change', (event)=> {
-  profile_id = event.target.value
+  const profile_id = event.target.value
   // Отправка id на сервер и получение списка материалов для выбранного профиля
   fetch('get-material/', {
       method: 'POST',
@@ -15,13 +16,13 @@ type_profile_input.addEventListener('change', (event)=> {
   .then(response => response.json())
   .then(data => {
       if (data.success) {
-          type_material_select = new_task_popup.querySelector('#id_task_type_material')
+          const type_material_select = new_task_popup.querySelector('#id_task_type_material')
           type_material_select.innerHTML = ""
           for (const key in data.data) {
             console.log(data.data)
             if (Object.prototype.hasOwnProperty.call(data.data, key)) {
               const element = data.data[key];
-              new_option = document.createElement('option')
+              const new_option = document.createElement('option')
               new_option.innerHTML = element
               new_option.value = key
               type_material_select.append(new_option)
@@ -38,7 +39,8 @@ type_profile_input.addEventListener('change', (event)=> {
 })
 
 
-//Запуск, приостановка, удаление задачи
+// ===== Task Start/Pause =====
+// Запуск, приостановка, удаление задачи
 $(document).ready(function() {
 
   $('.more-info-popup__start-task').click(function(){
@@ -79,7 +81,8 @@ $(document).ready(function() {
   });
 });
 
-//Удаление задачи
+// ===== Task Delete =====
+// Удаление задачи
 $(document).ready(function() {
 
   $('.more-info-popup__delete-task').click(function(){
@@ -116,7 +119,8 @@ $(document).ready(function() {
   });
 });
 
-//Cкрыть задачу
+// ===== Task Hide =====
+// Cкрыть задачу
 $(document).ready(function() {
 
   $('.more-info-popup__hide-task').click(function(){
@@ -153,7 +157,8 @@ $(document).ready(function() {
   });
 });
 
-//Открытие окна редактирования задачи
+// ===== Task Edit =====
+// Открытие окна редактирования задачи
 $(document).ready(function() {
   $('.more-info-popup__edit-task').click(function(){
     edit_task_popup.classList.toggle('disable')

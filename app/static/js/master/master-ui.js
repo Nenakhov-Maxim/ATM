@@ -1,16 +1,13 @@
-
-//Панель мастера
-//История задачи приклике на стрелку вниз
+// ===== Task Cards UI =====
+// Панель мастера
+// История задачи при клике на стрелку вниз
 
 // const { createElement } = require("react");
 
 let cards_task = document.querySelectorAll('.task-card-item')
-for (const key in cards_task) {
-  if (Object.prototype.hasOwnProperty.call(cards_task, key)) {
-    const card_item = cards_task[key];
-    let id_task = card_item.dataset.itemid    
-    card_item.querySelector('.toolbar-item__history__svg').addEventListener('click', () => open_task_history(id_task, card_item))
-}
+for (const card_item of cards_task) {
+  let id_task = card_item.dataset.itemid    
+  card_item.querySelector('.toolbar-item__history__svg').addEventListener('click', () => open_task_history(id_task, card_item))
 }
 
 function open_task_history(id_task, card_item) {
@@ -24,24 +21,19 @@ function open_task_history(id_task, card_item) {
   }
 };
 
-//Опции по задаче
+// ===== Task Actions Popup =====
+// Опции по задаче
 
-for (const key in cards_task) {
-  if (Object.prototype.hasOwnProperty.call(cards_task, key)) {
-    const card_item = cards_task[key];
-    let id_task = card_item.dataset.itemid    
-    card_item.querySelector('.more-info__text, .actions__more-info').addEventListener('click', () => open_actions(card_item))
-  }
+for (const card_item of cards_task) {
+  let id_task = card_item.dataset.itemid    
+  card_item.querySelector('.more-info__text, .actions__more-info').addEventListener('click', () => open_actions(card_item))
 }
 //Скрытие опций при клике в любом другом месте
 document.addEventListener('mouseup', function (e) {   
   let popup_action = document.querySelectorAll('.more-info-popup');
-  for (const key in popup_action) {
-    if (Object.prototype.hasOwnProperty.call(popup_action, key)) {
-      const element = popup_action[key];           
-      if (e.target.closest(".more-info-popup") && (e.target.classList != 'close-popup')) return;
-      element.classList.add("disable");
-    }
+  for (const element of popup_action) {
+    if (e.target.closest(".more-info-popup") && (e.target.classList != 'close-popup')) return;
+    element.classList.add("disable");
   }  
   
 });
@@ -63,28 +55,20 @@ function close_action(e) {
 }
 
 
+// ===== Header Menu =====
 // Переключение меню
 let menu_items = document.querySelectorAll('.header-menu-item')
 
-for (const key in menu_items) {
-
-  if (Object.prototype.hasOwnProperty.call(menu_items, key)) {
-    const menu_item = menu_items[key];        
-    menu_item.addEventListener('click', () => toggle_menu(menu_item))
-  }
+for (const menu_item of menu_items) {
+  menu_item.addEventListener('click', () => toggle_menu(menu_item))
 };
 
 function toggle_menu(menu_item) {
-  for (const key in menu_items) {
-
-    if (Object.prototype.hasOwnProperty.call(menu_items, key)) {
-      const item = menu_items[key];   
-
-      if (item.classList.contains('active')) {
-        item.classList.remove('active')
-      }
+  for (const item of menu_items) {
+    if (item.classList.contains('active')) {
+      item.classList.remove('active')
     }
-  };
+  }
 
   menu_item.classList.add('active')
   filter_task(menu_item.outerText)
@@ -94,16 +78,11 @@ function toggle_menu(menu_item) {
 window.onload = () => load_window()
 
 function load_window() {  
-  for (const key in menu_items) {
-
-    if (Object.prototype.hasOwnProperty.call(menu_items, key)) {
-      const menu_item = menu_items[key];  
-
-      if (menu_item.outerText === 'Все задачи') {
-        menu_item.classList.add('active')
-      }
+  for (const menu_item of menu_items) {
+    if (menu_item.outerText === 'Все задачи') {
+      menu_item.classList.add('active')
     }
-  };
+  }
 };
 
 //Отображение задач при выборе фильтра (надо переделать будет ;))
@@ -112,77 +91,59 @@ function filter_task(filter)  {
   let task_item = document.querySelectorAll('.task-card-item')  
   switch (filter) {
     case 'Все задачи':      
-      for (const key in task_item) {        
-        if (Object.prototype.hasOwnProperty.call(task_item, key)) {
-          const item = task_item[key];
-          if (item.classList.contains('disable')) {
-            item.classList.remove('disable')
-          }          
+      for (const item of task_item) {
+        if (item.classList.contains('disable')) {
+          item.classList.remove('disable')
         }
       }
       break;
       case 'Выполняются':        
-        for (const key in task_item) {
-          if (Object.prototype.hasOwnProperty.call(task_item, key)) {
-            const item = task_item[key];
-            if (item.classList.contains('disable')) {
-              item.classList.remove('disable')
-            }            
-            if (item.dataset.category != 'Выполняется') {              
-              item.classList.add('disable')
-            }            
+        for (const item of task_item) {
+          if (item.classList.contains('disable')) {
+            item.classList.remove('disable')
+          }            
+          if (item.dataset.category != 'Выполняется') {              
+            item.classList.add('disable')
           }
         }
         break;
       case 'Ожидают старта':        
-      for (const key in task_item) {
-        if (Object.prototype.hasOwnProperty.call(task_item, key)) {
-          const item = task_item[key];
-          if (item.classList.contains('disable')) {
-            item.classList.remove('disable')
-          }
-          if (item.dataset.category != 'Ожидание') {
-            item.classList.add('disable')
-          }            
+      for (const item of task_item) {
+        if (item.classList.contains('disable')) {
+          item.classList.remove('disable')
+        }
+        if (item.dataset.category != 'Ожидание') {
+          item.classList.add('disable')
         }
       }
       break;
       case 'Приостановлены':        
-      for (const key in task_item) {
-        if (Object.prototype.hasOwnProperty.call(task_item, key)) {
-          const item = task_item[key];
-          if (item.classList.contains('disable')) {
-            item.classList.remove('disable')
-          }
-          if (item.dataset.category != 'Приостановлена') {
-            item.classList.add('disable')
-          }            
+      for (const item of task_item) {
+        if (item.classList.contains('disable')) {
+          item.classList.remove('disable')
+        }
+        if (item.dataset.category != 'Приостановлена') {
+          item.classList.add('disable')
         }
       }
       break;
       case 'Завершенные':        
-      for (const key in task_item) {
-        if (Object.prototype.hasOwnProperty.call(task_item, key)) {
-          const item = task_item[key];
-          if (item.classList.contains('disable')) {
-            item.classList.remove('disable')
-          }
-          if (item.dataset.category != 'Выполнено') {
-            item.classList.add('disable')
-          }            
+      for (const item of task_item) {
+        if (item.classList.contains('disable')) {
+          item.classList.remove('disable')
+        }
+        if (item.dataset.category != 'Выполнено') {
+          item.classList.add('disable')
         }
       }
       break;
       case 'Созданные':        
-      for (const key in task_item) {
-        if (Object.prototype.hasOwnProperty.call(task_item, key)) {
-          const item = task_item[key];
-          if (item.classList.contains('disable')) {
-            item.classList.remove('disable')
-          }
-          if (item.dataset.category != 'Создана') {
-            item.classList.add('disable')
-          }            
+      for (const item of task_item) {
+        if (item.classList.contains('disable')) {
+          item.classList.remove('disable')
+        }
+        if (item.dataset.category != 'Создана') {
+          item.classList.add('disable')
         }
       }
       break;   
@@ -192,6 +153,7 @@ function filter_task(filter)  {
   }
 }
 
+// ===== New Task Popup =====
 // Новое задание открытие/скрытие poup
 let input_index = 2
 
@@ -209,28 +171,29 @@ function open_new_task_popup(elem) {
   input_index = 2
 }; 
 
+// ===== Dynamic Form Rows =====
 // Добавление длины профиля в форму
 
 function add_profile_length(event, elem) {
   event.preventDefault()
-  new_br = document.createElement('br')
-  new_div_length = document.createElement('div')
-  new_div_amount = document.createElement('div')
-  new_div_close = document.createElement('div')
+  const new_br = document.createElement('br')
+  const new_div_length = document.createElement('div')
+  const new_div_amount = document.createElement('div')
+  const new_div_close = document.createElement('div')
   new_div_length.classList.add('popup-content-block__amount')
   new_div_amount.classList.add('popup-content-block__amount')
   new_div_close.classList.add('popup-content-close-line')
   
-  inner_html_length = `    
+  const inner_html_length = `    
             <span class="popup-content-block__amoun__text">Длина профиля ${input_index}</span>
             <input type="number" name="task_profile_length" step="any" required="" id="id_task_profile_length">     
   `
-  inner_html_amount = `    
+  const inner_html_amount = `    
             <span class="popup-content-block__amoun__text">Количество профиля ${input_index}</span>
             <input type="number" name="task_profile_amount" required="" id="id_task_profile_amount">     
   `
 
-  inner_html_close = `<a href="">удалить строку</a>`
+  const inner_html_close = `<a href="">удалить строку</a>`
 
   new_div_length.innerHTML = inner_html_length
   new_div_amount.innerHTML = inner_html_amount
@@ -244,19 +207,21 @@ function add_profile_length(event, elem) {
   input_index += 1
   new_div_close.addEventListener('click', (event)=> {
     event.preventDefault()
-    this_elem = event.target.closest('div')
-    length_profile = this_elem.previousSibling
-    amount_profile = length_profile.previousSibling
+    const this_elem = event.target.closest('div')
+    const length_profile = this_elem.previousSibling
+    const amount_profile = length_profile.previousSibling
     this_elem.remove()
     length_profile.remove()
     amount_profile.remove()
   })  
 }
 
-// добавление материалов при выборе профиля при созхдании новой заявки
+// ===== API-Driven Form Data =====
+// Добавление материалов при выборе профиля при создании новой заявки
 
 
-//Изменение записей на странице
+// ===== Pagination =====
+// Изменение записей на странице
 let start_value = 0
 let all_cards = document.querySelectorAll('.task-card-item')
 
@@ -343,6 +308,7 @@ document.addEventListener("resize", (event) => {
   }
 });
 
+// ===== Report Modal =====
 // Открытие и закрытие модального окна нового отчета
 function action_report_popup(e) {
   document.querySelector('.new_report_popup').classList.toggle('disable')
@@ -353,5 +319,3 @@ function action_report_popup(e) {
     document.querySelector('.new_report_popup').classList.add('disable')
   })
 }
-
-
