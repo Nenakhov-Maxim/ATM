@@ -13,8 +13,9 @@ class DatabaseWork:
     self.now = self.tz.localize(datetime.datetime.now())
   
   # Добавить новую задачу (мастер)  
-  def add_new_task_data(self, user_name, material, user):
+  def add_new_task_data(self, material, user):
     try:            
+      user_name = f'{user.last_name} {user.first_name}'.strip() or user.username
       new_task = Tasks.objects.create(
         task_name = self.data['task_name'],
         task_timedate_start = self.data['task_timedate_start'],
@@ -25,6 +26,7 @@ class DatabaseWork:
         task_comments = self.data['task_comments'],
         task_status_id = 1,
         task_user_created = user_name,
+        task_user_created_by = user,
         task_profile_length = self.data['task_profile_length'],
         task_profile_material = SteelType.objects.get(id=material),
         )

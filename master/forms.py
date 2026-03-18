@@ -2,10 +2,22 @@ from .models import *
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.forms.widgets import DateTimeInput, TextInput, Select
+from django.db.models import Q
 from datetime import datetime
 
 
 class NewTaskForm(forms.Form):  
+    
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        if user and user.production_area_id:
+            self.fields['task_workplace'].queryset = Workplace.objects.filter(
+                production_area_id=user.production_area_id
+            )
+        else:
+            self.fields['task_workplace'].queryset = Workplace.objects.none()
    
     task_name = forms.CharField(max_length=150, widget=TextInput(attrs={"class":"popup-content-block__task-title__input"}), initial='Изготовить профиль')
     task_timedate_start = forms.DateTimeField(label="Время начала", required=True,   widget=DateTimeInput(format="%Y-%m-%d %H:%M", 
@@ -17,7 +29,7 @@ class NewTaskForm(forms.Form):
                                                                                                                   "class":"popup-content-block__time-to-end__input"}),
         input_formats=["%Y-%m-%d %H:%m"])
     task_profile_type = forms.ModelChoiceField(queryset=ProfileType.objects.all())
-    task_workplace =  forms.ModelChoiceField(queryset=Workplace.objects.all())
+    task_workplace =  forms.ModelChoiceField(queryset=Workplace.objects.none())
     task_profile_amount = forms.IntegerField()
     task_profile_length = forms.FloatField()
     task_comments = forms.CharField(widget=forms.Textarea(attrs={"class":"new-task-popup-comments__input", 'style':'resize:none;'}), required=False)
@@ -27,6 +39,32 @@ class NewTaskForm(forms.Form):
         model = Tasks
         
 class EditTaskForm(forms.Form):  
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        queryset = Workplace.objects.none()
+        if user and user.production_area_id:
+            queryset = Workplace.objects.filter(
+                production_area_id=user.production_area_id
+            )
+
+        selected_workplace_id = None
+        if self.is_bound:
+            selected_workplace_id = self.data.get('task_workplace')
+        else:
+            selected_workplace_id = self.initial.get('task_workplace')
+
+        if hasattr(selected_workplace_id, 'id'):
+            selected_workplace_id = selected_workplace_id.id
+
+        if selected_workplace_id:
+            queryset = Workplace.objects.filter(
+                Q(id=selected_workplace_id) | Q(id__in=queryset.values('id'))
+            ).distinct()
+
+        self.fields['task_workplace'].queryset = queryset
    
     task_name = forms.CharField(max_length=150, widget=TextInput(attrs={"class":"popup-content-block__task-title__input"}))
     task_timedate_start = forms.DateTimeField(label="Время начала", required=True,   widget=DateTimeInput(format="%Y-%m-%d %H:%M", 
@@ -38,7 +76,7 @@ class EditTaskForm(forms.Form):
                                                                                                                   "class":"popup-content-block__time-to-end__input"}),
         input_formats=["%Y-%m-%d %H:%m"])
     task_profile_type = forms.ModelChoiceField(queryset=ProfileType.objects.all())
-    task_workplace =  forms.ModelChoiceField(queryset=Workplace.objects.all())
+    task_workplace =  forms.ModelChoiceField(queryset=Workplace.objects.none())
     task_profile_amount = forms.IntegerField()
     task_profile_length = forms.FloatField()
     task_comments = forms.CharField(widget=forms.Textarea(attrs={"class":"new-task-popup-comments__input", 'style':'resize:none;'}))

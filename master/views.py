@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.views.generic import UpdateView
 from django.urls import reverse_lazy
+from django.db.models import Q
 from .report import create_excel_from_dict_list
 import math, os
 from datetime import timedelta, datetime
@@ -21,13 +22,24 @@ import json
 @login_required
 @permission_required(perm='master.view_tasks', raise_exception=True)
 def master_home(request):
-  new_task_form = NewTaskForm()
-  edit_task_form = EditTaskForm()
+  new_task_form = NewTaskForm(user=request.user)
+  edit_task_form = EditTaskForm(user=request.user)
   new_paused_form = PauseTaskForm()
   report_form = ReportForm()
-  tasks = Tasks.objects.all().filter(task_is_vision=True).order_by('-id')    
-  tasks_stat_all = Tasks.objects.all().count()
-  tasks_stat_complited = Tasks.objects.filter(task_status=2).count()  
+  tasks = Tasks.objects.all().filter(
+    Q(task_is_vision=True) & 
+    Q(
+      Q(production_area=request.user.production_area_id) | 
+      Q(task_workplace__production_area_id=request.user.production_area_id)
+    )).order_by('-id') 
+    
+  tasks_stat_all = tasks.count()
+  tasks_stat_complited = Tasks.objects.filter(
+    Q(task_status=2) & Q(task_is_vision=True) & 
+    Q(
+      Q(production_area=request.user.production_area_id) | 
+      Q(task_workplace__production_area_id=request.user.production_area_id)
+    )).count()  
   load_data = {'title': 'AT-Manager', "task_stat": f'{tasks_stat_all}/{tasks_stat_complited}'}
   if request.user.position_id_id == 1:
     user_prd = 'Мастер'
@@ -93,12 +105,11 @@ def new_task(request):
           start_position = start_position + timedelta(hours=time_for_sector)
         else:
           decleaned_data[key] = request.POST[key]
-      new_task_form = NewTaskForm(decleaned_data)
+      new_task_form = NewTaskForm(decleaned_data, user=request.user)
       if new_task_form.is_valid():
         type_material_id = request.POST.get('task_type_material')
-        user_name = f'{request.user.last_name} {request.user.first_name}'
         new_data_file = DatabaseWork(new_task_form.cleaned_data)       
-        new_task_file = new_data_file.add_new_task_data(user_name, type_material_id, request.user)        
+        new_task_file = new_data_file.add_new_task_data(type_material_id, request.user)        
         if  new_task_file == True:
           print(f'Добавление прошло успешно, id записи: {new_data_file.new_task_id}')            
         else:
@@ -157,7 +168,7 @@ def edit_task(request):
                           'task_workplace': data.task_workplace_id, 'task_profile_amount': data.task_profile_amount,
                           'task_profile_length': data.task_profile_length, 'task_comments': data.task_comments})
   elif request.method == 'POST':    
-    edit_task_form = EditTaskForm(request.POST)    
+    edit_task_form = EditTaskForm(request.POST, user=request.user)    
     if edit_task_form.is_valid():      
       new_data_file = DatabaseWork(edit_task_form.cleaned_data)    
       new_task_file = new_data_file.edit_data_from_task(id_task, request.user)        
@@ -167,7 +178,7 @@ def edit_task(request):
         return HttpResponse(f'Ошибка: {new_task_file}')
       
   else:
-    new_task_form = EditTaskForm() 
+    new_task_form = EditTaskForm(user=request.user) 
     
 @login_required
 @permission_required(perm='master.change_tasks', raise_exception=True)  
@@ -191,11 +202,14 @@ def new_report(request):
     if report_form.is_valid():
       data = report_form.cleaned_data
       start_date = data['date_start']
-      end_date = data['date_end']
-      print(start_date)
-      print(end_date)   
-      tasks = Tasks.objects.all().filter(last_update__range=(start_date, end_date))
-      print(tasks)
+      end_date = data['date_end'] 
+      
+      tasks = Tasks.objects.all().filter(
+        Q(last_update__range=(start_date, end_date)) & 
+        Q(
+          Q(production_area=request.user.production_area_id) | 
+          Q(task_workplace__production_area_id=request.user.production_area_id)
+        ))
       dict_list = {}
       for task in tasks:
         id_task = task.id

@@ -1,7 +1,7 @@
 from django.contrib.auth.admin import UserAdmin, GroupAdmin
 from django.contrib.auth.models import Group
 from django.contrib import admin
-from .models import User
+from .models import User, ProductionArea
 from django.contrib.auth.admin import UserAdmin as OrigUserAdmin
 
 
@@ -28,3 +28,4 @@ class AuthorAdmin(OrigUserAdmin):
     search_fields = ('username', 'first_name', 'last_name', 'email', 'qr_code')
  
 admin.site.register(User, AuthorAdmin)
+admin.site.register(ProductionArea)

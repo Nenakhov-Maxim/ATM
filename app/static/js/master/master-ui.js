@@ -200,11 +200,11 @@ function add_profile_length(event) {
   new_div_close.classList.add('popup-content-close-line')
   
   const inner_html_length = `    
-            <span class="popup-content-block__amoun__text">Длина профиля ${input_index}</span>
+            <span class="popup-content-block__amoun__text">Длина пролукции ${input_index}</span>
             <input type="number" name="task_profile_length" step="any" required="" id="id_task_profile_length">     
   `
   const inner_html_amount = `    
-            <span class="popup-content-block__amoun__text">Количество профиля ${input_index}</span>
+            <span class="popup-content-block__amoun__text">Количество продукции ${input_index}</span>
             <input type="number" name="task_profile_amount" required="" id="id_task_profile_amount">     
   `
 

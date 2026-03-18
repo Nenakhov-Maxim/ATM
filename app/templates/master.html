@@ -42,7 +42,7 @@
         <div class="person-info">
           <span class="person-info__name">{{user_info.1}} {{user_info.0}}</span>
           <span class="person-info__department">{{user.position_id.position}}</span>
-          <span class="person-info__department">{{user.production_area}}</span>          
+          <span class="person-info__department">{%if user.production_area_id %} {{user.production_area_id.production_area_name}} {% else %}  Нет участка {%endif%}</span>          
         </div>
         <div class="logout">
           <a href="{% url 'users:logout' %}" class="logout-link">Выход</a>
@@ -59,7 +59,7 @@
         <input class="search-item" type="search" placeholder="Поиск по имени, наименованию, номеру рабочего места и т.п.">
       </div>
       <div class="toolbars__sub_tasks">
-        <a href="{% url 'analytics:analitytics-home' %}"><img src="{% static "img/analytics.svg" %}" alt="Аналитика"><span>Аналитика</span></a>
+        <a href="{% url 'analytics:analytics-home' %}"><img src="{% static "img/analytics.svg" %}" alt="Аналитика"><span>Аналитика</span></a>
         <a href="#"><img src="{% static "img/report.svg" %}" alt="Сформировать акт выполненных работ" onclick="action_report_popup(this)"><span>АКТ</span></a>
       </div>
       <div class="toolbars__new-task">
@@ -81,7 +81,7 @@
           <span class="task-headers__title">Статус задачи</span>
         </div>
         <div class="task-header__position-quantity">
-          <span class="task-headers__title">Количество профиля (шт.)</span>
+          <span class="task-headers__title">Количество продукции (шт.)</span>
         </div>
         <div class="task-header__actions">
           <span class="task-headers__title">Действия</span>
@@ -103,7 +103,7 @@
               </div>
             </div>
             <div class="card-item__task-name">
-              <span class="card-item__title">{{el.task_name}} <br> (Тип профиля: {{el.task_profile_type}})</span>
+              <span class="card-item__title">{{el.task_name}} <br> (Тип продукции: {{el.task_profile_type}})</span>
             </div>
             {% if el.task_status_id == 1 %}
             <div class="card-item__task-status">
@@ -331,7 +331,7 @@
             {{ new_task_form.task_timedate_end }}            
           </div> 
           <div class="popup-content-block__type-profile">            
-            <label for="task_profile_type">Выберете тип профиля</label>
+            <label for="task_profile_type">Выберете тип продукции</label>
             {{ new_task_form.task_profile_type }}            
           </div> 
           <div class="popup-content-block__workspace">
@@ -345,16 +345,16 @@
           </div>
           
           <div class="popup-content-block__amount">
-            <span class="popup-content-block__amoun__text">Введите необходимое количество профиля</span>
+            <span class="popup-content-block__amoun__text">Введите необходимое количество продукции</span>
             {{ new_task_form.task_profile_amount }}           
           </div>
           <div class="popup-content-block__amount">
-            <span class="popup-content-block__amoun__text">Введите необходимую длину профиля</span>
+            <span class="popup-content-block__amoun__text">Введите необходимую длину продукции</span>
             {{ new_task_form.task_profile_length }}           
           </div>         
         </div>
         <div class="add-profile-length">
-          <a href="" onclick="add_profile_length(event, this)">Добавить длину профиля</a>
+          <a href="" onclick="add_profile_length(event, this)">Добавить длину продукции</a>
         </div>        
         <div class="popup-content-block__footer">
           <div class="new-task-popup-comments">
@@ -396,7 +396,7 @@
             {{ edit_task_form.task_timedate_end }}            
           </div> 
           <div class="popup-content-block__type-profile">            
-            <label for="task_profile_type">Выберете тип профиля</label>
+            <label for="task_profile_type">Выберете тип продукции</label>
             {{ edit_task_form.task_profile_type }}            
           </div> 
           <div class="popup-content-block__workspace">
@@ -405,12 +405,12 @@
           </div> 
           <br>
           <div class="popup-content-block__amount">
-            <span class="popup-content-block__amoun__text">Введите необходимое количество профиля</span>
+            <span class="popup-content-block__amoun__text">Введите необходимое количество продукции</span>
             {{ edit_task_form.task_profile_amount }}           
           </div>
           
           <div class="popup-content-block__amount">
-            <span class="popup-content-block__amoun__text">Введите необходимую длину профиля</span>
+            <span class="popup-content-block__amoun__text">Введите необходимую длину продукции (если требуется)</span>
             {{ edit_task_form.task_profile_length }}           
           </div>           
         </div>
@@ -493,6 +493,7 @@
     </div>
   </div>
 </footer>
+<script src="{% static "/js/loader.js" %}"></script>
 <script src="{% static "/js/jquery/jquery-3.7.1.min.js" %}"></script> 
 <script src="{% static "/js/master/master-ui.js" %}"></script>
 <script src="{% static "/js/master/master-api.js" %}"></script>

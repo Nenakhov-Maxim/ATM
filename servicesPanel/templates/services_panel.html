@@ -86,6 +86,20 @@
         </a>
         {% endif %}
 
+        {% if is_admin or is_master or is_dep_boss%}
+        <a class="service-card" href="">
+          <div class="service-card__head">
+            <div class="service-card__icon-wrap">
+              <img src="{% static "img/order.svg" %}" alt="Order management">
+            </div>
+            <span class="service-card__status service-card__status--limited">Недоступно</span>
+          </div>
+          <h2 class="service-card__title">Производственные заказы</h2>
+          <p class="service-card__desc">Управление производственными заказами.</p>
+          {% comment %} <span class="service-card__action">Открыть</span> {% endcomment %}
+        </a>
+        {% endif %}
+
         {% if is_admin %}
         <a class="service-card" href="{% url 'admin:index' %}">
           <div class="service-card__head">
@@ -102,6 +116,7 @@
       </div>
     </div>
   </section>
+  <script src="{% static "js/loader.js" %}"></script>
 </body>
 </html>
 {% endif %}

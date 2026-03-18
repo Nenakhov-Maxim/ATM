@@ -2,7 +2,7 @@ import django
 from django.db import models
 from django.contrib.postgres.fields import HStoreField
 from datetime import datetime, timezone
-from login.models import User, Workplace
+from login.models import User, Workplace, ProductionArea
 
 
 class AccessApp(models.Model):
@@ -142,12 +142,20 @@ class Tasks(models.Model):
     task_comments = models.TextField('Комментарий', blank=True, default='', null=True)
     task_status = models.ForeignKey('TaskStatus', null=True, on_delete=models.SET_NULL, verbose_name='Статус')
     task_user_created = models.CharField('Кто создал задачу', max_length=250, default='Неизвестный пользователь')
+    task_user_created_by = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='created_tasks',
+        verbose_name='Автор задачи',
+    )
     task_timedate_start_fact = models.DateTimeField('Фактическая дата и время начала', null=True, blank=True)
     task_timedate_end_fact = models.DateTimeField('Фактическая дата и время окончания', null=True, blank=True)
     task_is_vision = models.BooleanField('Видимость задачи', default=True)
     task_time_settingUp = models.DateTimeField('Фактическая дата и время начала наладки', null=True, blank=True)
     profile_amount_now = models.BigIntegerField('Количество профиля текущего', default=0)
-    task_profile_length = models.FloatField('Длина профиля', default=0)
+    task_profile_length = models.FloatField('Длина профиля', default=0, blank=True, null=True)
     worker_accepted_task = models.TextField('ФИО рабочего', blank=True)
     history_offs_shtrips = models.ManyToManyField(OffsShtrips)
     task_profile_material = models.ForeignKey('SteelType', null=True, on_delete=models.SET_NULL, verbose_name='Тип материала')
@@ -156,6 +164,7 @@ class Tasks(models.Model):
     sensor_true = models.BooleanField(default=False)
     last_update = models.DateTimeField('Последнее изменение количества профиля в задаче', null=True, blank=True)
     created_at = models.DateTimeField('Дата создания задачи', default=django.utils.timezone.now)
+    production_area = models.ForeignKey(ProductionArea, null=True, blank=True, on_delete=models.SET_NULL, verbose_name='Производственный участок')
     
     def __str__(self):
         return self.task_name
