@@ -127,9 +127,14 @@ def _profile_amounts_by_shift(task, start_date, end_date):
 
 def _shtrips_by_shift(task, start_date, end_date, material_weight_cache):
     amounts = defaultdict(float)
-    for shtrips in task.history_offs_shtrips.all():
-        if start_date <= shtrips.created_at <= end_date:
-            amounts[_shift_key(shtrips.created_at)] += _shtrips_weight_kg(task, shtrips, material_weight_cache)
+    shtrips_items = list(task.history_offs_shtrips.all())
+    in_period_items = [
+        shtrips for shtrips in shtrips_items
+        if start_date <= shtrips.created_at <= end_date
+    ]
+
+    for shtrips in in_period_items or shtrips_items:
+        amounts[_shift_key(shtrips.created_at)] += _shtrips_weight_kg(task, shtrips, material_weight_cache)
     return amounts
 
 
@@ -147,10 +152,13 @@ def _shtrips_weight_kg(task, shtrips, material_weight_cache):
             type_steel=task.task_profile_material,
         ).weight
     except SteelTypeProfile.DoesNotExist:
-        material_weight_cache[cache_key] = 0
-        return 0
+        material_weight_cache[cache_key] = None
+        return shtrips.value
 
-    return shtrips.value * material_weight_cache[cache_key]
+    material_weight = material_weight_cache[cache_key]
+    if material_weight is None:
+        return shtrips.value
+    return shtrips.value * material_weight
 
 
 def _shift_key(value):
