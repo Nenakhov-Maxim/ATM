@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Tasks, SteelTypeProfile
+from .models import HistoryEvent, OffsShtrips, SteelTypeProfile, Tasks
 from .forms import NewTaskForm, EditTaskForm, PauseTaskForm, ReportForm
 from .databaseWork import DatabaseWork
 from django.http import HttpResponse, JsonResponse, FileResponse
@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.views.generic import UpdateView
 from django.urls import reverse_lazy
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from .report import create_excel_from_dict_list
 import math, os
 from datetime import timedelta, datetime
@@ -26,12 +26,25 @@ def master_home(request):
   edit_task_form = EditTaskForm(user=request.user)
   new_paused_form = PauseTaskForm()
   report_form = ReportForm()
-  tasks = Tasks.objects.all().filter(
+  tasks = Tasks.objects.filter(
     Q(task_is_vision=True) & 
     Q(
       Q(production_area=request.user.production_area_id) | 
       Q(task_workplace__production_area_id=request.user.production_area_id)
-    )).order_by('-id') 
+    )).select_related(
+      'task_status',
+      'task_workplace',
+      'task_profile_type',
+    ).prefetch_related(
+      Prefetch(
+        'history_event_messages',
+        queryset=HistoryEvent.objects.select_related('type_event').order_by('created_at', 'id'),
+      ),
+      Prefetch(
+        'history_offs_shtrips',
+        queryset=OffsShtrips.objects.select_related('type_value_id').order_by('created_at', 'id'),
+      ),
+    ).order_by('-id') 
     
   tasks_stat_all = tasks.count()
   tasks_stat_complited = Tasks.objects.filter(
@@ -125,7 +138,7 @@ def get_material(request):
   try:
     data = json.loads(request.body)
     profile_id = data.get('profile_id', '').strip()
-    materials_list = SteelTypeProfile.objects.all().filter(type_profile_id=profile_id)
+    materials_list = SteelTypeProfile.objects.select_related('type_steel').filter(type_profile_id=profile_id)
     material_name_list = {}
     for item in materials_list:
       material_name_list[item.type_steel.id] = item.type_steel.name

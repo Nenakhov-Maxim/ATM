@@ -174,13 +174,10 @@ class Tasks(models.Model):
         return self.task_profile_type.is_accepted_video
 
     def get_all_history_shtrips(self):
-        offs_shtrips = Tasks.objects.get(id=self.id).history_offs_shtrips.all()
-        
-        return offs_shtrips
+        return self.history_offs_shtrips.all()
 
     def get_all_history_event_message(self):
-        event_messages = Tasks.objects.get(id=self.id).history_event_messages.all()
-        return event_messages      
+        return self.history_event_messages.all()
     
     class Meta:
         verbose_name = 'Задача'
