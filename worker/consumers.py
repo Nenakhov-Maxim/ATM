@@ -357,9 +357,6 @@ class ObjectDetectionConsumer(AsyncWebsocketConsumer):
         return objects
 
 
-# Глобальный список задач для отслеживания изменений
-task_list = []
-
 class TaskTransferConsumer(AsyncWebsocketConsumer):
     """
     WebSocket потребитель для передачи информации о задачах в реальном времени
@@ -372,7 +369,7 @@ class TaskTransferConsumer(AsyncWebsocketConsumer):
         }))      
         self.client = self.scope['client']
         self.area_id = self.scope['url_route']['kwargs']
-        self.task_list = []
+        self.task_list = {}
         self.profile_quantity_old = 0
 
     async def disconnect(self, close_code):
@@ -391,7 +388,6 @@ class TaskTransferConsumer(AsyncWebsocketConsumer):
     
     async def check_new_task(self):
         """Проверяет новые задачи и изменения в существующих задачах каждые 10 секунд"""        
-        global task_list                     
         while True:
             await self.check_profile_amount()
             await asyncio.sleep(1)
@@ -400,7 +396,7 @@ class TaskTransferConsumer(AsyncWebsocketConsumer):
             db_task = await self.get_all_task()                        
             if len(db_task) > 0:
                 for task in db_task:                                                
-                    task_list[str(task['id'])] = str(task['task_status_id'])                    
+                    self.task_list[str(task['id'])] = str(task['task_status_id'])                    
                     await self.send(text_data=json.dumps({
                         'type': 'new_task',
                         'content': task            
@@ -410,7 +406,7 @@ class TaskTransferConsumer(AsyncWebsocketConsumer):
             db_task_ch = await self.get_task_with_id()
             if len(db_task_ch) > 0:
                 for task in db_task_ch:                     
-                    task_list[str(task['id'])] = str(task['task_status_id'])                    
+                    self.task_list[str(task['id'])] = str(task['task_status_id'])                    
                     await self.send(text_data=json.dumps({
                         'type': 'change_task',
                         'content': task            
@@ -441,63 +437,67 @@ class TaskTransferConsumer(AsyncWebsocketConsumer):
     @sync_to_async
     def get_all_task(self):
         """Получает все новые задачи для данной производственной линии"""
-        global task_list
-        task_list = self.task_list        
         query_task = []
-        tasks = Tasks.objects.filter(
+        tasks = Tasks.objects.select_related(
+            'task_status',
+            'task_profile_type',
+            'task_coating_type',
+            'task_coating_thickness',
+        ).filter(
             task_workplace=self.area_id['line_name'], 
-            task_status_id__in=[3, 4, 7]
+            task_status_id__in=[3, 4, 7, 8]
         )
         
         for task in tasks:
-            if str(task.id) not in task_list.keys():
-                content = {
-                    'id': task.id, 
-                    'name': task.task_name, 
-                    'task_status': task.task_status.status_name, 
-                    'task_status_id': task.task_status_id, 
-                    'task_name': task.task_name,
-                    'task_profile_type': task.task_profile_type.profile_name, 
-                    'task_timedate_start': task.task_timedate_start,
-                    'task_timedate_end': task.task_timedate_end, 
-                    'task_profile_amount': task.task_profile_amount,
-                    'task_timedate_end_fact': task.task_timedate_end_fact, 
-                    'task_time_settingUp': task.task_time_settingUp,
-                    'task_timedate_start_fact': task.task_timedate_start_fact, 
-                    'profile_amount_now': task.profile_amount_now,
-                    'task_workplace_id': task.task_workplace_id
-                }
-                query_task.append(content)
+            if str(task.id) not in self.task_list.keys():
+                query_task.append(self.build_task_payload(task))
                      
         return query_task
     
     @sync_to_async
     def get_task_with_id(self):
         """Получает задачи с изменившимся статусом"""        
-        global task_list
-        task_list = self.task_list        
         query_task = []
         
-        for task_id in task_list.keys():
-            if task_list[task_id] in ['3', '7']:                               
-                task = Tasks.objects.get(id=task_id)                   
-                if str(task.task_status_id) != task_list[task_id]:                    
-                    content = {
-                        'id': task.id, 
-                        'name': task.task_name, 
-                        'task_status': task.task_status.status_name, 
-                        'task_status_id': task.task_status_id, 
-                        'task_name': task.task_name,
-                        'task_profile_type': task.task_profile_type.profile_name, 
-                        'task_timedate_start': task.task_timedate_start,
-                        'task_timedate_end': task.task_timedate_end, 
-                        'task_profile_amount': task.task_profile_amount,
-                        'task_timedate_end_fact': task.task_timedate_end_fact, 
-                        'task_time_settingUp': task.task_time_settingUp,
-                        'task_timedate_start_fact': task.task_timedate_start_fact, 
-                        'profile_amount_now': task.profile_amount_now,
-                        'task_workplace_id': task.task_workplace_id
-                    }
-                    query_task.append(content)
+        tasks = Tasks.objects.select_related(
+            'task_status',
+            'task_profile_type',
+            'task_coating_type',
+            'task_coating_thickness',
+        ).filter(id__in=list(self.task_list.keys()))
+
+        for task in tasks:
+            task_id = str(task.id)
+            if self.task_list[task_id] in ['3', '4', '7', '8']:
+                if str(task.task_status_id) != self.task_list[task_id]:                    
+                    query_task.append(self.build_task_payload(task))
                      
         return query_task
+
+    def build_task_payload(self, task):
+        coating_thickness = None
+        if task.task_coating_thickness:
+            coating_thickness = format(task.task_coating_thickness.value.normalize(), 'f')
+
+        return {
+            'id': task.id,
+            'name': task.task_name,
+            'task_status': task.task_status.status_name,
+            'task_status_id': task.task_status_id,
+            'task_name': task.task_name,
+            'task_profile_type': task.task_profile_type.profile_name,
+            'association_name_shtrips': task.task_profile_type.association_name_shtrips,
+            'task_profile_length': task.task_profile_length,
+            'task_coating_type': str(task.task_coating_type) if task.task_coating_type else '',
+            'task_coating_area': task.task_coating_area,
+            'task_coating_thickness': coating_thickness,
+            'task_timedate_start': task.task_timedate_start,
+            'task_timedate_end': task.task_timedate_end,
+            'task_profile_amount': task.task_profile_amount,
+            'task_timedate_end_fact': task.task_timedate_end_fact,
+            'task_time_settingUp': task.task_time_settingUp,
+            'task_timedate_start_fact': task.task_timedate_start_fact,
+            'profile_amount_now': task.profile_amount_now,
+            'task_workplace_id': task.task_workplace_id,
+            'is_accepted_video': task.is_accepted_video(),
+        }

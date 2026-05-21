@@ -3,6 +3,7 @@ from master.models import *
 from master.databaseWork import DatabaseWork
 from django.http import HttpResponse, JsonResponse
 from .forms import PauseTaskForm, DenyTaskForm
+from django.db.models import Count, Prefetch, Q
 import datetime
 from datetime import timedelta
 from django.shortcuts import redirect
@@ -34,9 +35,18 @@ def worker_home(request, filter='all'):
     'task_profile_type',
     'task_coating_type',
     'task_coating_thickness',
+  ).prefetch_related(
+    Prefetch(
+      'history_offs_shtrips',
+      queryset=OffsShtrips.objects.select_related('type_value_id').order_by('created_at', 'id'),
+    ),
   ).order_by('-id')  
-  task_to_start = tasks.filter(task_status_id=4).count
-  task_start= tasks.filter(task_status_id=3).count
+  task_stats = tasks.aggregate(
+    task_to_start=Count('id', filter=Q(task_status_id=4)),
+    task_start=Count('id', filter=Q(task_status_id=3)),
+  )
+  task_to_start = task_stats['task_to_start']
+  task_start = task_stats['task_start']
   user_info = [request.user.first_name, request.user.last_name, request.user.position_id.position, user_prd_ar]
   if filter == 'now':
     tasks = tasks.filter(task_timedate_start__lte = now)

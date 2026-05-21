@@ -1,5 +1,10 @@
 // ===== Task Card Rendering =====
 function ws_add_new_task(data){
+  const existingCard = document.querySelector(`.task-card-item[data-itemid="${data['id']}"]`);
+  if (existingCard) {
+    existingCard.remove();
+  }
+
   let date_start = new Date(data['task_timedate_start']) 
   let date_end = new Date(data['task_timedate_end']) 
   
@@ -43,6 +48,7 @@ function ws_add_new_task(data){
   div_main.setAttribute('data-itemId', data['id'])
   div_main.setAttribute('data-category', data['task_status'])
   div_main.setAttribute('data-category-id', data['task_status_id'])
+  div_main.setAttribute('data-video', data['is_accepted_video'])
   // task-card-item__wrapper
   let div_wrapper = document.createElement('div');
   div_wrapper.className = "task-card-item__wrapper"
@@ -53,7 +59,11 @@ function ws_add_new_task(data){
   </div>
   <div class="card-item__workplace-name">
     <span class="card-item__title">${data['task_name']}</span><br>
-    <span class="card-item__title">(${data['task_profile_type']})</span>
+    <span class="card-item__title">(Тип профиля: ${data['task_profile_type']}, штрипс - ${data['association_name_shtrips'] || ''})</span><br>
+    <span class="card-item__title">Длина профиля: ${data['task_profile_length'] ?? ''}</span>
+    ${data['task_coating_type'] ? `<br><span class="card-item__title">Покрытие: ${data['task_coating_type']}</span>` : ''}
+    ${data['task_coating_thickness'] ? `<br><span class="card-item__title">Толщина покрытия: ${data['task_coating_thickness']}</span>` : ''}
+    ${data['task_coating_area'] ? `<br><span class="card-item__title">Площадь покрытия: ${data['task_coating_area']}</span>` : ''}
     <div class="worplace-name__equipment"></div>
   </div>
   <div class="card-item__task-name">
@@ -218,6 +228,14 @@ function ws_add_new_task(data){
     <span class="right-side__required-quantity__text">Необходимое количество</span>
     <span class="right-side__required-quantity__amount">${data['task_profile_amount']}</span>
   </div>
+  <div class="task-information__right-side__required-length">
+    <span class="right-side__required-length__text">Длина профиля</span>
+    <span class="right-side__required-length__amount">${data['task_profile_length'] ?? ''}</span>
+  </div>
+  <div class="task-information__right-side__shtrips-type">
+    <span class="right-side__shtrips-type__text">Штрипс</span>
+    <span class="right-side__shtrips-type__value">${data['association_name_shtrips'] || ''}</span>
+  </div>
   <div class="task-information__right-side__current-quantity">
     <span class="right-side__current-quantity__text">Текущее количество</span>
     <input class="right-side__current-quantity__amount" type="number" value="${[3, 7].includes(data['task_status_id']) ? data['profile_amount_now'] : 0}"></input>
@@ -297,12 +315,21 @@ function ws_add_new_task(data){
   // Общая вставка блока задания на страницу
   let cards_wrapper = document.querySelector('.task-cards-list')
   cards_wrapper.prepend(div_main)
+  refresh_task_cards_pagination(true)
 }
 
 // ===== Pagination =====
 // Действие при измнении количества записей на листе
 let start_value = 0
 let all_cards = document.querySelectorAll('.task-card-item')
+
+function refresh_task_cards_pagination(resetPosition) {
+  all_cards = document.querySelectorAll('.task-card-item')
+  if (resetPosition) {
+    start_value = 0
+  }
+  change_block_in_page(false)
+}
 
 $(document).ready(function() {
   const qualityInput = document.querySelector('.quality-position__title')
