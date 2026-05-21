@@ -11,6 +11,7 @@ from django.views.generic import UpdateView
 from django.urls import reverse_lazy
 from django.db.models import Prefetch, Q
 from .report import create_excel_from_dict_list
+from .profiling_invoice_report import create_profiling_invoice_report
 import math, os
 from datetime import timedelta, datetime
 import json
@@ -304,6 +305,23 @@ def new_report(request):
       return redirect('/master', permanent=True)
   else:
     return HttpResponse('Только GET-запрос')  
+
+
+@login_required
+@permission_required(perm='master.change_tasks', raise_exception=True)
+def profiling_invoice_report(request):
+  if request.method == 'POST':
+    report_form = ReportForm(request.POST)
+    if report_form.is_valid():
+      data = report_form.cleaned_data
+      answer = create_profiling_invoice_report(
+        data['date_start'],
+        data['date_end'],
+        request.user,
+      )
+      return FileResponse(open(os.path.join(answer), "rb"))
+    return redirect('/master', permanent=True)
+  return HttpResponse('Только POST-запрос')
 
 
 def dates_to_time(date1, date2):

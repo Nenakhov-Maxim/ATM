@@ -18,6 +18,7 @@ urlpatterns = [
     path('edit_task/', views.edit_task, name='edit_task'),
     path('hide_task/', views.hide_task, name='edit_task'),
     path('new_report/', views.new_report, name='new_report'),
+    path('profiling-invoice-report/', views.profiling_invoice_report, name='profiling_invoice_report'),
     path('get-material/', views.get_material, name='get_material'),  
     path('get-coating-thickness/', views.get_coating_thickness, name='get_coating_thickness'),
 ]

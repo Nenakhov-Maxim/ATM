@@ -60,7 +60,8 @@
       </div>
       <div class="toolbars__sub_tasks">
         <a href="{% url 'analytics:analytics-home' %}"><img src="{% static "img/analytics.svg" %}" alt="Аналитика"><span>Аналитика</span></a>
-        <a href="#"><img src="{% static "img/report.svg" %}" alt="Сформировать акт выполненных работ" onclick="action_report_popup(this)"><span>АКТ</span></a>
+        <a href="#" class="completed-work-report-link"><img src="{% static "img/report.svg" %}" alt="Сформировать акт выполненных работ" onclick="action_report_popup(this)"><span>АКТ</span></a>
+        <a href="#" class="profiling-invoice-report-link"><img src="{% static "img/doc.svg" %}" alt="Сформировать накладную на линию профилирования"><span>НАКЛАДНАЯ</span></a>
       </div>
       <div class="toolbars__new-task">
         <input type="button" class="new-task-button" value="НОВОЕ ЗАДАНИЕ">
@@ -524,6 +525,7 @@
 <script src="{% static "/js/jquery/jquery-3.7.1.min.js" %}"></script> 
 <script src="{% static "/js/master/master-ui.js" %}"></script>
 <script src="{% static "/js/master/master-api.js" %}"></script>
+<script src="{% static "/js/master/profiling-invoice-report.js" %}"></script>
 <script src="{% static "/js/master/master.js" %}"></script>   
 </body>
 </html>
