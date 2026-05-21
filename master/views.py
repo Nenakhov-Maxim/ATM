@@ -1,12 +1,10 @@
 from django.shortcuts import render
-from .models import CoatingThickness, HistoryEvent, OffsShtrips, SteelTypeProfile, Tasks
+from .models import HistoryEvent, OffsShtrips, Tasks
 from .forms import NewTaskForm, EditTaskForm, PauseTaskForm, ReportForm
 from .databaseWork import DatabaseWork
 from django.http import HttpResponse, JsonResponse, FileResponse
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required, permission_required
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
 from django.views.generic import UpdateView
 from django.urls import reverse_lazy
 from django.db.models import Prefetch, Q
@@ -14,7 +12,6 @@ from .report import create_excel_from_dict_list
 from .profiling_invoice_report import create_profiling_invoice_report
 import math, os
 from datetime import timedelta, datetime
-import json
 
 
 
@@ -37,7 +34,6 @@ def master_home(request):
       'task_workplace',
       'task_profile_type',
       'task_coating_type',
-      'task_coating_thickness',
     ).prefetch_related(
       Prefetch(
         'history_event_messages',
@@ -123,63 +119,13 @@ def new_task(request):
           decleaned_data[key] = request.POST[key]
       new_task_form = NewTaskForm(decleaned_data, user=request.user)
       if new_task_form.is_valid():
-        type_material_id = request.POST.get('task_type_material')
         new_data_file = DatabaseWork(new_task_form.cleaned_data)       
-        new_task_file = new_data_file.add_new_task_data(type_material_id, request.user)        
+        new_task_file = new_data_file.add_new_task_data(request.user)        
         if  new_task_file == True:
           print(f'Добавление прошло успешно, id записи: {new_data_file.new_task_id}')            
         else:
           return HttpResponse(f'Ошибка: {new_task_file}')
     return redirect('/master', permanent=True)   
-
-# Получение списка материалов для поля "Материал" при создании заявки
-@csrf_exempt
-# @login_required
-# @permission_required(perm='master.change_task', raise_exception=True)
-@require_http_methods(["POST"])
-def get_material(request):
-  try:
-    data = json.loads(request.body)
-    profile_id = data.get('profile_id', '').strip()
-    materials_list = SteelTypeProfile.objects.select_related('type_steel').filter(type_profile_id=profile_id)
-    material_name_list = {}
-    for item in materials_list:
-      material_name_list[item.type_steel.id] = item.type_steel.name
-    
-    return JsonResponse({
-      'success': True,
-      'data': material_name_list
-    })
-    
-  except Exception as e:
-        return JsonResponse({
-            'success': False, 
-            'error': f'Произошла ошибка: {str(e)}'
-        })
-
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def get_coating_thickness(request):
-  try:
-    data = json.loads(request.body)
-    coating_type_id = data.get('coating_type_id', '')
-    thicknesses = CoatingThickness.objects.filter(coating_type_id=coating_type_id).order_by('value')
-    thickness_list = {}
-    for item in thicknesses:
-      thickness_list[item.id] = format(item.value.normalize(), 'f')
-
-    return JsonResponse({
-      'success': True,
-      'data': thickness_list
-    })
-
-  except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': f'Произошла ошибка: {str(e)}'
-        })
-  
 
 # Удаление задачи    
 @login_required
@@ -206,8 +152,9 @@ def edit_task(request):
                           'task_timedate_end': data.task_timedate_end, 'task_profile_type': data.task_profile_type_id, 
                           'task_workplace': data.task_workplace_id, 'task_profile_amount': data.task_profile_amount,
                           'task_profile_length': data.task_profile_length, 'task_comments': data.task_comments,
+                          'task_profile_material': data.task_profile_material,
                           'task_coating_type': data.task_coating_type_id, 'task_coating_area': data.task_coating_area,
-                          'task_coating_thickness': data.task_coating_thickness_id})
+                          'task_coating_thickness': data.task_coating_thickness})
   elif request.method == 'POST':    
     edit_task_form = EditTaskForm(request.POST, user=request.user)    
     if edit_task_form.is_valid():      
@@ -261,15 +208,7 @@ def new_report(request):
           if shtrips.type_value_id.id == 1:
             shtrips_list_str = shtrips_list_str + str(shtrips.value) + '; '
           else:
-              # получаем материал у задачи
-              material = task.task_profile_material
-              # получаем тип профиля
-              type_profile = task.task_profile_type
-              # Находим запись в таблице соответствий, указывающую на кг в погонном метре
-              value_kg_m = SteelTypeProfile.objects.get(type_profile=type_profile, type_steel=material)
-              # Вес профиля умножаем на длину остатка и добавляем в общую строку
-              value_to_add = round(value_kg_m.weight * shtrips.value, 2)
-              shtrips_list_str = shtrips_list_str + str(shtrips.value) + "(п.м.)" + str(value_to_add) + "(кг.)" + "; "
+              shtrips_list_str = shtrips_list_str + str(shtrips.value) + "(п.м.); "
         
         # Дописываем какие штрипсы были списаны по задаче
         label_task = label_task + shtrips_list_str    

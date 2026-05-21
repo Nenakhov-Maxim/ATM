@@ -1,13 +1,13 @@
 import os
 from collections import OrderedDict, defaultdict
-from datetime import datetime, time, timedelta
+from datetime import datetime, time
 
 from django.db.models import Prefetch, Q
 from django.utils import timezone
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
-from .models import HistoryProfileRecords, OffsShtrips, SteelTypeProfile, Tasks
+from .models import HistoryProfileRecords, OffsShtrips, Tasks
 
 
 SHIFT_1 = 'shift_1'
@@ -40,9 +40,7 @@ def _get_completed_tasks(start_date, end_date, user):
         )
     ).select_related(
         'task_profile_type',
-        'task_profile_material',
         'task_coating_type',
-        'task_coating_thickness',
     ).prefetch_related(
         Prefetch(
             'history_profile_records',
@@ -57,10 +55,8 @@ def _get_completed_tasks(start_date, end_date, user):
 
 def _build_report_rows(tasks, start_date, end_date):
     profile_groups = OrderedDict()
-    material_weight_cache = {}
-
     for task in tasks:
-        profile_key = task.task_profile_type_id
+        profile_key = _profile_group_key(task)
         profile_group = profile_groups.setdefault(profile_key, _empty_profile_group(task))
         detail_key = _task_group_key(task)
         detail_row = profile_group['details'].setdefault(detail_key, _empty_detail_row(task))
@@ -73,7 +69,7 @@ def _build_report_rows(tasks, start_date, end_date):
             detail_row['profile_by_shift'][shift_key] += amount
             profile_group['profile_by_shift'][shift_key] += amount
 
-        shtrips_by_shift = _shtrips_by_shift(task, start_date, end_date, material_weight_cache)
+        shtrips_by_shift = _shtrips_by_shift(task, start_date, end_date)
         for shift_key, weight in shtrips_by_shift.items():
             detail_row['shtrips_by_shift'][shift_key] += weight
             profile_group['shtrips_by_shift'][shift_key] += weight
@@ -83,8 +79,8 @@ def _build_report_rows(tasks, start_date, end_date):
 
 def _empty_profile_group(task):
     return {
-        'profile_name': task.task_profile_type.profile_name,
-        'shtrips_name': task.task_profile_type.association_name_shtrips,
+        'profile_name': _profile_report_name(task),
+        'shtrips_name': _shtrips_report_name(task),
         'profile_by_shift': defaultdict(float),
         'shtrips_by_shift': defaultdict(float),
         'details': OrderedDict(),
@@ -93,11 +89,20 @@ def _empty_profile_group(task):
 
 def _empty_detail_row(task):
     return {
-        'coating': _coating_label(task),
+        'coating': _detail_coating_label(task),
         'profile_length': task.task_profile_length or 0,
         'profile_by_shift': defaultdict(float),
         'shtrips_by_shift': defaultdict(float),
     }
+
+
+def _profile_group_key(task):
+    return (
+        task.task_profile_type_id,
+        task.task_profile_material,
+        task.task_coating_thickness,
+        task.task_coating_type_id,
+    )
 
 
 def _task_group_key(task):
@@ -105,16 +110,45 @@ def _task_group_key(task):
         task.task_profile_type_id,
         round(float(task.task_profile_length or 0), 3),
         task.task_coating_type_id,
-        task.task_coating_thickness_id,
+        task.task_coating_thickness,
         task.task_coating_area,
     )
 
 
-def _coating_label(task):
-    if not task.task_coating_type:
-        return ''
+def _profile_report_name(task):
+    parts = [task.task_profile_type.profile_name]
+    material_thickness = _format_number(task.task_profile_material)
+    coating_thickness = task.task_coating_thickness or ''
+    coating_type = str(task.task_coating_type) if task.task_coating_type else ''
+    suffix = f'{material_thickness}{coating_thickness}{coating_type}'
+    if suffix:
+        parts.append(suffix)
+    return ' '.join(parts)
 
-    return str(task.task_coating_type)
+
+def _detail_coating_label(task):
+    return str(task.task_coating_type) if task.task_coating_type else ''
+
+
+def _shtrips_report_name(task):
+    shtrips_name = task.task_profile_type.association_name_shtrips or ''
+    material_thickness = _format_number(task.task_profile_material)
+    coating_thickness = task.task_coating_thickness or ''
+
+    first_line = shtrips_name
+    if material_thickness:
+        first_line = f'{first_line}х{material_thickness}' if first_line else f'х{material_thickness}'
+    if coating_thickness:
+        return f'{first_line}\n{coating_thickness}'
+    return first_line
+
+
+def _format_number(value):
+    if value is None:
+        return ''
+    if isinstance(value, float) and value.is_integer():
+        value = int(value)
+    return str(value).replace('.', ',')
 
 
 def _profile_amounts_by_shift(task, start_date, end_date):
@@ -125,7 +159,7 @@ def _profile_amounts_by_shift(task, start_date, end_date):
     return amounts
 
 
-def _shtrips_by_shift(task, start_date, end_date, material_weight_cache):
+def _shtrips_by_shift(task, start_date, end_date):
     amounts = defaultdict(float)
     shtrips_items = list(task.history_offs_shtrips.all())
     in_period_items = [
@@ -134,31 +168,12 @@ def _shtrips_by_shift(task, start_date, end_date, material_weight_cache):
     ]
 
     for shtrips in in_period_items or shtrips_items:
-        amounts[_shift_key(shtrips.created_at)] += _shtrips_weight_kg(task, shtrips, material_weight_cache)
+        amounts[_shift_key(shtrips.created_at)] += _shtrips_weight_kg(shtrips)
     return amounts
 
 
-def _shtrips_weight_kg(task, shtrips, material_weight_cache):
-    if shtrips.type_value_id_id == 1:
-        return shtrips.value
-
-    cache_key = (task.task_profile_type_id, task.task_profile_material_id)
-    if cache_key in material_weight_cache:
-        return shtrips.value * material_weight_cache[cache_key]
-
-    try:
-        material_weight_cache[cache_key] = SteelTypeProfile.objects.get(
-            type_profile=task.task_profile_type,
-            type_steel=task.task_profile_material,
-        ).weight
-    except SteelTypeProfile.DoesNotExist:
-        material_weight_cache[cache_key] = None
-        return shtrips.value
-
-    material_weight = material_weight_cache[cache_key]
-    if material_weight is None:
-        return shtrips.value
-    return shtrips.value * material_weight
+def _shtrips_weight_kg(shtrips):
+    return shtrips.value
 
 
 def _shift_key(value):
@@ -291,7 +306,7 @@ def _write_detail_row(ws, row_number, detail_row, font, border, center, left):
 
     ws.cell(row_number, 1).value = detail_row['coating']
     ws.cell(row_number, 3).value = 'L='
-    ws.cell(row_number, 4).value = detail_row['profile_length']
+    ws.cell(row_number, 4).value = _format_number(detail_row['profile_length'])
     ws.cell(row_number, 5).value = _number_or_empty(profile_by_shift[SHIFT_1])
     ws.cell(row_number, 7).value = _number_or_empty(profile_by_shift[SHIFT_2])
     ws.cell(row_number, 9).value = _number_or_empty(profile_by_shift[SHIFT_3])
@@ -345,5 +360,3 @@ def _number_or_empty(value):
     if isinstance(value, float) and value.is_integer():
         return int(value)
     return value
-
-    wb.save(filepath)

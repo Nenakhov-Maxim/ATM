@@ -34,7 +34,6 @@ def worker_home(request, filter='all'):
     'task_status',
     'task_profile_type',
     'task_coating_type',
-    'task_coating_thickness',
   ).prefetch_related(
     Prefetch(
       'history_offs_shtrips',

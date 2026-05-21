@@ -442,7 +442,6 @@ class TaskTransferConsumer(AsyncWebsocketConsumer):
             'task_status',
             'task_profile_type',
             'task_coating_type',
-            'task_coating_thickness',
         ).filter(
             task_workplace=self.area_id['line_name'], 
             task_status_id__in=[3, 4, 7, 8]
@@ -463,7 +462,6 @@ class TaskTransferConsumer(AsyncWebsocketConsumer):
             'task_status',
             'task_profile_type',
             'task_coating_type',
-            'task_coating_thickness',
         ).filter(id__in=list(self.task_list.keys()))
 
         for task in tasks:
@@ -475,10 +473,6 @@ class TaskTransferConsumer(AsyncWebsocketConsumer):
         return query_task
 
     def build_task_payload(self, task):
-        coating_thickness = None
-        if task.task_coating_thickness:
-            coating_thickness = format(task.task_coating_thickness.value.normalize(), 'f')
-
         return {
             'id': task.id,
             'name': task.task_name,
@@ -490,7 +484,7 @@ class TaskTransferConsumer(AsyncWebsocketConsumer):
             'task_profile_length': task.task_profile_length,
             'task_coating_type': str(task.task_coating_type) if task.task_coating_type else '',
             'task_coating_area': task.task_coating_area,
-            'task_coating_thickness': coating_thickness,
+            'task_coating_thickness': task.task_coating_thickness,
             'task_timedate_start': task.task_timedate_start,
             'task_timedate_end': task.task_timedate_end,
             'task_profile_amount': task.task_profile_amount,

@@ -13,7 +13,7 @@ class DatabaseWork:
     self.now = self.tz.localize(datetime.datetime.now())
   
   # Добавить новую задачу (мастер)  
-  def add_new_task_data(self, material, user):
+  def add_new_task_data(self, user):
     try:            
       user_name = f'{user.last_name} {user.first_name}'.strip() or user.username
       new_task = Tasks.objects.create(
@@ -28,7 +28,7 @@ class DatabaseWork:
         task_user_created = user_name,
         task_user_created_by = user,
         task_profile_length = self.data['task_profile_length'],
-        task_profile_material = SteelType.objects.get(id=material),
+        task_profile_material = self.data.get('task_profile_material'),
         task_coating_type = self.data.get('task_coating_type'),
         task_coating_area = self.data.get('task_coating_area'),
         task_coating_thickness = self.data.get('task_coating_thickness'),
@@ -85,6 +85,7 @@ class DatabaseWork:
       task_workplace_id = self.data['task_workplace'].id,
       task_profile_amount = self.data['task_profile_amount'],
       task_profile_length = self.data['task_profile_length'],
+      task_profile_material = self.data.get('task_profile_material'),
       task_coating_type = self.data.get('task_coating_type'),
       task_coating_area = self.data.get('task_coating_area'),
       task_coating_thickness = self.data.get('task_coating_thickness'),

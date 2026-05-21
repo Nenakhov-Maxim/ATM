@@ -38,13 +38,6 @@ admin.site.register(Positions)
 admin.site.register(AccessApp)
 admin.site.register(MasterTypeProblem)
 
-
-@admin.register(CoatingThickness)
-class CoatingThicknessAdmin(admin.ModelAdmin):
-    list_display = ('coating_type', 'value')
-    list_filter = ('coating_type',)
-
-
 @admin.register(TaskHistory)
 class ProfileAdmin(admin.ModelAdmin):
     pass
