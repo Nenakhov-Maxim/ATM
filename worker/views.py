@@ -26,7 +26,15 @@ def worker_home(request, filter='all'):
   else:
     user_prd_ar = 'Неизвестная линия'
     area_id = 1 #99  
-  tasks = Tasks.objects.all().filter(task_workplace=area_id, task_status_id__in=[3, 4, 7, 8]).order_by('-id')  
+  tasks = Tasks.objects.filter(
+    task_workplace=area_id,
+    task_status_id__in=[3, 4, 7, 8]
+  ).select_related(
+    'task_status',
+    'task_profile_type',
+    'task_coating_type',
+    'task_coating_thickness',
+  ).order_by('-id')  
   task_to_start = tasks.filter(task_status_id=4).count
   task_start= tasks.filter(task_status_id=3).count
   user_info = [request.user.first_name, request.user.last_name, request.user.position_id.position, user_prd_ar]

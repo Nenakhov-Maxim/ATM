@@ -107,6 +107,20 @@
             <div class="card-item__workplace-name">
               <span class="card-item__title">{{ el.task_name }}</span><br>
               <span class="card-item__title">(Тип профиля: {{ el.task_profile_type }}, штрипс - {{el.task_profile_type.association_name_shtrips}})</span>
+              <br>
+              <span class="card-item__title">Длина профиля: {{ el.task_profile_length }}</span>
+              {% if el.task_coating_type %}
+              <br>
+              <span class="card-item__title">Покрытие: {{ el.task_coating_type }}</span>
+              {% if el.task_coating_thickness %}
+              <br>
+              <span class="card-item__title">Толщина покрытия: {{ el.task_coating_thickness.value }}</span>
+              {% endif %}
+              {% if el.task_coating_area %}
+              <br>
+              <span class="card-item__title">Площадь покрытия: {{ el.task_coating_area }}</span>
+              {% endif %}
+              {% endif %}
               <div class="worplace-name__equipment">
               </div>
             </div>
