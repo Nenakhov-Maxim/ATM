@@ -13,9 +13,11 @@ class TasksAdmin(admin.ModelAdmin):
         'task_user_created',
         'task_status',
         'task_workplace',
+        'task_coating_type',
+        'task_coating_thickness',
         'created_at',
     )
-    list_filter = ('task_status', 'task_workplace', 'task_user_created_by', 'production_area')
+    list_filter = ('task_status', 'task_workplace', 'task_coating_type', 'task_user_created_by', 'production_area')
     search_fields = (
         'task_name',
         'task_user_created',
@@ -29,6 +31,7 @@ class TasksAdmin(admin.ModelAdmin):
 
 admin.site.register(Workplace)
 admin.site.register(ProfileType)
+admin.site.register(CoatingType)
 admin.site.register(TaskStatus)
 # admin.site.register(Users)
 admin.site.register(Positions)
@@ -36,8 +39,12 @@ admin.site.register(AccessApp)
 admin.site.register(MasterTypeProblem)
 
 
+@admin.register(CoatingThickness)
+class CoatingThicknessAdmin(admin.ModelAdmin):
+    list_display = ('coating_type', 'value')
+    list_filter = ('coating_type',)
+
+
 @admin.register(TaskHistory)
 class ProfileAdmin(admin.ModelAdmin):
     pass
-
-

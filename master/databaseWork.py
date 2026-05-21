@@ -29,6 +29,9 @@ class DatabaseWork:
         task_user_created_by = user,
         task_profile_length = self.data['task_profile_length'],
         task_profile_material = SteelType.objects.get(id=material),
+        task_coating_type = self.data.get('task_coating_type'),
+        task_coating_area = self.data.get('task_coating_area'),
+        task_coating_thickness = self.data.get('task_coating_thickness'),
         )
       
       new_task.history_event_messages.create(user=user, type_event=TypeEvent.objects.get(id=1), message=new_task.task_comments)
@@ -81,6 +84,10 @@ class DatabaseWork:
       task_profile_type_id = self.data['task_profile_type'].id,
       task_workplace_id = self.data['task_workplace'].id,
       task_profile_amount = self.data['task_profile_amount'],
+      task_profile_length = self.data['task_profile_length'],
+      task_coating_type = self.data.get('task_coating_type'),
+      task_coating_area = self.data.get('task_coating_area'),
+      task_coating_thickness = self.data.get('task_coating_thickness'),
       task_comments = self.data['task_comments'],
       task_timedate_start_fact = None     
     )

@@ -104,6 +104,9 @@
             </div>
             <div class="card-item__task-name">
               <span class="card-item__title">{{el.task_name}} <br> (Тип продукции: {{el.task_profile_type}})</span>
+              {% if el.task_coating_type %}
+              <span class="card-item__title">Покрытие: {{el.task_coating_type}}{% if el.task_coating_thickness %}, {{el.task_coating_thickness.value}}{% endif %}{% if el.task_coating_area %}, площадь {{el.task_coating_area}}{% endif %}</span>
+              {% endif %}
             </div>
             {% if el.task_status_id == 1 %}
             <div class="card-item__task-status">
@@ -351,6 +354,18 @@
           <div class="popup-content-block__amount">
             <span class="popup-content-block__amoun__text">Введите необходимую длину продукции</span>
             {{ new_task_form.task_profile_length }}           
+          </div>
+          <div class="popup-content-block__type-coating">
+            <label for="task_coating_type">Выберете тип покрытия</label>
+            {{ new_task_form.task_coating_type }}
+          </div>
+          <div class="popup-content-block__coating-thickness">
+            <label for="task_coating_thickness">Выберете толщину покрытия</label>
+            {{ new_task_form.task_coating_thickness }}
+          </div>
+          <div class="popup-content-block__amount">
+            <span class="popup-content-block__amoun__text">Введите площадь покрытия</span>
+            {{ new_task_form.task_coating_area }}
           </div>         
         </div>
         <div class="add-profile-length">
@@ -412,6 +427,18 @@
           <div class="popup-content-block__amount">
             <span class="popup-content-block__amoun__text">Введите необходимую длину продукции (если требуется)</span>
             {{ edit_task_form.task_profile_length }}           
+          </div>
+          <div class="popup-content-block__type-coating">
+            <label for="task_coating_type">Выберете тип покрытия</label>
+            {{ edit_task_form.task_coating_type }}
+          </div>
+          <div class="popup-content-block__coating-thickness">
+            <label for="task_coating_thickness">Выберете толщину покрытия</label>
+            {{ edit_task_form.task_coating_thickness }}
+          </div>
+          <div class="popup-content-block__amount">
+            <span class="popup-content-block__amoun__text">Введите площадь покрытия</span>
+            {{ edit_task_form.task_coating_area }}
           </div>           
         </div>
         <div class="popup-content-block__footer">

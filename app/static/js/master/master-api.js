@@ -62,6 +62,64 @@ type_profile_input.addEventListener('change', (event)=> {
   load_materials_by_profile(profile_id)
 })
 
+function set_empty_coating_thickness(select) {
+  select.innerHTML = "";
+  const empty_option = document.createElement('option');
+  empty_option.innerHTML = "---------";
+  empty_option.value = "";
+  select.append(empty_option);
+}
+
+function load_coating_thickness_by_type(popup, coating_type_id) {
+  const coating_thickness_select = popup.querySelector('#id_task_coating_thickness');
+  set_empty_coating_thickness(coating_thickness_select);
+
+  if (!coating_type_id) {
+    return Promise.resolve();
+  }
+
+  return fetch('get-coating-thickness/', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+          coating_type_id: coating_type_id
+      })
+  })
+  .then(response => response.json())
+  .then(data => {
+      if (data.success) {
+          for (const key in data.data) {
+            if (Object.prototype.hasOwnProperty.call(data.data, key)) {
+              const element = data.data[key];
+              const new_option = document.createElement('option')
+              new_option.innerHTML = element
+              new_option.value = key
+              coating_thickness_select.append(new_option)
+            }
+          }
+      } else {
+        alert(build_request_error_message(data, 'Не удалось загрузить толщины покрытия.'));
+      }
+  })
+  .catch(error => {
+      alert(build_request_error_message(error, 'Ошибка загрузки толщин покрытия.'));
+  });
+}
+
+function bind_coating_type_input(popup) {
+  const coating_type_input = popup.querySelector('#id_task_coating_type');
+  if (!coating_type_input) return;
+
+  coating_type_input.addEventListener('change', (event)=> {
+    load_coating_thickness_by_type(popup, event.target.value);
+  });
+}
+
+bind_coating_type_input(new_task_popup);
+bind_coating_type_input(edit_task_popup);
+
 
 // ===== Task Start/Pause =====
 // Запуск, приостановка, удаление задачи
@@ -149,6 +207,11 @@ $(document).ready(function() {
         edit_task_popup.querySelector('#id_task_workplace').value = data['task_workplace']
         edit_task_popup.querySelector('#id_task_profile_amount').value = data['task_profile_amount']
         edit_task_popup.querySelector('#id_task_profile_length').value = data['task_profile_length']
+        edit_task_popup.querySelector('#id_task_coating_type').value = data['task_coating_type'] || ""
+        edit_task_popup.querySelector('#id_task_coating_area').value = data['task_coating_area'] || ""
+        load_coating_thickness_by_type(edit_task_popup, data['task_coating_type']).then(() => {
+          edit_task_popup.querySelector('#id_task_coating_thickness').value = data['task_coating_thickness'] || ""
+        });
         edit_task_popup.querySelector('#id_task_comments').value = data['task_comments']
         edit_task_popup.querySelector('.edit-task-popup__title-text').innerText = `Редактировать задачу № ${id_task}`
         //location.reload();

@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import HistoryEvent, OffsShtrips, SteelTypeProfile, Tasks
+from .models import CoatingThickness, HistoryEvent, OffsShtrips, SteelTypeProfile, Tasks
 from .forms import NewTaskForm, EditTaskForm, PauseTaskForm, ReportForm
 from .databaseWork import DatabaseWork
 from django.http import HttpResponse, JsonResponse, FileResponse
@@ -35,6 +35,8 @@ def master_home(request):
       'task_status',
       'task_workplace',
       'task_profile_type',
+      'task_coating_type',
+      'task_coating_thickness',
     ).prefetch_related(
       Prefetch(
         'history_event_messages',
@@ -153,6 +155,29 @@ def get_material(request):
             'success': False, 
             'error': f'Произошла ошибка: {str(e)}'
         })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def get_coating_thickness(request):
+  try:
+    data = json.loads(request.body)
+    coating_type_id = data.get('coating_type_id', '')
+    thicknesses = CoatingThickness.objects.filter(coating_type_id=coating_type_id).order_by('value')
+    thickness_list = {}
+    for item in thicknesses:
+      thickness_list[item.id] = format(item.value.normalize(), 'f')
+
+    return JsonResponse({
+      'success': True,
+      'data': thickness_list
+    })
+
+  except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Произошла ошибка: {str(e)}'
+        })
   
 
 # Удаление задачи    
@@ -179,7 +204,9 @@ def edit_task(request):
       return JsonResponse({'task_name': data.task_name, 'task_timedate_start':data.task_timedate_start,
                           'task_timedate_end': data.task_timedate_end, 'task_profile_type': data.task_profile_type_id, 
                           'task_workplace': data.task_workplace_id, 'task_profile_amount': data.task_profile_amount,
-                          'task_profile_length': data.task_profile_length, 'task_comments': data.task_comments})
+                          'task_profile_length': data.task_profile_length, 'task_comments': data.task_comments,
+                          'task_coating_type': data.task_coating_type_id, 'task_coating_area': data.task_coating_area,
+                          'task_coating_thickness': data.task_coating_thickness_id})
   elif request.method == 'POST':    
     edit_task_form = EditTaskForm(request.POST, user=request.user)    
     if edit_task_form.is_valid():      

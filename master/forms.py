@@ -18,6 +18,16 @@ class NewTaskForm(forms.Form):
             )
         else:
             self.fields['task_workplace'].queryset = Workplace.objects.none()
+
+        selected_coating_type_id = self.data.get('task_coating_type') if self.is_bound else self.initial.get('task_coating_type')
+        if hasattr(selected_coating_type_id, 'id'):
+            selected_coating_type_id = selected_coating_type_id.id
+        if selected_coating_type_id:
+            self.fields['task_coating_thickness'].queryset = CoatingThickness.objects.filter(
+                coating_type_id=selected_coating_type_id
+            )
+        else:
+            self.fields['task_coating_thickness'].queryset = CoatingThickness.objects.none()
    
     task_name = forms.CharField(max_length=150, widget=TextInput(attrs={"class":"popup-content-block__task-title__input"}), initial='Изготовить профиль')
     task_timedate_start = forms.DateTimeField(label="Время начала", required=True,   widget=DateTimeInput(format="%Y-%m-%d %H:%M", 
@@ -32,8 +42,19 @@ class NewTaskForm(forms.Form):
     task_workplace =  forms.ModelChoiceField(queryset=Workplace.objects.none())
     task_profile_amount = forms.IntegerField()
     task_profile_length = forms.FloatField()
+    task_coating_type = forms.ModelChoiceField(queryset=CoatingType.objects.all(), required=False)
+    task_coating_area = forms.FloatField(required=False)
+    task_coating_thickness = forms.ModelChoiceField(queryset=CoatingThickness.objects.none(), required=False)
     task_comments = forms.CharField(widget=forms.Textarea(attrs={"class":"new-task-popup-comments__input", 'style':'resize:none;'}), required=False)
     # task_type_material = forms.ChoiceField(required=False)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        coating_type = cleaned_data.get('task_coating_type')
+        coating_thickness = cleaned_data.get('task_coating_thickness')
+        if coating_thickness and coating_type and coating_thickness.coating_type_id != coating_type.id:
+            self.add_error('task_coating_thickness', 'Выберите толщину для указанного типа покрытия.')
+        return cleaned_data
     
     class Meta:
         model = Tasks
@@ -65,6 +86,16 @@ class EditTaskForm(forms.Form):
             ).distinct()
 
         self.fields['task_workplace'].queryset = queryset
+
+        selected_coating_type_id = self.data.get('task_coating_type') if self.is_bound else self.initial.get('task_coating_type')
+        if hasattr(selected_coating_type_id, 'id'):
+            selected_coating_type_id = selected_coating_type_id.id
+        if selected_coating_type_id:
+            self.fields['task_coating_thickness'].queryset = CoatingThickness.objects.filter(
+                coating_type_id=selected_coating_type_id
+            )
+        else:
+            self.fields['task_coating_thickness'].queryset = CoatingThickness.objects.none()
    
     task_name = forms.CharField(max_length=150, widget=TextInput(attrs={"class":"popup-content-block__task-title__input"}))
     task_timedate_start = forms.DateTimeField(label="Время начала", required=True,   widget=DateTimeInput(format="%Y-%m-%d %H:%M", 
@@ -79,7 +110,18 @@ class EditTaskForm(forms.Form):
     task_workplace =  forms.ModelChoiceField(queryset=Workplace.objects.none())
     task_profile_amount = forms.IntegerField()
     task_profile_length = forms.FloatField()
+    task_coating_type = forms.ModelChoiceField(queryset=CoatingType.objects.all(), required=False)
+    task_coating_area = forms.FloatField(required=False)
+    task_coating_thickness = forms.ModelChoiceField(queryset=CoatingThickness.objects.none(), required=False)
     task_comments = forms.CharField(widget=forms.Textarea(attrs={"class":"new-task-popup-comments__input", 'style':'resize:none;'}))
+
+    def clean(self):
+        cleaned_data = super().clean()
+        coating_type = cleaned_data.get('task_coating_type')
+        coating_thickness = cleaned_data.get('task_coating_thickness')
+        if coating_thickness and coating_type and coating_thickness.coating_type_id != coating_type.id:
+            self.add_error('task_coating_thickness', 'Выберите толщину для указанного типа покрытия.')
+        return cleaned_data
     
     class Meta:
         model = Tasks

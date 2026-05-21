@@ -82,6 +82,33 @@ class SteelTypeProfile(models.Model):
      weight = models.FloatField('вес профиля (кг/пог.м)', blank=True)
 
 
+class CoatingType(models.Model):
+    """Модель типов покрытия"""
+    name = models.CharField('Тип покрытия', max_length=100)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'Тип покрытия'
+        verbose_name_plural = 'Типы покрытия'
+
+
+class CoatingThickness(models.Model):
+    """Стандартная толщина покрытия для выбранного типа покрытия"""
+    coating_type = models.ForeignKey(CoatingType, on_delete=models.CASCADE, related_name='thicknesses', verbose_name='Тип покрытия')
+    value = models.DecimalField('Толщина покрытия', max_digits=8, decimal_places=3)
+
+    def __str__(self):
+        value = format(self.value.normalize(), 'f')
+        return f'{self.coating_type}: {value}'
+
+    class Meta:
+        verbose_name = 'Толщина покрытия'
+        verbose_name_plural = 'Толщины покрытия'
+        ordering = ('coating_type__name', 'value')
+
+
 class ProfileType(models.Model):
     """Модель типов профилей"""
     profile_name = models.CharField('Наименование', max_length=100)
@@ -159,6 +186,9 @@ class Tasks(models.Model):
     worker_accepted_task = models.TextField('ФИО рабочего', blank=True)
     history_offs_shtrips = models.ManyToManyField(OffsShtrips)
     task_profile_material = models.ForeignKey('SteelType', null=True, on_delete=models.SET_NULL, verbose_name='Тип материала')
+    task_coating_type = models.ForeignKey('CoatingType', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='Тип покрытия')
+    task_coating_area = models.FloatField('Площадь покрытия', null=True, blank=True)
+    task_coating_thickness = models.ForeignKey('CoatingThickness', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='Толщина покрытия')
     history_event_messages = models.ManyToManyField(HistoryEvent)
     history_profile_records = models.ManyToManyField(HistoryProfileRecords)
     sensor_true = models.BooleanField(default=False)
