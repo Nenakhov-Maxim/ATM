@@ -10,6 +10,7 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Построение путей внутри проекта: BASE_DIR / 'subdir'.
@@ -132,10 +133,21 @@ AUTH_USER_MODEL = 'login.User'
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_VERSION = os.environ.get("STATIC_VERSION", "20260527-1")
 
 STATICFILES_DIRS = [
     BASE_DIR / "app/static",    
 ]
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "app.staticfiles.VersionedStaticFilesStorage",
+    },
+}
 
 # Тип поля первичного ключа по умолчанию
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
