@@ -415,6 +415,8 @@ $(document).ready(function() {
 
           if (!response.ok || data.status !== 'ok') {
             throw new Error(data.message || 'Не удалось изменить состояние автоматической фиксации');
+          } else {
+            location.reload();
           }
 
           if (checked) {
