@@ -21,15 +21,26 @@ function build_request_error_message(source, fallbackMessage) {
 
 // ===== Task Start/Pause =====
 // Запуск, приостановка, удаление задачи
-function master_ajax_request(url, data, onSuccess) {
-  $.ajax({
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+function master_ajax_request(url, data, onSuccess, method='POST') {
+  let ajaxOptions = {
     url: url,
-    type: 'GET',
-    data: data,
-    headers: {
-      "Accept": "network/json",
-      "Content-Type": "network/json",
-    },
+    type: method,
+    dataType: 'json',
     success: function(answer) {
       if (typeof onSuccess === 'function') {
         onSuccess(answer);
@@ -43,7 +54,20 @@ function master_ajax_request(url, data, onSuccess) {
         'Ошибка запроса к серверу.'
       ));
     }
-  });
+  };
+
+  if (method === 'POST') {
+    ajaxOptions.data = JSON.stringify(data);
+    ajaxOptions.contentType = 'application/json';
+    ajaxOptions.headers = {
+      'X-CSRFToken': getCookie('csrftoken'),
+      'Accept': 'application/json'
+    };
+  } else {
+    ajaxOptions.data = data;
+  }
+
+  $.ajax(ajaxOptions);
 }
 
 $(document).ready(function() {
@@ -112,7 +136,7 @@ $(document).ready(function() {
         edit_task_popup.querySelector('#id_task_comments').value = data['task_comments']
         edit_task_popup.querySelector('.edit-task-popup__title-text').innerText = `Редактировать задачу № ${id_task}`
         //location.reload();
-      });
+      }, 'GET');
     }
   });
 });

@@ -13,3 +13,5 @@ master/templatetags/__pycache__
 login/migrations/__pycache__
 analytics/migrations/__pycache__
 excel_files/
+requirements.txt
+venv.nosync/

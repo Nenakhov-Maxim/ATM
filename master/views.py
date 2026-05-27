@@ -8,10 +8,22 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.views.generic import UpdateView
 from django.urls import reverse_lazy
 from django.db.models import Prefetch, Q
+from django.views.decorators.http import require_POST
 from .report import create_excel_from_dict_list
 from .profiling_invoice_report import create_profiling_invoice_report
 import math, os
 from datetime import timedelta, datetime
+import json
+
+
+def request_param(request, key):
+  if request.content_type and request.content_type.startswith('application/json'):
+    try:
+      data = json.loads(request.body)
+      return data.get(key)
+    except Exception:
+      return None
+  return request.POST.get(key)
 
 
 
@@ -65,16 +77,17 @@ def master_home(request):
 
 @login_required()
 @permission_required(perm='master.change_tasks', raise_exception=True)
-def start_task(request):    
-  if request.method == 'GET':
-    data_task = DatabaseWork({'id_task':request.GET.get('id_task')})
-    task = data_task.push_to_workers(request.user)     
-    if task == True:      
-      return HttpResponse('Статус задачи успешно обновлен')
-    else:
-      return HttpResponse(f'Ошибка обновления задачи: {task}')
+@require_POST
+def start_task(request):
+  id_task = request_param(request, 'id_task')
+  if not id_task:
+    return JsonResponse({'success': False, 'message': 'missing id_task'}, status=400)
+  data_task = DatabaseWork({'id_task':id_task})
+  task = data_task.push_to_workers(request.user)
+  if task == True:
+    return JsonResponse({'success': True, 'message': 'Статус задачи успешно обновлен'})
   else:
-    return HttpResponse('Только GET-запрос')
+    return JsonResponse({'success': False, 'message': f'Ошибка обновления задачи: {task}'}, status=400)
 
 # Приостановка выполнения задания 
 @login_required 
@@ -131,13 +144,15 @@ def new_task(request):
 @login_required
 @permission_required(perm='master.change_tasks', raise_exception=True)  
 def delete_task(request):
-  if request.method == 'GET':
-    data_task = DatabaseWork({'id_task':request.GET.get('id_task')})
-    task = data_task.delete_task()     
-    if task == True:      
-      return HttpResponse('Задача удалена')
-    else:
-      return HttpResponse(f'Ошибка удаления задачи: {task}') 
+  # POST only
+  if request.method != 'POST':
+    return JsonResponse({'success': False, 'message': 'Только POST-запрос'}, status=405)
+  data_task = DatabaseWork({'id_task':request_param(request, 'id_task')})
+  task = data_task.delete_task()
+  if task == True:
+    return JsonResponse({'success': True, 'message': 'Задача удалена'})
+  else:
+    return JsonResponse({'success': False, 'message': f'Ошибка удаления задачи: {task}'}, status=400) 
 
 # Изменение задачи  
 @login_required
@@ -171,15 +186,15 @@ def edit_task(request):
 @login_required
 @permission_required(perm='master.change_tasks', raise_exception=True)  
 def hide_task(request):
-  if request.method == 'GET':
-    data_task = DatabaseWork({'id_task':request.GET.get('id_task')})
-    task = data_task.hide_task()     
-    if task == True:      
-      return HttpResponse('Задача скрыта')
-    else:
-      return HttpResponse(f'Ошибка скрытия задачи: {task}')
+  # POST only
+  if request.method != 'POST':
+    return JsonResponse({'success': False, 'message': 'Только POST-запрос'}, status=405)
+  data_task = DatabaseWork({'id_task':request_param(request, 'id_task')})
+  task = data_task.hide_task()
+  if task == True:
+    return JsonResponse({'success': True, 'message': 'Задача скрыта'})
   else:
-    return HttpResponse('Только GET-запрос')
+    return JsonResponse({'success': False, 'message': f'Ошибка скрытия задачи: {task}'}, status=400)
 
 
 @login_required

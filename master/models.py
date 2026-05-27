@@ -225,3 +225,46 @@ class AcceptedProfile(models.Model):
     class Meta:
         verbose_name = 'Принятый профиль'
         verbose_name_plural = 'Принятые профили'
+
+
+class TaskEvent(models.Model):
+    """Нормализованная запись события, привязанного к задаче"""
+    task = models.ForeignKey(Tasks, related_name='events', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    type_event = models.ForeignKey('TypeEvent', null=True, on_delete=models.SET_NULL)
+    message = models.CharField('Сообщение', max_length=500)
+    created_at = models.DateTimeField('Дата и время', default=django.utils.timezone.now)
+
+    class Meta:
+        verbose_name = 'Событие задачи'
+        verbose_name_plural = 'События задач'
+
+
+class TaskProfileRecord(models.Model):
+    """Нормализованная запись изготовления профиля (история профилей)"""
+    task = models.ForeignKey(Tasks, related_name='profile_records', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    amount = models.IntegerField('Количество изготовленного профиля', default=0)
+    profile_sum = models.IntegerField('Всего профиля на данный момент', default=0)
+    created_at = models.DateTimeField('Дата и время', default=django.utils.timezone.now)
+
+    class Meta:
+        verbose_name = 'Запись по профилю'
+        verbose_name_plural = 'Записи по профилю'
+
+
+class WorkerAnalyticsRecord(models.Model):
+    """Нормализованная запись аналитики по пользователю и задаче для месяца"""
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    task = models.ForeignKey(Tasks, null=True, on_delete=models.SET_NULL)
+    month = models.IntegerField('Месяц')
+    year = models.IntegerField('Год')
+    setting_up_hours = models.FloatField('Часы на переналадку', default=0.0)
+    profile_amount = models.IntegerField('Количество профиля', default=0)
+    work_time_hours = models.FloatField('Время работы (ч)', default=0.0)
+    created_at = models.DateTimeField('Дата создания', default=django.utils.timezone.now)
+
+    class Meta:
+        verbose_name = 'Аналитическая запись пользователя'
+        verbose_name_plural = 'Аналитические записи пользователей'
+        unique_together = ('user', 'task', 'month', 'year')

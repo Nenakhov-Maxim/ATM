@@ -9,9 +9,20 @@ from datetime import timedelta
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required, permission_required
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_POST
 from app.telegramAPI import TelegramBot
 import json
+
+
+def request_param(request, key):
+  """Read parameter from POST form or JSON body"""
+  if request.content_type and request.content_type.startswith('application/json'):
+    try:
+      data = json.loads(request.body)
+      return data.get(key)
+    except Exception:
+      return None
+  return request.POST.get(key)
 
 # Стратовая страница
 @login_required
@@ -58,19 +69,20 @@ def worker_home(request, filter='all'):
                                          'task_start':task_start, 'user_info':user_info, 'new_paused_form':new_paused_form,
                                          'new_deny_form':new_deny_form, 'line_id':area_id})
 
-# Запуск задания в работу
+# Запуск задания в работу (POST only)
 @login_required
-@permission_required(perm='worker.change_workertypeproblem', raise_exception=True) 
+@permission_required(perm='worker.change_workertypeproblem', raise_exception=True)
+@require_POST
 def start_working(request):
-  if request.method == 'GET':
-    # Получаем id задачи
-    id_task = request.GET.get('id_task')
-    user_name = f'{request.user.last_name} {request.user.first_name}'
-    user_position = request.user.position_id_id
-    data_task = DatabaseWork({'id_task':id_task})
-    result = data_task.start_working(id_task, request.user)
-    
-    return HttpResponse(result)
+  # Получаем id задачи из POST
+  id_task = request_param(request, 'id_task')
+  if not id_task:
+    return JsonResponse({'success': False, 'message': 'missing id_task'}, status=400)
+  data_task = DatabaseWork({'id_task':id_task})
+  result = data_task.start_working(id_task, request.user)
+  if result == True:
+    return JsonResponse({'success': True, 'message': 'Статус задачи успешно обновлен'})
+  return JsonResponse({'success': False, 'message': result}, status=400)
   
 # Изменение фильтра-меню(сегодня)
 @login_required
@@ -156,49 +168,66 @@ def deny_task(request):
   else:
     new_task_form = DenyTaskForm()
 
-# Завершение задачи
-@login_required
-@permission_required(perm='worker.change_workertypeproblem', raise_exception=True)   
-def complete_task(request):  
-  if request.method == 'GET':    
-    # Получаем id задачи
-    id_task = request.GET.get('id_task')
-    id_user = request.user.id
-    data_task = DatabaseWork({'id_task':id_task})
-    result = data_task.complete_task(id_task, request.user)
-    data_task.add_data_to_user_analytics(int(id_user), int(id_task))
-    return HttpResponse('')
-  
-# Старт наладки/переналадки
+# Завершение задачи (POST only)
 @login_required
 @permission_required(perm='worker.change_workertypeproblem', raise_exception=True)
-def start_settingUp(request):
-  id_task = request.GET.get('id_task')
+@require_POST
+def complete_task(request):
+  # Получаем id задачи
+  id_task = request_param(request, 'id_task')
+  if not id_task:
+    return JsonResponse({'success': False, 'message': 'missing id_task'}, status=400)
+  id_user = request.user.id
   data_task = DatabaseWork({'id_task':id_task})
-  result = data_task.start_settingUp(id_task, request.user)  
-  return JsonResponse({'answer':result})
-
-# Изменение текущего количества профиля в БД
+  result = data_task.complete_task(id_task, request.user)
+  if result != True:
+    return JsonResponse({'success': False, 'message': result}, status=400)
+  data_task.add_data_to_user_analytics(int(id_user), int(id_task))
+  return JsonResponse({'success': True, 'message': 'Задача завершена'})
+  
+# Старт наладки/переналадки (POST only)
 @login_required
 @permission_required(perm='worker.change_workertypeproblem', raise_exception=True)
+@require_POST
+def start_settingUp(request):
+  id_task = request_param(request, 'id_task')
+  if not id_task:
+    return JsonResponse({'success': False, 'message': 'missing id_task'}, status=400)
+  data_task = DatabaseWork({'id_task':id_task})
+  result = data_task.start_settingUp(id_task, request.user)
+  if str(result).startswith('Ошибка'):
+    return JsonResponse({'success': False, 'message': result}, status=400)
+  return JsonResponse({'success': True, 'message': result})
+
+# Изменение текущего количества профиля в БД (POST only)
+@login_required
+@permission_required(perm='worker.change_workertypeproblem', raise_exception=True)
+@require_POST
 def edit_profile_amount(request):
-  task_id = request.GET.get('id_task')
-  value = request.GET.get('value')
+  task_id = request_param(request, 'id_task')
+  value = request_param(request, 'value')
+  if not task_id or value is None:
+    return JsonResponse({'success': False, 'message':'missing parameters'}, status=400)
   data_task = DatabaseWork({'id_task':task_id})
   result = data_task.change_profile_amount(task_id, value, request.user)
   if result:
-    return JsonResponse({'answer':'ОК'})
+    return JsonResponse({'success': True, 'message':'ОК'})
   else:
-    return JsonResponse({'answer':'Error'})
+    return JsonResponse({'success': False, 'message':'Error'}, status=400)
   
-  # Пересменка 
+  # Пересменка (POST only)
 @login_required
 @permission_required(perm='worker.change_workertypeproblem', raise_exception=True)
-def shiftChange(request):  
-  task_id = request.GET.get('id_task')
+@require_POST
+def shiftChange(request):
+  task_id = request_param(request, 'id_task')
+  if not task_id:
+    return JsonResponse({'success': False, 'message':'missing id_task'}, status=400)
   data_task = DatabaseWork({'id_task':task_id})
   result = data_task.shiftChange(task_id, request.user)
-  return JsonResponse({'answer':'ОК'})
+  if result:
+    return JsonResponse({'success': True, 'message':'ОК'})
+  return JsonResponse({'success': False, 'message':'Ошибка пересменки'}, status=400)
 
 # Списание штрипса
 @csrf_exempt

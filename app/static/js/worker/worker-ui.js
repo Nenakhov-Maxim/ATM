@@ -502,7 +502,7 @@ $(document).ready(function(){
       } else {
         let link = 'edit-profile-amount-value/'
         let data = {'id_task': id_task, 'value':Number(value)}
-        let type_request = 'GET'         
+        let type_request = 'POST'         
         ajax_request(link, type_request, data)
         e.target.value = value    
       }
