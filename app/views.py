@@ -1,5 +1,7 @@
 from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 import json
 from master.models import HistoryProfileRecords, TaskProfileRecord, Tasks
 from django.db import transaction
@@ -80,6 +82,8 @@ def arduino_data(request):
         return JsonResponse({"status": "error", "detail": str(e)}, status=500)
 
 
+@login_required
+@require_POST
 def activate_sensor(request, task_id, bool_val):
     try:
         task = Tasks.objects.get(id=task_id)

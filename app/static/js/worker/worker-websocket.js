@@ -94,7 +94,7 @@ if (enabled_task) {
   remoteVideoElement = enabled_task.querySelector('#remoteVideo');
   callButton = enabled_task.querySelector('#callButton');
   hangupButton = enabled_task.querySelector('#hangupButton');
-  checkboxAutoVision = enabled_task.querySelector('#automatic-vision-checkbox'); 
+  checkboxAutoVision = enabled_task.querySelector('.automatic-vision-checkbox'); 
 }
 
 
@@ -360,7 +360,7 @@ function hangup() {
 
 $(document).ready(function() {
 
-  const auto_vision_checkbox = document.querySelectorAll('#automatic-vision-checkbox[data-statusId="3"]');
+  const auto_vision_checkbox = document.querySelectorAll('.automatic-vision-checkbox[data-statusId="3"]');
   const activeTask = document.querySelector('.task-card-item[data-category-id="3"]')
   if (!activeTask) {
     return;
@@ -387,8 +387,11 @@ $(document).ready(function() {
           remoteVideoElement.innerHTML = `<p>Автоматическая фиксация выключена....</p> <p>Количество изготовленного профиля нужно вводить самостоятельно</p><p>Для старта автоматической фиксации поставьте галочку в поле "Включить автоматическое распознование"</p>`
         }
         }
-      checkbox.addEventListener('change', (event)=> {
-        if (!checkbox.checked) {
+      checkbox.addEventListener('change', async (event)=> {
+        const checked = checkbox.checked;
+        checkbox.disabled = true;
+
+        if (!checked) {
           if (remoteVideoElement) {
             remoteVideoElement.innerHTML = `<p>Автоматическая фиксация выключена....</p> <p>Количество изготовленного профиля нужно вводить самостоятельно</p><p>Для старта автоматической фиксации поставьте галочку в поле "Включить автоматическое распознование"</p>`
           }
@@ -397,30 +400,42 @@ $(document).ready(function() {
           }
         }
 
-        const task_id = activeTask.dataset.itemid
-        fetch(`/change-task-automatic-vision/${task_id}/${checkbox.checked}`, {
+        const task_id = activeTask.dataset.itemid;
+        try {
+          const response = await fetch(`/change-task-automatic-vision/${task_id}/${checked}`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+              'Content-Type': 'application/json',
+              'X-CSRFToken': getCookie('csrftoken'),
+              'Accept': 'application/json'
             },
             body: JSON.stringify({})
-          })
-          .then(response=>{
-            response.json()
-          })
-          .then(data=> {
-          })
-        if (checkbox.checked) {
-          input_profile_amount.disabled = true
-          location.reload();
-          
-        } else {
-          input_profile_amount.disabled = false
+          });
+          const data = await response.json();
+
+          if (!response.ok || data.status !== 'ok') {
+            throw new Error(data.message || 'Не удалось изменить состояние автоматической фиксации');
+          }
+
+          if (checked) {
+            input_profile_amount.disabled = true;
+            if (callButton) {
+              callButton.click();
+            }
+          } else {
+            input_profile_amount.disabled = false;
+          }
+        } catch (error) {
+          checkbox.checked = !checked;
+          input_profile_amount.disabled = !checked;
+          alert(error.message || 'Ошибка переключения автоматической фиксации');
+        } finally {
+          checkbox.disabled = false;
         }
       });
 
     } else {
-      console.warn('Element with id "automatic-vision-checkbox" not found');
+      console.warn('Element with class "automatic-vision-checkbox" not found');
     }
   }
 });

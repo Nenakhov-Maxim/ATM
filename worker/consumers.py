@@ -29,8 +29,6 @@ class ServerVideoTrack(VideoStreamTrack):
         self.amount_profile = 0
         self.counter_cuda = 0
         self.type_profile = type_profile
-        print(model_name)
-        print(type_profile)
         if model_name == '' or model_name == None:
             self.model_name = 't-profile_240_nano_b=32.pt'
         else:
@@ -67,15 +65,15 @@ class ServerVideoTrack(VideoStreamTrack):
         """
         # Балансировка нагрузки между GPU
         if torch.cuda.is_available():
-            print(f'Всего устройств для обработки: {torch.cuda.device_count()}')
+            
             if self.counter_cuda == 0:
                 torch.cuda.device(0)
                 self.counter_cuda = 1
-                print(f'Обработка на видеокарте № 1: {torch.cuda.get_device_name(0)}')
+                
             else:
                 torch.cuda.device(1)
                 self.counter_cuda = 0
-                print(f'Обработка на видеокарте № 2: {torch.cuda.get_device_name(1)}')
+                
         
         # Логика обработки изображения с помощью предобученной модели YOLOv8      
         results = self.model.track(img, stream=True, persist=True, iou=0.60, conf=0.65,
@@ -424,14 +422,17 @@ class TaskTransferConsumer(AsyncWebsocketConsumer):
     # Смотрим сколько профиля в данный момент в выполняемой задаче
     @sync_to_async
     def get_only_working_task(self):
-        profile_amount = 0
-        tasks = Tasks.objects.filter(
-                task_workplace=self.area_id['line_name'], 
-                task_status_id__in=[3],
+        return (
+            Tasks.objects
+            .filter(
+                task_workplace=self.area_id['line_name'],
+                task_status_id=3,
             )
-        for task in tasks:
-            profile_amount = task.profile_amount_now
-        return profile_amount
+            .order_by('-task_timedate_start_fact', '-id')
+            .values_list('profile_amount_now', flat=True)
+            .first()
+            or 0
+        )
         
     
     @sync_to_async

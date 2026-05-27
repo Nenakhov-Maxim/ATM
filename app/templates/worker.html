@@ -234,11 +234,11 @@
                     <div class="task-information-history-shtrips-offs">
                       <div class="task-information-automatic-vision">
                         {% if el.sensor_true %}
-                        <input type="checkbox" name="automatic-vision" id="automatic-vision-checkbox" data-statusId="{{el.task_status_id}}" checked>
+                        <input type="checkbox" name="automatic-vision" id="automatic-vision-checkbox-{{el.id}}" class="automatic-vision-checkbox" data-statusId="{{el.task_status_id}}" checked>
                         {% else %}
-                        <input type="checkbox" name="automatic-vision" id="automatic-vision-checkbox" data-statusId="{{el.task_status_id}}">
+                        <input type="checkbox" name="automatic-vision" id="automatic-vision-checkbox-{{el.id}}" class="automatic-vision-checkbox" data-statusId="{{el.task_status_id}}">
                         {% endif %}
-                        <label for="automatic-vision">Включить автоматическое распознование</label>
+                        <label for="automatic-vision-checkbox-{{el.id}}">Включить автоматическое распознование</label>
                       </div>
                       <button id="shtrips-offs-btn" type="button">Списать штрипс</button>
                       <h3 class="history-shtrips-offs-title">История списания штрипсов</h3>
