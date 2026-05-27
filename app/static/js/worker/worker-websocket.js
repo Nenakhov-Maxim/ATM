@@ -1,6 +1,6 @@
 // ===== Task WebSocket =====
 // Взаимодействие клиента с сервером по вебсоккету
-
+// ver
 $(document).ready(function() {
   let task_id_list = {}
   const personDepartments = document.querySelectorAll(".person-info__department")

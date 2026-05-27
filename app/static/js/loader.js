@@ -1,3 +1,4 @@
+// ver
 (function() {
   if (window.__appLoaderInitialized) {
     return;

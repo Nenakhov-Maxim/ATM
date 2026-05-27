@@ -1,4 +1,5 @@
 // Списание штрипса
+//ver
 document.addEventListener('DOMContentLoaded', function() {
     const work_task = document.querySelector('div.task-card-item[data-category-id="3"]')
     let shtripsButton
