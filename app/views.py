@@ -4,6 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import json
 from master.models import HistoryProfileRecords, TaskProfileRecord, Tasks
+from master.history_utils import infer_profile_record_user
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
@@ -61,13 +62,17 @@ def arduino_data(request):
             task.save(update_fields=['profile_amount_now', 'last_update'])
             task.refresh_from_db(fields=['profile_amount_now'])
 
+            record_user = infer_profile_record_user(task)
+
             legacy_record = HistoryProfileRecords.objects.create(
+                user=record_user,
                 amount=1,
                 profile_sum=task.profile_amount_now,
             )
             task.history_profile_records.add(legacy_record)
             TaskProfileRecord.objects.create(
                 task=task,
+                user=record_user,
                 amount=1,
                 profile_sum=task.profile_amount_now,
             )

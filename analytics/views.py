@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from master.models import Tasks
+from master.history_utils import profile_record_user_display_name
 from login.models import Workplace
 from login.models import User
 from django.contrib.auth.decorators import login_required, permission_required
@@ -87,7 +88,7 @@ def update_current_profile(param):
     for task in tasks_in_work:
       profile_making_list = task.history_profile_records.all()
       for record in profile_making_list:
-        user_key = f'{record.user.last_name} {record.user.first_name}'
+        user_key = profile_record_user_display_name(record, task)
         if user_key in data.keys():
           old_value = data[user_key]
           data[user_key] = old_value + record.amount
@@ -165,7 +166,7 @@ def update_setup_speed(param):
     if profile_making_list != None:
       timedate_start_fact = task.task_timedate_start_fact
       timedate_setting_up = task.task_time_settingUp
-      user_making_setting_up = f'{profile_making_list.user.last_name} {profile_making_list.user.first_name}'
+      user_making_setting_up = profile_record_user_display_name(profile_making_list, task)
       seconds_in_day = 24 * 60 * 60
       dif_timedate_minute = round((timedate_setting_up - timedate_start_fact).seconds / 60, 2)
       
@@ -198,7 +199,7 @@ def update_profile_amount(param):
   for task in tasks_in_work:
     profile_making_list = task.history_profile_records.all()
     for record in profile_making_list:
-      user_key = f'{record.user.last_name} {record.user.first_name}'
+      user_key = profile_record_user_display_name(record, task)
       if user_key in data.keys():
         old_value = data[user_key]
         data[user_key] = old_value + record.amount
@@ -231,7 +232,7 @@ def update_hours_worked(param):
     if profile_making_list != None:
       timedate_start_fact = task.task_timedate_start_fact
       timedate_setting_up = task.task_time_settingUp
-      user_making_setting_up = f'{profile_making_list.user.last_name} {profile_making_list.user.first_name}'
+      user_making_setting_up = profile_record_user_display_name(profile_making_list, task)
       seconds_in_day = 24 * 60 * 60
       dif_timedate_minute = round((timedate_setting_up - timedate_start_fact).seconds / 60, 2)
       timedate_work_task = round((task.task_timedate_end_fact - task.task_timedate_start_fact).seconds / 60, 2)
@@ -267,7 +268,7 @@ def update_effectiveness(param):
     timedate_start = task.task_timedate_start_fact
     profile_making_list = task.history_profile_records.all()
     for record in profile_making_list:
-      user = f'{record.user.last_name} {record.user.first_name}'
+      user = profile_record_user_display_name(record, task)
       amount_profile = record.amount
       timedate_end = record.created_at
       time_to_work_hour = round((timedate_end - timedate_start).seconds / 60 / 60, 2)

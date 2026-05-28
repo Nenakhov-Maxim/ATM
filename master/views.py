@@ -2,6 +2,7 @@ from django.shortcuts import render
 from .models import HistoryEvent, OffsShtrips, Tasks
 from .forms import NewTaskForm, EditTaskForm, PauseTaskForm, ReportForm
 from .databaseWork import DatabaseWork
+from .history_utils import profile_record_user_display_name
 from django.http import HttpResponse, JsonResponse, FileResponse
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required, permission_required
@@ -230,11 +231,11 @@ def new_report(request):
         # Обрабатываем записи по каждому событию изготовления профиля
         # Объединяем по именю
         data_lib = {}
-        all_records = task.history_profile_records.all()
+        all_records = task.history_profile_records.select_related('user').all()
 
         for record in all_records:
           if record.created_at >= start_date and record.created_at <= end_date:
-            user = f'{record.user.last_name} {record.user.first_name}'
+            user = profile_record_user_display_name(record, task)
             profile_amount = record.amount
             if user in data_lib.keys():
               old_value = data_lib[user]
