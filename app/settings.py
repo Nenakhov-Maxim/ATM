@@ -136,6 +136,7 @@ AUTH_USER_MODEL = 'login.User'
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATIC_VERSION = os.environ.get("STATIC_VERSION", "20260527-1")
+AUTOMATIC_VISION_API_TOKEN = os.environ.get("AUTOMATIC_VISION_API_TOKEN", "")
 
 STATICFILES_DIRS = [
     BASE_DIR / "app/static",    
