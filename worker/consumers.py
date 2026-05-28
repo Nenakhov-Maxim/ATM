@@ -369,6 +369,7 @@ class TaskTransferConsumer(AsyncWebsocketConsumer):
         self.area_id = self.scope['url_route']['kwargs']
         self.task_list = {}
         self.profile_quantity_old = 0
+        self.sensor_state_old = None
 
     async def disconnect(self, close_code):
         """Отключение клиента от WebSocket"""
@@ -388,6 +389,7 @@ class TaskTransferConsumer(AsyncWebsocketConsumer):
         """Проверяет новые задачи и изменения в существующих задачах каждые 10 секунд"""        
         while True:
             await self.check_profile_amount()
+            await self.check_sensor_state()
             await asyncio.sleep(1)
             
             # Проверяем новые задачи
@@ -418,6 +420,24 @@ class TaskTransferConsumer(AsyncWebsocketConsumer):
                         'type': 'change_profile_amount',
                         'content': profile_amount            
                     }, default=str))
+
+    async def check_sensor_state(self):
+        sensor_state = await self.get_active_task_sensor_state()
+        if sensor_state is None:
+            self.sensor_state_old = None
+            return
+
+        state_key = f"{sensor_state['task_id']}:{sensor_state['sensor_true']}"
+        if self.sensor_state_old is None:
+            self.sensor_state_old = state_key
+            return
+
+        if self.sensor_state_old != state_key:
+            self.sensor_state_old = state_key
+            await self.send(text_data=json.dumps({
+                'type': 'change_sensor_state',
+                'content': sensor_state,
+            }, default=str))
                          
     # Смотрим сколько профиля в данный момент в выполняемой задаче
     @sync_to_async
@@ -433,6 +453,25 @@ class TaskTransferConsumer(AsyncWebsocketConsumer):
             .first()
             or 0
         )
+
+    @sync_to_async
+    def get_active_task_sensor_state(self):
+        row = (
+            Tasks.objects
+            .filter(
+                task_workplace=self.area_id['line_name'],
+                task_status_id=3,
+            )
+            .order_by('-task_timedate_start_fact', '-id')
+            .values('id', 'sensor_true')
+            .first()
+        )
+        if not row:
+            return None
+        return {
+            'task_id': row['id'],
+            'sensor_true': row['sensor_true'],
+        }
         
     
     @sync_to_async
@@ -494,5 +533,6 @@ class TaskTransferConsumer(AsyncWebsocketConsumer):
             'task_timedate_start_fact': task.task_timedate_start_fact,
             'profile_amount_now': task.profile_amount_now,
             'task_workplace_id': task.task_workplace_id,
+            'sensor_true': task.sensor_true,
             'is_accepted_video': task.is_accepted_video(),
         }

@@ -44,6 +44,15 @@ $(document).ready(function() {
           active_input.value = profile_now;
         }
       }
+    } else if (data.type === 'change_sensor_state') {
+      const active_item = document.querySelector('.task-card-item[data-category-id="3"]');
+      if (active_item) {
+        const checkbox = active_item.querySelector('.automatic-vision-checkbox');
+        if (checkbox) {
+          checkbox.checked = Boolean(data.content.sensor_true);
+        }
+      }
+      location.reload();
     }
 
   };
