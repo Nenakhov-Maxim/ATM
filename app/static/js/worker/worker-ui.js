@@ -62,6 +62,8 @@ function ws_add_new_task(data){
     <span class="card-item__title">${data['task_name']}</span><br>
     <span class="card-item__title">(Тип профиля: ${data['task_profile_type']}, штрипс - ${data['association_name_shtrips'] || ''})</span><br>
     <span class="card-item__title">Длина профиля: ${data['task_profile_length'] ?? ''}</span>
+    <br><span class="card-item__title">Номер заказа: ${data['task_order_number'] || ''}</span>
+    ${data['task_profile_material'] ? `<br><span class="card-item__title">Толщина материала: ${data['task_profile_material']}</span>` : ''}
     ${data['task_coating_type'] ? `<br><span class="card-item__title">Покрытие: ${data['task_coating_type']}</span>` : ''}
     ${data['task_coating_thickness'] ? `<br><span class="card-item__title">Толщина покрытия: ${data['task_coating_thickness']}</span>` : ''}
     ${data['task_coating_area'] ? `<br><span class="card-item__title">Площадь покрытия: ${data['task_coating_area']}</span>` : ''}

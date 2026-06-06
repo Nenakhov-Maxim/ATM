@@ -8,9 +8,10 @@ from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required, permission_required
 from django.views.generic import UpdateView
 from django.urls import reverse_lazy
+from django.db import transaction
 from django.db.models import Prefetch, Q
 from django.views.decorators.http import require_POST
-from .report import create_excel_from_dict_list
+from .report import create_excel_from_dict_list, profile_name_with_length_group
 from .profiling_invoice_report import create_profiling_invoice_report
 import math, os
 from datetime import timedelta, datetime
@@ -111,34 +112,53 @@ def new_task(request):
   if request.method == 'POST':
     profile_length_array = request.POST.getlist('task_profile_length')
     profile_amount_array = request.POST.getlist('task_profile_amount')
+    order_number_array = request.POST.getlist('task_order_number')
+    coating_type_array = request.POST.getlist('task_coating_type')
+    variant_count = len(profile_length_array)
+    if not variant_count or any(
+      len(values) != variant_count
+      for values in (profile_amount_array, order_number_array, coating_type_array)
+    ):
+      return HttpResponse('Ошибка: некорректно заполнены варианты длины продукции', status=400)
+
     amount_date_period = len(profile_length_array)
     date_start = datetime.strptime(request.POST.get('task_timedate_start'), "%Y-%m-%dT%H:%M") 
     date_end = datetime.strptime(request.POST.get('task_timedate_end'), "%Y-%m-%dT%H:%M")
     total_hour = ((date_end - date_start).total_seconds()) / 3600
     time_for_sector = total_hour / amount_date_period
-    start_position = date_start            
-    for index, value in enumerate(profile_length_array):               
-      decleaned_data = {}      
-      for key in request.POST:
-        if key == 'task_profile_length':
-          decleaned_data['task_profile_length'] = value
-        elif key == 'task_profile_amount':
-          decleaned_data['task_profile_amount'] = profile_amount_array[index]
-        elif key == 'task_timedate_start':
-          decleaned_data['task_timedate_start'] = start_position
-        elif key == 'task_timedate_end':
-          decleaned_data['task_timedate_end'] = start_position + timedelta(hours=time_for_sector)
-          start_position = start_position + timedelta(hours=time_for_sector)
-        else:
-          decleaned_data[key] = request.POST[key]
-      new_task_form = NewTaskForm(decleaned_data, user=request.user)
+    start_position = date_start
+    common_data = request.POST.dict()
+    task_forms = []
+
+    for index, profile_length in enumerate(profile_length_array):
+      end_position = start_position + timedelta(hours=time_for_sector)
+      task_data = common_data.copy()
+      task_data.update({
+        'task_profile_length': profile_length,
+        'task_profile_amount': profile_amount_array[index],
+        'task_order_number': order_number_array[index],
+        'task_coating_type': coating_type_array[index],
+        'task_timedate_start': start_position,
+        'task_timedate_end': end_position,
+      })
+      start_position = end_position
+
+      new_task_form = NewTaskForm(task_data, user=request.user)
       if new_task_form.is_valid():
-        new_data_file = DatabaseWork(new_task_form.cleaned_data)       
-        new_task_file = new_data_file.add_new_task_data(request.user)        
-        if  new_task_file == True:
-          print(f'Добавление прошло успешно, id записи: {new_data_file.new_task_id}')            
-        else:
-          return HttpResponse(f'Ошибка: {new_task_file}')
+        task_forms.append(new_task_form)
+      else:
+        return HttpResponse(f'Ошибка заполнения формы: {new_task_form.errors}', status=400)
+
+    try:
+      with transaction.atomic():
+        for new_task_form in task_forms:
+          new_data_file = DatabaseWork(new_task_form.cleaned_data)
+          new_task_file = new_data_file.add_new_task_data(request.user)
+          if new_task_file is not True:
+            raise RuntimeError(new_task_file)
+          print(f'Добавление прошло успешно, id записи: {new_data_file.new_task_id}')
+    except Exception as error:
+      return HttpResponse(f'Ошибка: {error}', status=400)
     return redirect('/master', permanent=True)   
 
 # Удаление задачи    
@@ -168,6 +188,7 @@ def edit_task(request):
                           'task_timedate_end': data.task_timedate_end, 'task_profile_type': data.task_profile_type_id, 
                           'task_workplace': data.task_workplace_id, 'task_profile_amount': data.task_profile_amount,
                           'task_profile_length': data.task_profile_length, 'task_comments': data.task_comments,
+                          'task_order_number': data.task_order_number,
                           'task_profile_material': data.task_profile_material,
                           'task_coating_type': data.task_coating_type_id, 'task_coating_area': data.task_coating_area,
                           'task_coating_thickness': data.task_coating_thickness})
@@ -247,7 +268,10 @@ def new_report(request):
         
         # Наполняем данными
         for key in data_lib.keys():    
-          new_row = [key, task.task_workplace_id, task.task_profile_type.profile_name,
+          new_row = [key, task.task_workplace_id, profile_name_with_length_group(
+                       task.task_profile_type.profile_name,
+                       task.task_profile_length,
+                     ),
                      data_lib[key] * task.task_profile_length, "8", '0', 'Да', '']
           dict_list[id_task]['data'].append(new_row)
         

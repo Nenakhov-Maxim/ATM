@@ -3,6 +3,17 @@ import pandas as pd
 from openpyxl import Workbook
 from openpyxl.styles import NamedStyle, Font, Border, Side, Alignment, PatternFill
 
+
+def profile_name_with_length_group(profile_name, profile_length):
+    length = float(profile_length or 0)
+    if length < 3:
+        length_group = 'L < 3'
+    elif length > 3:
+        length_group = 'L > 3'
+    else:
+        length_group = 'L = 3'
+    return f'{profile_name} {length_group}'
+
 def create_empty_excel(columns: list, filename: str, sheet_name: str = 'Акта'):
     df = pd.DataFrame(columns=columns)
 

@@ -109,6 +109,12 @@
               <span class="card-item__title">(Тип профиля: {{ el.task_profile_type }}, штрипс - {{el.task_profile_type.association_name_shtrips}})</span>
               <br>
               <span class="card-item__title">Длина профиля: {{ el.task_profile_length }}</span>
+              <br>
+              <span class="card-item__title">Номер заказа: {{ el.task_order_number }}</span>
+              {% if el.task_profile_material %}
+              <br>
+              <span class="card-item__title">Толщина материала: {{ el.task_profile_material }}</span>
+              {% endif %}
               {% if el.task_coating_type %}
               <br>
               <span class="card-item__title">Покрытие: {{ el.task_coating_type }}</span>

@@ -347,17 +347,23 @@
             {{ new_task_form.task_profile_material }}
           </div>
           
-          <div class="popup-content-block__amount">
-            <span class="popup-content-block__amoun__text">Введите необходимое количество продукции</span>
-            {{ new_task_form.task_profile_amount }}           
-          </div>
-          <div class="popup-content-block__amount">
-            <span class="popup-content-block__amoun__text">Введите необходимую длину продукции</span>
-            {{ new_task_form.task_profile_length }}           
-          </div>
-          <div class="popup-content-block__type-coating">
-            <label for="task_coating_type">Выберете тип финального покрытия</label>
-            {{ new_task_form.task_coating_type }}
+          <div class="profile-variant-row" data-variant-index="1">
+            <div class="popup-content-block__amount">
+              <span class="popup-content-block__amoun__text">Введите необходимое количество продукции</span>
+              {{ new_task_form.task_profile_amount }}
+            </div>
+            <div class="popup-content-block__amount">
+              <span class="popup-content-block__amoun__text">Введите необходимую длину продукции</span>
+              {{ new_task_form.task_profile_length }}
+            </div>
+            <div class="popup-content-block__order-number">
+              <label for="task_order_number">Введите номер заказа</label>
+              {{ new_task_form.task_order_number }}
+            </div>
+            <div class="popup-content-block__type-coating">
+              <label for="task_coating_type">Выберете тип финального покрытия</label>
+              {{ new_task_form.task_coating_type }}
+            </div>
           </div>
           <div class="popup-content-block__coating-thickness">
             <label for="task_coating_thickness">Тип и толщина базового покрытия</label>
@@ -427,6 +433,10 @@
           <div class="popup-content-block__amount">
             <span class="popup-content-block__amoun__text">Введите необходимую длину продукции (если требуется)</span>
             {{ edit_task_form.task_profile_length }}           
+          </div>
+          <div class="popup-content-block__order-number">
+            <label for="task_order_number">Введите номер заказа</label>
+            {{ edit_task_form.task_order_number }}
           </div>
           <div class="popup-content-block__material">
             <label for="task_profile_material">Введите толщину материала</label>

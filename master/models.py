@@ -183,6 +183,7 @@ class Tasks(models.Model):
     task_time_settingUp = models.DateTimeField('Фактическая дата и время начала наладки', null=True, blank=True)
     profile_amount_now = models.BigIntegerField('Количество профиля текущего', default=0)
     task_profile_length = models.FloatField('Длина профиля', default=0, blank=True, null=True)
+    task_order_number = models.CharField('Номер заказа', max_length=100, blank=True, default='')
     worker_accepted_task = models.TextField('ФИО рабочего', blank=True)
     history_offs_shtrips = models.ManyToManyField(OffsShtrips)
     task_profile_material = models.FloatField('Толщина материала', null=True, blank=True)

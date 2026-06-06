@@ -183,7 +183,6 @@ if (new_task_button && new_task_popup && edit_task_popup) {
 
 function open_new_task_popup(elem) {  
   elem.classList.toggle('disable')
-  input_index = 2
 }; 
 
 // ===== Dynamic Form Rows =====
@@ -191,44 +190,45 @@ function open_new_task_popup(elem) {
 
 function add_profile_length(event) {
   event.preventDefault()
-  const new_br = document.createElement('br')
-  const new_div_length = document.createElement('div')
-  const new_div_amount = document.createElement('div')
-  const new_div_close = document.createElement('div')
-  new_div_length.classList.add('popup-content-block__amount')
-  new_div_amount.classList.add('popup-content-block__amount')
-  new_div_close.classList.add('popup-content-close-line')
-  
-  const inner_html_length = `    
-            <span class="popup-content-block__amoun__text">Длина пролукции ${input_index}</span>
-            <input type="number" name="task_profile_length" step="any" required="" id="id_task_profile_length">     
-  `
-  const inner_html_amount = `    
-            <span class="popup-content-block__amoun__text">Количество продукции ${input_index}</span>
-            <input type="number" name="task_profile_amount" required="" id="id_task_profile_amount">     
-  `
+  const contentBlock = new_task_popup.querySelector('.new-task-popup__content-block')
+  const sourceRow = contentBlock.querySelector('.profile-variant-row')
+  if (!sourceRow) {
+    return
+  }
 
-  const inner_html_close = `<a href="">удалить строку</a>`
+  const rowIndex = input_index
+  const newRow = sourceRow.cloneNode(true)
+  newRow.dataset.variantIndex = rowIndex
 
-  new_div_length.innerHTML = inner_html_length
-  new_div_amount.innerHTML = inner_html_amount
-  new_div_close.innerHTML = inner_html_close
-  if (input_index === 2){
-    $('div.new-task-popup__content-block')[0].append(new_br)
-  }  
-  $('div.new-task-popup__content-block')[0].append(new_div_amount)
-  $('div.new-task-popup__content-block')[0].append(new_div_length)
-  $('div.new-task-popup__content-block')[0].append(new_div_close) 
+  newRow.querySelectorAll('input').forEach((input) => {
+    input.value = ''
+    input.id = `${input.id}_${rowIndex}`
+  })
+  newRow.querySelectorAll('select').forEach((select) => {
+    select.value = ''
+    select.id = `${select.id}_${rowIndex}`
+  })
+
+  const amountLabel = newRow.querySelectorAll('.popup-content-block__amoun__text')[0]
+  const lengthLabel = newRow.querySelectorAll('.popup-content-block__amoun__text')[1]
+  if (amountLabel) {
+    amountLabel.innerText = `Количество продукции ${rowIndex}`
+  }
+  if (lengthLabel) {
+    lengthLabel.innerText = `Длина продукции ${rowIndex}`
+  }
+
+  const closeRow = document.createElement('div')
+  closeRow.className = 'popup-content-close-line'
+  closeRow.innerHTML = '<a href="#">Удалить строку</a>'
+  closeRow.addEventListener('click', (closeEvent) => {
+    closeEvent.preventDefault()
+    newRow.remove()
+  })
+  newRow.append(closeRow)
+  const variantRows = contentBlock.querySelectorAll('.profile-variant-row')
+  variantRows[variantRows.length - 1].after(newRow)
   input_index += 1
-  new_div_close.addEventListener('click', (event)=> {
-    event.preventDefault()
-    const this_elem = event.target.closest('div')
-    const length_profile = this_elem.previousSibling
-    const amount_profile = length_profile.previousSibling
-    this_elem.remove()
-    length_profile.remove()
-    amount_profile.remove()
-  })  
 }
 
 // ===== API-Driven Form Data =====

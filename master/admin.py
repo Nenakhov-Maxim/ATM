@@ -13,6 +13,7 @@ class TasksAdmin(admin.ModelAdmin):
         'task_user_created',
         'task_status',
         'task_workplace',
+        'task_order_number',
         'task_coating_type',
         'task_coating_thickness',
         'created_at',
@@ -20,6 +21,7 @@ class TasksAdmin(admin.ModelAdmin):
     list_filter = ('task_status', 'task_workplace', 'task_coating_type', 'task_user_created_by', 'production_area')
     search_fields = (
         'task_name',
+        'task_order_number',
         'task_user_created',
         'task_user_created_by__username',
         'task_user_created_by__first_name',

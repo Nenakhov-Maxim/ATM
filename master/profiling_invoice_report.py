@@ -79,6 +79,7 @@ def _build_report_rows(tasks, start_date, end_date):
 
 def _empty_profile_group(task):
     return {
+        'order_number': task.task_order_number,
         'profile_name': _profile_report_name(task),
         'shtrips_name': _shtrips_report_name(task),
         'profile_by_shift': defaultdict(float),
@@ -89,6 +90,7 @@ def _empty_profile_group(task):
 
 def _empty_detail_row(task):
     return {
+        'order_number': task.task_order_number,
         'coating': _detail_coating_label(task),
         'profile_length': task.task_profile_length or 0,
         'profile_by_shift': defaultdict(float),
@@ -98,6 +100,7 @@ def _empty_detail_row(task):
 
 def _profile_group_key(task):
     return (
+        task.task_order_number,
         task.task_profile_type_id,
         task.task_profile_material,
         task.task_coating_thickness,
@@ -107,6 +110,7 @@ def _profile_group_key(task):
 
 def _task_group_key(task):
     return (
+        task.task_order_number,
         task.task_profile_type_id,
         round(float(task.task_profile_length or 0), 3),
         task.task_coating_type_id,
@@ -220,58 +224,60 @@ def _write_workbook(filepath, rows, start_date, end_date):
 
 
 def _setup_example_columns(ws):
-    for column in range(1, 25):
+    for column in range(1, 26):
         ws.column_dimensions[ws.cell(1, column).column_letter].width = 6
 
-    ws.column_dimensions['A'].width = 12
-    ws.column_dimensions['B'].width = 5
-    ws.column_dimensions['C'].width = 4
-    ws.column_dimensions['D'].width = 8
+    ws.column_dimensions['A'].width = 14
+    ws.column_dimensions['B'].width = 12
+    ws.column_dimensions['C'].width = 5
+    ws.column_dimensions['D'].width = 4
+    ws.column_dimensions['E'].width = 8
 
 
 def _write_example_header(ws, header_font, border, center):
     merges = [
-        'A1:D3', 'E1:F1', 'G1:H1', 'I1:J1', 'K1:L2', 'M1:N2',
-        'O1:P3', 'Q1:R1', 'S1:T1', 'U1:V1', 'W1:X2',
-        'E2:F2', 'G2:H2', 'I2:J2', 'Q2:R2', 'S2:T2', 'U2:V2',
-        'E3:F3', 'G3:H3', 'I3:J3', 'K3:L3', 'M3:N3',
-        'Q3:R3', 'S3:T3', 'U3:V3', 'W3:X3',
+        'A1:A3', 'B1:E3', 'F1:G1', 'H1:I1', 'J1:K1', 'L1:M2', 'N1:O2',
+        'P1:Q3', 'R1:S1', 'T1:U1', 'V1:W1', 'X1:Y2',
+        'F2:G2', 'H2:I2', 'J2:K2', 'R2:S2', 'T2:U2', 'V2:W2',
+        'F3:G3', 'H3:I3', 'J3:K3', 'L3:M3', 'N3:O3',
+        'R3:S3', 'T3:U3', 'V3:W3', 'X3:Y3',
     ]
     for cells in merges:
         ws.merge_cells(cells)
 
     values = {
-        'A1': 'Профиль',
-        'E1': '1 см.',
-        'G1': '2см.',
-        'I1': '3см.',
-        'K1': 'Всего',
-        'M1': 'Всего',
-        'O1': 'Штрипс',
-        'Q1': '1см.',
-        'S1': '2см.',
-        'U1': '3см.',
-        'W1': 'Всего',
-        'E2': 'Кол-во',
-        'G2': 'Кол-во ',
-        'I2': 'Кол-во',
-        'Q2': 'К-во штр.',
-        'S2': 'К-во штр.',
-        'U2': 'К-во штр.',
-        'E3': '(штук)',
-        'G3': '(штук)',
-        'I3': '(штук)',
-        'K3': '(штук)',
-        'M3': '(п/м)',
-        'Q3': '(кг)',
-        'S3': '(кг)',
-        'U3': '(кг)',
-        'W3': 'м/п',
+        'A1': '№ заказа',
+        'B1': 'Профиль',
+        'F1': '1 см.',
+        'H1': '2см.',
+        'J1': '3см.',
+        'L1': 'Всего',
+        'N1': 'Всего',
+        'P1': 'Штрипс',
+        'R1': '1см.',
+        'T1': '2см.',
+        'V1': '3см.',
+        'X1': 'Всего',
+        'F2': 'Кол-во',
+        'H2': 'Кол-во ',
+        'J2': 'Кол-во',
+        'R2': 'К-во штр.',
+        'T2': 'К-во штр.',
+        'V2': 'К-во штр.',
+        'F3': '(штук)',
+        'H3': '(штук)',
+        'J3': '(штук)',
+        'L3': '(штук)',
+        'N3': '(п/м)',
+        'R3': '(кг)',
+        'T3': '(кг)',
+        'V3': '(кг)',
+        'X3': 'м/п',
     }
     for cell, value in values.items():
         ws[cell] = value
 
-    for row in ws.iter_rows(min_row=1, max_row=3, min_col=1, max_col=24):
+    for row in ws.iter_rows(min_row=1, max_row=3, min_col=1, max_col=25):
         for cell in row:
             cell.font = header_font
             cell.border = border
@@ -283,16 +289,17 @@ def _write_profile_group_row(ws, row_number, profile_group, font, border, center
     profile_by_shift = profile_group['profile_by_shift']
     shtrips_by_shift = profile_group['shtrips_by_shift']
 
-    ws.cell(row_number, 1).value = profile_group['profile_name']
-    ws.cell(row_number, 5).value = _number_or_empty(profile_by_shift[SHIFT_1])
-    ws.cell(row_number, 7).value = _number_or_empty(profile_by_shift[SHIFT_2])
-    ws.cell(row_number, 9).value = _number_or_empty(profile_by_shift[SHIFT_3])
-    ws.cell(row_number, 11).value = _number_or_empty(sum(profile_by_shift.values()))
-    ws.cell(row_number, 15).value = profile_group['shtrips_name']
-    ws.cell(row_number, 17).value = _number_or_empty(round(shtrips_by_shift[SHIFT_1], 2))
-    ws.cell(row_number, 19).value = _number_or_empty(round(shtrips_by_shift[SHIFT_2], 2))
-    ws.cell(row_number, 21).value = _number_or_empty(round(shtrips_by_shift[SHIFT_3], 2))
-    ws.cell(row_number, 23).value = _number_or_empty(round(sum(shtrips_by_shift.values()), 2))
+    ws.cell(row_number, 1).value = profile_group['order_number']
+    ws.cell(row_number, 2).value = profile_group['profile_name']
+    ws.cell(row_number, 6).value = _number_or_empty(profile_by_shift[SHIFT_1])
+    ws.cell(row_number, 8).value = _number_or_empty(profile_by_shift[SHIFT_2])
+    ws.cell(row_number, 10).value = _number_or_empty(profile_by_shift[SHIFT_3])
+    ws.cell(row_number, 12).value = _number_or_empty(sum(profile_by_shift.values()))
+    ws.cell(row_number, 16).value = profile_group['shtrips_name']
+    ws.cell(row_number, 18).value = _number_or_empty(round(shtrips_by_shift[SHIFT_1], 2))
+    ws.cell(row_number, 20).value = _number_or_empty(round(shtrips_by_shift[SHIFT_2], 2))
+    ws.cell(row_number, 22).value = _number_or_empty(round(shtrips_by_shift[SHIFT_3], 2))
+    ws.cell(row_number, 24).value = _number_or_empty(round(sum(shtrips_by_shift.values()), 2))
 
     _style_data_row(ws, row_number, font, border, center, left)
 
@@ -304,18 +311,19 @@ def _write_detail_row(ws, row_number, detail_row, font, border, center, left):
     total_length = round(total_amount * float(detail_row['profile_length'] or 0), 2)
     shtrips_by_shift = detail_row['shtrips_by_shift']
 
-    ws.cell(row_number, 1).value = detail_row['coating']
-    ws.cell(row_number, 3).value = 'L='
-    ws.cell(row_number, 4).value = _format_number(detail_row['profile_length'])
-    ws.cell(row_number, 5).value = _number_or_empty(profile_by_shift[SHIFT_1])
-    ws.cell(row_number, 7).value = _number_or_empty(profile_by_shift[SHIFT_2])
-    ws.cell(row_number, 9).value = _number_or_empty(profile_by_shift[SHIFT_3])
-    ws.cell(row_number, 11).value = _number_or_empty(total_amount)
-    ws.cell(row_number, 13).value = _number_or_empty(total_length)
-    ws.cell(row_number, 17).value = _number_or_empty(round(shtrips_by_shift[SHIFT_1], 2))
-    ws.cell(row_number, 19).value = _number_or_empty(round(shtrips_by_shift[SHIFT_2], 2))
-    ws.cell(row_number, 21).value = _number_or_empty(round(shtrips_by_shift[SHIFT_3], 2))
-    ws.cell(row_number, 23).value = _number_or_empty(round(sum(shtrips_by_shift.values()), 2))
+    ws.cell(row_number, 1).value = detail_row['order_number']
+    ws.cell(row_number, 2).value = detail_row['coating']
+    ws.cell(row_number, 4).value = 'L='
+    ws.cell(row_number, 5).value = _format_number(detail_row['profile_length'])
+    ws.cell(row_number, 6).value = _number_or_empty(profile_by_shift[SHIFT_1])
+    ws.cell(row_number, 8).value = _number_or_empty(profile_by_shift[SHIFT_2])
+    ws.cell(row_number, 10).value = _number_or_empty(profile_by_shift[SHIFT_3])
+    ws.cell(row_number, 12).value = _number_or_empty(total_amount)
+    ws.cell(row_number, 14).value = _number_or_empty(total_length)
+    ws.cell(row_number, 18).value = _number_or_empty(round(shtrips_by_shift[SHIFT_1], 2))
+    ws.cell(row_number, 20).value = _number_or_empty(round(shtrips_by_shift[SHIFT_2], 2))
+    ws.cell(row_number, 22).value = _number_or_empty(round(shtrips_by_shift[SHIFT_3], 2))
+    ws.cell(row_number, 24).value = _number_or_empty(round(sum(shtrips_by_shift.values()), 2))
 
     _style_data_row(ws, row_number, font, border, center, left)
 
@@ -330,13 +338,13 @@ def _write_total_row(ws, row_number, rows, border, center):
             total_amount = sum(detail_row['profile_by_shift'].values())
             total_length += total_amount * float(detail_row['profile_length'] or 0)
 
-    ws.cell(row_number, 13).value = _number_or_empty(round(total_length, 2))
-    ws.cell(row_number, 23).value = _number_or_empty(round(total_shtrips, 2))
+    ws.cell(row_number, 14).value = _number_or_empty(round(total_length, 2))
+    ws.cell(row_number, 24).value = _number_or_empty(round(total_shtrips, 2))
     _style_data_row(ws, row_number, Font(bold=True, size=10), border, center, center)
 
 
 def _merge_data_row(ws, row_number):
-    for start_column in range(5, 25, 2):
+    for start_column in range(6, 26, 2):
         ws.merge_cells(
             start_row=row_number,
             start_column=start_column,
@@ -349,7 +357,7 @@ def _style_data_row(ws, row_number, font, border, center, left):
     for cell in ws[row_number]:
         cell.font = font
         cell.border = border
-        cell.alignment = left if cell.column in (1, 3) else center
+        cell.alignment = left if cell.column in (1, 2, 4) else center
 
 
 def _number_or_empty(value):

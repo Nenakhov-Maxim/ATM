@@ -129,6 +129,7 @@ $(document).ready(function() {
         edit_task_popup.querySelector('#id_task_workplace').value = data['task_workplace']
         edit_task_popup.querySelector('#id_task_profile_amount').value = data['task_profile_amount']
         edit_task_popup.querySelector('#id_task_profile_length').value = data['task_profile_length']
+        edit_task_popup.querySelector('#id_task_order_number').value = data['task_order_number'] || ""
         edit_task_popup.querySelector('#id_task_profile_material').value = data['task_profile_material'] || ""
         edit_task_popup.querySelector('#id_task_coating_type').value = data['task_coating_type'] || ""
         edit_task_popup.querySelector('#id_task_coating_area').value = data['task_coating_area'] || ""

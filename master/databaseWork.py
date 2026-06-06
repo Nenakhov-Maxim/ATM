@@ -28,6 +28,7 @@ class DatabaseWork:
         task_user_created = user_name,
         task_user_created_by = user,
         task_profile_length = self.data['task_profile_length'],
+        task_order_number = self.data.get('task_order_number', ''),
         task_profile_material = self.data.get('task_profile_material'),
         task_coating_type = self.data.get('task_coating_type'),
         task_coating_area = self.data.get('task_coating_area'),
@@ -35,10 +36,11 @@ class DatabaseWork:
         )
       
       # legacy M2M history (backwards-compatible)
-      new_history = new_task.history_event_messages.create(user=user, type_event=TypeEvent.objects.get(id=1), message=new_task.task_comments)
+      history_message = f"Заказ № {new_task.task_order_number}. {new_task.task_comments}".strip()
+      new_history = new_task.history_event_messages.create(user=user, type_event=TypeEvent.objects.get(id=1), message=history_message)
       # normalized event
       try:
-        TaskEvent.objects.create(task=new_task, user=user, type_event=TypeEvent.objects.get(id=1), message=new_task.task_comments)
+        TaskEvent.objects.create(task=new_task, user=user, type_event=TypeEvent.objects.get(id=1), message=history_message)
       except Exception:
         pass
       return True
@@ -94,9 +96,13 @@ class DatabaseWork:
   # Изменить задачу (Мастер)
   def edit_data_from_task(self, id_task, user): 
     task = Tasks.objects.get(id=id_task)
-    new_history = task.history_event_messages.create(user=user, type_event=TypeEvent.objects.get(id=9), message=f"Задача изменена пользователем {user.last_name} {user.first_name}")
+    history_message = (
+      f"Задача изменена пользователем {user.last_name} {user.first_name}. "
+      f"Заказ № {self.data.get('task_order_number', '')}"
+    )
+    new_history = task.history_event_messages.create(user=user, type_event=TypeEvent.objects.get(id=9), message=history_message)
     try:
-      TaskEvent.objects.create(task=task, user=user, type_event=TypeEvent.objects.get(id=9), message=f"Задача изменена пользователем {user.last_name} {user.first_name}")
+      TaskEvent.objects.create(task=task, user=user, type_event=TypeEvent.objects.get(id=9), message=history_message)
     except Exception:
       pass
     try:
@@ -108,6 +114,7 @@ class DatabaseWork:
       task_workplace_id = self.data['task_workplace'].id,
       task_profile_amount = self.data['task_profile_amount'],
       task_profile_length = self.data['task_profile_length'],
+      task_order_number = self.data.get('task_order_number', ''),
       task_profile_material = self.data.get('task_profile_material'),
       task_coating_type = self.data.get('task_coating_type'),
       task_coating_area = self.data.get('task_coating_area'),
