@@ -7,6 +7,7 @@ import django
 from django.conf.urls import include
 from django.contrib import admin
 from . import views
+from . import production_views
 
 
 urlpatterns = [
@@ -21,7 +22,10 @@ urlpatterns = [
     path('month/', views.task_month, name='month_filter'),
     path('pause_task/', views.pause_task, name='pause_working'),
     path('deny_task/', views.deny_task, name='deny_working'),
-    path('complete_task/', views.complete_task, name='complete_working'),
+    path('complete_task/', production_views.complete_production, name='complete_working'),
+    path('production-state/', production_views.production_state, name='production_state'),
+    path('change-coating/', production_views.update_coating, name='change_coating'),
+    path('stock-decision/', production_views.stock_decision, name='stock_decision'),
     path('setting-up/', views.start_settingUp, name='settingUp'),
     path('edit-profile-amount-value/', views.edit_profile_amount, name='change_profile_amount'),
     path('shiftChange/', views.shiftChange, name='change_worker'),

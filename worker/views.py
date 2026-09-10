@@ -4,13 +4,15 @@ from master.databaseWork import DatabaseWork
 from django.http import HttpResponse, JsonResponse
 from .forms import PauseTaskForm, DenyTaskForm
 from django.db.models import Count, Prefetch, Q
-import datetime
 from datetime import timedelta
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required, permission_required
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_POST
 from app.telegramAPI import TelegramBot
+from .line_access import worker_line_id, authorized_line_id
+from django.db import transaction
+from master.shift_selection import worker_selection, login_shift, worker_shift_tasks
 import json
 
 
@@ -30,7 +32,6 @@ def request_param(request, key):
 def worker_home(request, filter='all'):
   new_paused_form = PauseTaskForm()
   new_deny_form = DenyTaskForm()  
-  now = datetime.datetime.now()
   adr_lib = {'192.168.211.10': 1, '192.168.211.11': 2, '192.168.211.12': 3, '192.168.211.13': 4, '192.168.211.14': 5, '192.168.211.15': 6}
   if request.META['REMOTE_ADDR'] in adr_lib.keys():
     area_id = adr_lib[request.META['REMOTE_ADDR']]
@@ -38,10 +39,16 @@ def worker_home(request, filter='all'):
   else:
     user_prd_ar = 'Неизвестная линия'
     area_id = 1 #99  
-  tasks = Tasks.objects.filter(
+  area_id = worker_line_id(request)
+  selected_day, selected_shift = worker_selection(request.session, request.GET)
+  login_day, login_shift_number = login_shift(request.session)
+  pending_stock = Tasks.objects.filter(
+    task_workplace_id=area_id, task_status_id=2, allow_stock=True,
+    stock_decision__isnull=True, stock_source__isnull=True,
+  ).select_related('task_profile_type').order_by('-task_timedate_end_fact')
+  tasks = worker_shift_tasks(Tasks.objects.filter(
     task_workplace=area_id,
-    task_status_id__in=[3, 4, 7, 8]
-  ).select_related(
+  ), selected_day, selected_shift, login_day, login_shift_number).select_related(
     'task_status',
     'task_profile_type',
     'task_coating_type',
@@ -50,7 +57,7 @@ def worker_home(request, filter='all'):
       'history_offs_shtrips',
       queryset=OffsShtrips.objects.select_related('type_value_id').order_by('created_at', 'id'),
     ),
-  ).order_by('-id')  
+  )
   task_stats = tasks.aggregate(
     task_to_start=Count('id', filter=Q(task_status_id=4)),
     task_start=Count('id', filter=Q(task_status_id=3)),
@@ -58,16 +65,11 @@ def worker_home(request, filter='all'):
   task_to_start = task_stats['task_to_start']
   task_start = task_stats['task_start']
   user_info = [request.user.first_name, request.user.last_name, request.user.position_id.position, user_prd_ar]
-  if filter == 'now':
-    tasks = tasks.filter(task_timedate_start__lte = now)
-  elif filter == 'week':    
-    tasks = tasks.filter(task_timedate_start__lte = now + datetime.timedelta(days=5))
-  elif filter == 'month':    
-    tasks = tasks.filter(task_timedate_start__lte = now + datetime.timedelta(days=30))
   
   return render(request, 'worker.html', {'filter': filter, 'tasks':tasks, 'task_to_start':task_to_start,
                                          'task_start':task_start, 'user_info':user_info, 'new_paused_form':new_paused_form,
-                                         'new_deny_form':new_deny_form, 'line_id':area_id})
+                                         'new_deny_form':new_deny_form, 'line_id':area_id, 'pending_stock': pending_stock,
+                                         'selected_day': selected_day, 'selected_shift': selected_shift})
 
 # Запуск задания в работу (POST only)
 @login_required
@@ -78,8 +80,14 @@ def start_working(request):
   id_task = request_param(request, 'id_task')
   if not id_task:
     return JsonResponse({'success': False, 'message': 'missing id_task'}, status=400)
+  try:
+    revision = int(request_param(request, 'revision'))
+  except (TypeError, ValueError):
+    return JsonResponse({'message': 'Обновите страницу перед началом работы.'}, status=400)
+  if not Tasks.objects.filter(pk=id_task, task_workplace_id=authorized_line_id(request)).exists():
+    return JsonResponse({'message': 'Задание не найдено.'}, status=404)
   data_task = DatabaseWork({'id_task':id_task})
-  result = data_task.start_working(id_task, request.user)
+  result = data_task.start_working(id_task, request.user, revision)
   if result == True:
     return JsonResponse({'success': True, 'message': 'Статус задачи успешно обновлен'})
   return JsonResponse({'success': False, 'message': result}, status=400)
@@ -208,8 +216,10 @@ def edit_profile_amount(request):
   value = request_param(request, 'value')
   if not task_id or value is None:
     return JsonResponse({'success': False, 'message':'missing parameters'}, status=400)
+  if not Tasks.objects.filter(pk=task_id, task_workplace_id=authorized_line_id(request)).exists():
+    return JsonResponse({'message': 'Задание не найдено.'}, status=404)
   data_task = DatabaseWork({'id_task':task_id})
-  result = data_task.change_profile_amount(task_id, value, request.user)
+  result = data_task.change_profile_amount(task_id, value, request.user, request_param(request, 'revision') or 0)
   if result:
     return JsonResponse({'success': True, 'message':'ОК'})
   else:
@@ -220,17 +230,12 @@ def edit_profile_amount(request):
 @permission_required(perm='worker.change_workertypeproblem', raise_exception=True)
 @require_POST
 def shiftChange(request):
-  task_id = request_param(request, 'id_task')
-  if not task_id:
-    return JsonResponse({'success': False, 'message':'missing id_task'}, status=400)
-  data_task = DatabaseWork({'id_task':task_id})
-  result = data_task.shiftChange(task_id, request.user)
-  if result:
-    return JsonResponse({'success': True, 'message':'ОК'})
-  return JsonResponse({'success': False, 'message':'Ошибка пересменки'}, status=400)
+  from .production_views import handover_production
+  return handover_production(request)
 
 # Списание штрипса
-@csrf_exempt
+@login_required
+@permission_required(perm='worker.change_workertypeproblem', raise_exception=True)
 @require_http_methods(["POST"])
 def shtripsOffs(request):
   try:
@@ -239,9 +244,9 @@ def shtripsOffs(request):
     value = data['val_num']
     type_value = ShtripsValueType.objects.get(id=data['type'])
     task_id = data['task_id']
-    task = Tasks.objects.get(id=task_id)
-    task.history_offs_shtrips.create(value=value, type_value_id=type_value)
-    last_history = OffsShtrips.objects.latest('id')
+    with transaction.atomic():
+      task = Tasks.objects.select_for_update().get(id=task_id, task_workplace_id=authorized_line_id(request))
+      last_history = task.history_offs_shtrips.create(value=value, type_value_id=type_value, coating_thickness=task.task_coating_thickness or '')
     
     date_value = last_history.created_at + timedelta(hours=5)
     return JsonResponse({

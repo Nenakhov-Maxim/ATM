@@ -83,10 +83,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
             
             // Отправка shtrips на сервер
-            fetch('shtrips-offs/', {
+            fetch('/worker/shtrips-offs/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
                 },
                 body: JSON.stringify({data})
             })

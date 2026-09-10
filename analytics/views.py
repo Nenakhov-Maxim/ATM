@@ -28,7 +28,7 @@ def get_home_page(request):
       old_value.append(new_str) 
       work_task_lib[line_number] = old_value
     else:
-      if task.task_status_id == 3:
+      if task.task_status_id == 3 and task.task_profile_amount:
         koef_success = round(task.profile_amount_now / task.task_profile_amount * 100, 2)
         koef_success_lib[line_number] = koef_success
       new_str = f'Задание №{task.id}, профиль "{task.task_profile_type}", требуется: {task.task_profile_amount} шт., текущее количество: {task.profile_amount_now} шт. ({task.task_status})'

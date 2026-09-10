@@ -9,7 +9,25 @@ $(document).ready(function() {
   }
   let name_line = personDepartments[1].dataset.line
   let tasks_list = document.querySelectorAll(".task-card-item")
-  const socket_task = new WebSocket(`ws://192.168.211.1/ws/task-transfer/${name_line}`); //На сервере
+  const shiftFilter = document.querySelector('.worker-shift-filter');
+  const selection = new URLSearchParams({
+    production_date: shiftFilter.dataset.productionDate, shift: shiftFilter.dataset.shift,
+  });
+  const socket_task = new WebSocket(`${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws/task-transfer/${name_line}?${selection}`);
+  let refreshPending = false;
+  let refreshing = false;
+  async function refreshTasks() {
+    if (!refreshPending || refreshing || document.querySelector('dialog[open]') ||
+        document.activeElement?.matches('input, textarea, select')) return;
+    refreshing = true;
+    if (window.pendingProductionCount && await window.pendingProductionCount === false) {
+      refreshing = false;
+      return;
+    }
+    location.reload();
+  }
+  const refreshTimer = setInterval(refreshTasks, 1000);
+  window.addEventListener('pagehide', () => { clearInterval(refreshTimer); socket_task.close(); });
   // const socket_task = new WebSocket(`ws://127.0.0.1:8000/ws/task-transfer/${name_line}`); //На домашней машине
 
   for (const element of tasks_list) {
@@ -24,6 +42,18 @@ $(document).ready(function() {
     const data = JSON.parse(event.data);
     if (data.type === "Welcome"){
       // alert(`Успешно подключились к серверу AT-Manager. Производственная линия № ${name_line}`)
+    } else if (data.type === 'tasks_changed') {
+      refreshPending = true;
+      refreshTasks();
+    } else if (data.type === 'production_counter') {
+      const card = document.querySelector(`.task-card-item[data-itemid="${data.content.task_id}"]`);
+      const input = card?.querySelector('.right-side__current-quantity__amount');
+      if (input && document.activeElement !== input) input.value = data.content.total;
+      const checkbox = card?.querySelector('.automatic-vision-checkbox');
+      if (checkbox && checkbox.checked !== data.content.sensor_true) {
+        refreshPending = true;
+        refreshTasks();
+      }
     } else if (data.type === "new_task") {
       ws_add_new_task(data['content'])
     } else if  (data.type === 'change_task') {

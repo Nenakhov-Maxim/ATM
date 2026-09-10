@@ -1,4 +1,5 @@
 import os
+from copy import copy
 from collections import OrderedDict, defaultdict
 from datetime import datetime, time
 
@@ -69,30 +70,43 @@ def _get_completed_tasks(start_date, end_date, user):
 def _build_report_rows(tasks):
     profile_groups = OrderedDict()
     for task in tasks:
-        profile_amounts = _profile_amounts_by_shift(task)
-        if not any(profile_amounts.values()):
+        if not any(record.amount for record in task.invoice_profile_records):
             continue
+        coating_rows = {}
 
-        profile_key = _profile_group_key(task)
-        profile_group = profile_groups.setdefault(profile_key, _empty_profile_group(task))
-        detail_key = _task_group_key(task)
-        detail_row = profile_group['details'].setdefault(detail_key, _empty_detail_row(task))
+        def rows_for(coating):
+            if coating is None:
+                coating = task.task_coating_thickness or ''
+            if coating not in coating_rows:
+                snapshot = copy(task)
+                snapshot.task_coating_thickness = coating
+                profile_key = _profile_group_key(snapshot)
+                group = profile_groups.setdefault(profile_key, _empty_profile_group(snapshot))
+                detail_key = _task_group_key(snapshot)
+                detail = group['details'].setdefault(detail_key, _empty_detail_row(snapshot))
+                coating_rows[coating] = (group, detail)
+            return coating_rows[coating]
 
-        for shift_key, amount in profile_amounts.items():
-            detail_row['profile_by_shift'][shift_key] += amount
-            profile_group['profile_by_shift'][shift_key] += amount
+        for record in task.invoice_profile_records:
+            if not record.amount:
+                continue
+            group, detail = rows_for(record.coating_thickness)
+            shift = _shift_key(record.created_at)
+            group['profile_by_shift'][shift] += record.amount
+            detail['profile_by_shift'][shift] += record.amount
 
-        shtrips_by_shift = _shtrips_by_shift(task)
-        for shift_key, weight in shtrips_by_shift.items():
-            detail_row['shtrips_by_shift'][shift_key] += weight
-            profile_group['shtrips_by_shift'][shift_key] += weight
+        for record in task.invoice_shtrips_records:
+            group, detail = rows_for(record.coating_thickness)
+            shift = _shift_key(record.created_at)
+            group['shtrips_by_shift'][shift] += _shtrips_weight_kg(record)
+            detail['shtrips_by_shift'][shift] += _shtrips_weight_kg(record)
 
     return list(profile_groups.values())
 
 
 def _empty_profile_group(task):
     return {
-        'order_number': task.task_order_number,
+        'order_number': task.order_label,
         'profile_name': _profile_report_name(task),
         'shtrips_name': _shtrips_report_name(task),
         'profile_by_shift': defaultdict(float),
@@ -103,7 +117,7 @@ def _empty_profile_group(task):
 
 def _empty_detail_row(task):
     return {
-        'order_number': task.task_order_number,
+        'order_number': task.order_label,
         'coating': _detail_coating_label(task),
         'profile_length': task.task_profile_length or 0,
         'profile_by_shift': defaultdict(float),

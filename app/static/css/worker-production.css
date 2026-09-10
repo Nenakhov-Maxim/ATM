@@ -1,0 +1,96 @@
+.production-dialog {
+  box-sizing: border-box;
+  width: min(440px, calc(100% - 24px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  border: none;
+  border-radius: 10px;
+  padding: 0;
+  color: #333;
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, .3);
+  font-size: 14px;
+}
+.production-dialog::backdrop { background: rgb(0 0 0 / 50%); }
+.production-dialog[open] { animation: productionFadeIn .2s ease; }
+.production-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+.production-dialog h3 { font-family: 'Rosatom-bold', sans-serif; font-size: 18px; line-height: 1.4; margin: 0; overflow-wrap: anywhere; }
+.production-dialog .production-dialog-close {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: #999;
+  font: bold 26px/1 sans-serif;
+}
+.production-dialog .production-dialog-close:hover { color: #c21500; background: #f5f5f5; }
+.production-dialog-body { padding: 20px; }
+.production-dialog p { margin: 0 0 16px; line-height: 1.5; overflow-wrap: anywhere; }
+.production-dialog .production-dialog-info { color: #666; text-align: center; border-bottom: 1px solid #eee; padding-bottom: 20px; }
+.production-dialog label { display: block; margin: 16px 0 10px; font-weight: bold; line-height: 1.4; }
+.production-dialog input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background: #fff;
+  color: #333;
+  font: inherit;
+}
+.production-dialog input:focus { outline: none; border-color: #c21500; box-shadow: 0 0 5px rgba(194, 21, 0, .3); }
+.production-dialog-actions { display: grid; gap: 10px; margin-top: 20px; }
+.production-dialog button, .pending-stock button { padding: 10px 12px; cursor: pointer; white-space: normal; font: inherit; }
+.production-dialog-actions button { min-height: 44px; border: 1px solid #ddd; border-radius: 5px; font-weight: bold; }
+.production-dialog-actions .production-primary { background: #c21500; border-color: #c21500; color: #fff; text-transform: uppercase; }
+.production-dialog-actions .production-primary:hover { background: #a01800; border-color: #a01800; }
+.production-dialog-actions .production-secondary { background: #fff; color: #555; }
+.production-dialog-actions .production-secondary:hover { background: #f5f5f5; color: #333; }
+.production-dialog button:focus-visible, .change-coating-button:focus-visible { outline: 2px solid #c21500; outline-offset: 3px; }
+.production-dialog button:disabled { opacity: .5; cursor: wait; }
+.production-dialog .production-error { color: #b42318; margin: 12px 0 0; }
+.production-error:empty { display: none; }
+.change-coating-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  max-width: 100%;
+  min-height: 40px;
+  margin: 8px 0;
+  padding: 10px 14px;
+  border: 1px solid #c21500;
+  border-radius: 5px;
+  background: #fff;
+  color: #a01800;
+  font: 14px/1.4 'Rosatom-regular', sans-serif;
+  font-weight: bold;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  transition: background-color .15s ease, color .15s ease;
+}
+.change-coating-button:hover { background: #c21500; color: #fff; }
+.change-coating-button:disabled { opacity: .5; cursor: wait; }
+.pending-stock { padding: 12px 0; display: flex; flex-wrap: wrap; gap: 12px; }
+@keyframes productionFadeIn {
+  from { opacity: 0; transform: scale(.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .production-dialog[open] { animation: none; }
+  .change-coating-button { transition: none; }
+}

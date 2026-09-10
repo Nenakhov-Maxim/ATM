@@ -200,23 +200,13 @@ function add_profile_length(event) {
   const newRow = sourceRow.cloneNode(true)
   newRow.dataset.variantIndex = rowIndex
 
-  newRow.querySelectorAll('input').forEach((input) => {
-    input.value = ''
-    input.id = `${input.id}_${rowIndex}`
+  newRow.querySelectorAll('input, select').forEach((field) => {
+    field.value = ''
+    const label = newRow.querySelector(`label[for="${field.id}"]`)
+    field.id = `${field.id}_${rowIndex}`
+    if (label) label.htmlFor = field.id
   })
-  newRow.querySelectorAll('select').forEach((select) => {
-    select.value = ''
-    select.id = `${select.id}_${rowIndex}`
-  })
-
-  const amountLabel = newRow.querySelectorAll('.popup-content-block__amoun__text')[0]
-  const lengthLabel = newRow.querySelectorAll('.popup-content-block__amoun__text')[1]
-  if (amountLabel) {
-    amountLabel.innerText = `Количество продукции ${rowIndex}`
-  }
-  if (lengthLabel) {
-    lengthLabel.innerText = `Длина продукции ${rowIndex}`
-  }
+  newRow.querySelector('.profile-variant-title').textContent = `Продукция ${rowIndex}`
 
   const closeRow = document.createElement('div')
   closeRow.className = 'popup-content-close-line'
@@ -225,7 +215,7 @@ function add_profile_length(event) {
     closeEvent.preventDefault()
     newRow.remove()
   })
-  newRow.append(closeRow)
+  newRow.querySelector('.profile-variant-heading').append(closeRow)
   const variantRows = contentBlock.querySelectorAll('.profile-variant-row')
   variantRows[variantRows.length - 1].after(newRow)
   input_index += 1

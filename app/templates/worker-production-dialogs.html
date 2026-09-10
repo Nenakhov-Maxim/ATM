@@ -1,0 +1,41 @@
+<dialog id="production-dialog" class="production-dialog" aria-labelledby="production-title">
+  <form id="production-form">
+    <div class="production-dialog-header">
+      <h3 id="production-title"></h3>
+      <button class="production-dialog-close" type="button" data-close-production aria-label="Закрыть окно" title="Закрыть окно">&times;</button>
+    </div>
+    <div class="production-dialog-body">
+      <p id="production-current" class="production-dialog-info"></p>
+      <label for="production-total">Общее изготовленное количество, шт.</label>
+      <input id="production-total" type="number" min="0" step="1" required>
+      <div id="production-coating-fields">
+        <label for="production-coating">Новое базовое покрытие</label>
+        <input id="production-coating" type="text" maxlength="100" autocomplete="off">
+      </div>
+      <p class="production-error" role="alert"></p>
+      <div class="production-dialog-actions">
+        <button type="submit" id="production-submit" class="production-primary">Сохранить</button>
+        <button type="button" data-close-production class="production-secondary">Отмена</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+<dialog id="stock-dialog" class="production-dialog" aria-labelledby="stock-title">
+  <form id="stock-form">
+    <div class="production-dialog-header">
+      <h3 id="stock-title">Доработать остаток штрипса на склад?</h3>
+      <button class="production-dialog-close" type="button" data-close-stock aria-label="Закрыть окно" title="Закрыть окно">&times;</button>
+    </div>
+    <div class="production-dialog-body">
+      <p id="stock-profile" class="production-dialog-info"></p>
+      <label for="stock-length">Длина профиля, м</label>
+      <input id="stock-length" type="number" min="0.001" step="any" list="stock-lengths" required>
+      <datalist id="stock-lengths"><option value="3"></option><option value="6"></option></datalist>
+      <p class="production-error" role="alert"></p>
+      <div class="production-dialog-actions">
+        <button type="submit" class="production-primary">На склад</button>
+        <button type="button" data-stock-no class="production-secondary">Без доработки</button>
+      </div>
+    </div>
+  </form>
+</dialog>

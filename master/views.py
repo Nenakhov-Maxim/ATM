@@ -4,6 +4,8 @@ from .forms import NewTaskForm, EditTaskForm, PauseTaskForm, ReportForm
 from .databaseWork import DatabaseWork
 from .history_utils import profile_record_user_display_name
 from .shifts import production_shift_at
+from .shift_selection import with_effective_shift
+from datetime import date
 from django.http import HttpResponse, JsonResponse, FileResponse
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required, permission_required
@@ -67,6 +69,23 @@ def master_home(request):
       Q(production_area=request.user.production_area_id) | 
       Q(task_workplace__production_area_id=request.user.production_area_id)
     )).count()  
+  selected_day = None
+  selected_shift = None
+  try:
+    if request.GET.get('production_date'):
+      selected_day = date.fromisoformat(request.GET['production_date'])
+    if request.GET.get('shift'):
+      selected_shift = int(request.GET['shift'])
+      if selected_shift not in (1, 2, 3):
+        raise ValueError
+  except ValueError:
+    return HttpResponse('Некорректная дата или смена', status=400)
+  if selected_day or selected_shift:
+    tasks = with_effective_shift(tasks)
+    if selected_day:
+      tasks = tasks.filter(effective_shift_date=selected_day)
+    if selected_shift:
+      tasks = tasks.filter(effective_shift=selected_shift)
   load_data = {'title': 'AT-Manager', "task_stat": f'{tasks_stat_all}/{tasks_stat_complited}'}
   if request.user.position_id_id == 1:
     user_prd = 'Мастер'
@@ -76,7 +95,8 @@ def master_home(request):
   user_info = [request.user.first_name, request.user.last_name, user_prd]
   return render(request, 'master.html', {'load_data': load_data, 'new_task_form':new_task_form,
                                          'edit_task_form': edit_task_form, 'new_paused_form':new_paused_form,
-                                         'tasks': tasks, 'report_form': report_form, 'user_info': user_info})
+                                         'tasks': tasks, 'report_form': report_form, 'user_info': user_info,
+                                         'selected_day': selected_day, 'selected_shift': selected_shift})
 
 @login_required()
 @permission_required(perm='master.change_tasks', raise_exception=True)
@@ -180,6 +200,7 @@ def edit_task(request):
         shift_date, shift = production_shift_at(data.task_timedate_start)
       return JsonResponse({'task_name': data.task_name, 'task_timedate_start':data.task_timedate_start,
                           'id_task': data.id, 'task_shift_date': shift_date, 'task_shift': shift,
+                          'allow_stock': data.allow_stock,
                           'task_timedate_end': data.task_timedate_end, 'task_profile_type': data.task_profile_type_id, 
                           'task_workplace': data.task_workplace_id, 'task_profile_amount': data.task_profile_amount,
                           'task_profile_length': data.task_profile_length, 'task_comments': data.task_comments,

@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="{% static "css/style.css" %}">  
   <link rel="stylesheet" href="{% static "css/master.css" %}">
   <link rel="stylesheet" href="{% static "css/media-master.css" %}">
+  <link rel="stylesheet" href="{% static 'css/shift-filter.css' %}">
   <title>AT-Manager (Мастер)</title>
 </head>
 <body>
@@ -54,6 +55,17 @@
 </header>
 <section class="main">
   <div class="wrapper">
+    <form class="shift-filter master-shift-filter" method="get" action="/master/">
+      <label>Производственные сутки <input type="date" name="production_date" value="{{ selected_day|date:'Y-m-d' }}"></label>
+      <label>Смена <select name="shift">
+        <option value="">Все смены</option>
+        <option value="1" {% if selected_shift == 1 %}selected{% endif %}>1 смена</option>
+        <option value="2" {% if selected_shift == 2 %}selected{% endif %}>2 смена</option>
+        <option value="3" {% if selected_shift == 3 %}selected{% endif %}>3 смена</option>
+      </select></label>
+      <button type="submit">Применить</button>
+      <a href="/master/">Сбросить</a>
+    </form>
     <div class="toolbars">
       <div class="toolbars__search">
         <input class="search-item" type="search" placeholder="Поиск по имени, наименованию, номеру рабочего места и т.п.">
@@ -105,6 +117,7 @@
             </div>
             <div class="card-item__task-name">
               <span class="card-item__title">{{el.task_name}} <br> (Тип продукции: {{el.task_profile_type}})</span>
+              <br><span class="card-item__title">Заказ: {{ el.order_label }}</span>
               {% if el.planned_shift_label %}
               <br><span class="card-item__title">Плановая смена: {{ el.planned_shift_label }}</span>
               {% endif %}
@@ -171,7 +184,7 @@
             {% endif %}
             <div class="card-item__position-quantity">
               {% if el.task_status_id == 7 or el.task_status_id == 3 or el.task_status_id == 8 %}
-              <span class="card-item__title">{{el.task_profile_amount}}({{el.profile_amount_now}})</span>
+              <span class="card-item__title">{% if el.stock_source_id %}До окончания остатка{% else %}{{el.task_profile_amount}}{% endif %} ({{el.profile_amount_now}})</span>
               {%else%}
               <span class="card-item__title">{{el.task_profile_amount}}</span>
               {%endif%}
@@ -349,25 +362,6 @@
             <label for="task_profile_material">Введите толщину материала</label>
             {{ new_task_form.task_profile_material }}
           </div>
-          
-          <div class="profile-variant-row" data-variant-index="1">
-            <div class="popup-content-block__amount">
-              <span class="popup-content-block__amoun__text">Введите необходимое количество продукции</span>
-              {{ new_task_form.task_profile_amount }}
-            </div>
-            <div class="popup-content-block__amount">
-              <span class="popup-content-block__amoun__text">Введите необходимую длину продукции</span>
-              {{ new_task_form.task_profile_length }}
-            </div>
-            <div class="popup-content-block__order-number">
-              <label for="task_order_number">Введите номер заказа</label>
-              {{ new_task_form.task_order_number }}
-            </div>
-            <div class="popup-content-block__type-coating">
-              <label for="task_coating_type">Выберете тип финального покрытия</label>
-              {{ new_task_form.task_coating_type }}
-            </div>
-          </div>
           <div class="popup-content-block__coating-thickness">
             <label for="task_coating_thickness">Тип и толщина базового покрытия</label>
             {{ new_task_form.task_coating_thickness }}
@@ -375,12 +369,32 @@
           <div class="popup-content-block__amount">
             <span class="popup-content-block__amoun__text">Введите площадь покрытия</span>
             {{ new_task_form.task_coating_area }}
-          </div>         
+          </div>
+          <div class="profile-variant-row" data-variant-index="1">
+            <div class="profile-variant-heading"><span class="profile-variant-title">Продукция 1</span></div>
+            <div class="popup-content-block__amount">
+              <label for="{{ new_task_form.task_profile_amount.id_for_label }}">Количество продукции</label>
+              {{ new_task_form.task_profile_amount }}
+            </div>
+            <div class="popup-content-block__amount">
+              <label for="{{ new_task_form.task_profile_length.id_for_label }}">Длина продукции, м</label>
+              {{ new_task_form.task_profile_length }}
+            </div>
+            <div class="popup-content-block__order-number">
+              <label for="{{ new_task_form.task_order_number.id_for_label }}">Номер заказа</label>
+              {{ new_task_form.task_order_number }}
+            </div>
+            <div class="popup-content-block__type-coating">
+              <label for="{{ new_task_form.task_coating_type.id_for_label }}">Финальное покрытие</label>
+              {{ new_task_form.task_coating_type }}
+            </div>
+          </div>
         </div>
         <div class="add-profile-length">
           <a href="" onclick="add_profile_length(event, this)">Добавить длину продукции</a>
         </div>        
         <div class="popup-content-block__footer">
+          <label class="task-stock-option">{{ new_task_form.allow_stock }} Разрешить изготовление на склад</label>
           <div class="new-task-popup-comments">
             <span class="new-task-popup-comments__text">Комментарий к задаче</span>
             {{ new_task_form.task_comments }}           
@@ -460,9 +474,10 @@
           </div>           
         </div>
         <div class="popup-content-block__footer">
+          <label class="task-stock-option">{{ edit_task_form.allow_stock }} Разрешить изготовление на склад</label>
           <div class="new-task-popup-comments">
             <span class="new-task-popup-comments__text">Комментарий к задаче</span>
-            {{ edit_task_form.task_comments }}           
+            {{ edit_task_form.task_comments }}
           </div>
           <div class="edit-task-popup-buttons">
             <div class="popup-button-inner">

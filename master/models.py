@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.postgres.fields import HStoreField
 from datetime import datetime, timezone
 from login.models import User, Workplace, ProductionArea
-from .shifts import SHIFT_CHOICES, planned_shift_label
+from .shifts import SHIFT_CHOICES, planned_shift_label, production_shift_at
 
 
 class AccessApp(models.Model):
@@ -62,6 +62,7 @@ class ShtripsValueType(models.Model):
 class OffsShtrips(models.Model):
     """Модель истории списания штрипсов"""
     value = models.FloatField('Значение')
+    coating_thickness = models.CharField('Базовое покрытие при установке', max_length=100, null=True, blank=True)
     type_value_id = models.ForeignKey('ShtripsValueType', null=True, on_delete=models.SET_NULL)
     created_at = models.DateTimeField('Фактическая дата и время списания', default=django.utils.timezone.now)
     
@@ -150,6 +151,7 @@ class MasterTypeProblem(models.Model):
         verbose_name_plural = 'Типы проблем'
 
 class HistoryProfileRecords(models.Model):
+    coating_thickness = models.CharField('Базовое покрытие при изготовлении', max_length=100, null=True, blank=True)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     amount = models.IntegerField('Количество изготовленного профиля', default=0)
     profile_sum = models.IntegerField('Всего профиля на данный момент', default=0)
@@ -162,6 +164,11 @@ class HistoryProfileRecords(models.Model):
 class Tasks(models.Model):
     """Модель задач производства"""
     task_name = models.CharField('Наименование', max_length=250)
+    allow_stock = models.BooleanField('Разрешить изготовление на склад', default=False)
+    stock_decision = models.BooleanField('Решение о доработке на склад', null=True, blank=True)
+    stock_source = models.OneToOneField('self', related_name='stock_task', on_delete=models.PROTECT, null=True, blank=True, verbose_name='Исходное задание')
+    coating_revision = models.PositiveIntegerField(default=0)
+    coating_start_amount = models.BigIntegerField(default=0)
     task_timedate_start = models.DateTimeField('Дата и время начала', null=True, blank=True)
     task_timedate_end = models.DateTimeField('Дата и время окончания', null=True, blank=True)
     task_shift_date = models.DateField('Дата производственных суток', null=True, blank=True)
@@ -209,7 +216,13 @@ class Tasks(models.Model):
 
     @property
     def planned_shift_label(self):
+        if (self.task_shift_date is None or self.task_shift is None) and self.task_timedate_start:
+            return planned_shift_label(*production_shift_at(self.task_timedate_start))
         return planned_shift_label(self.task_shift_date, self.task_shift)
+
+    @property
+    def order_label(self):
+        return 'На склад' if self.stock_source_id else self.task_order_number
 
     def get_all_history_shtrips(self):
         return self.history_offs_shtrips.all()
@@ -250,6 +263,7 @@ class TaskEvent(models.Model):
 
 class TaskProfileRecord(models.Model):
     """Нормализованная запись изготовления профиля (история профилей)"""
+    coating_thickness = models.CharField('Базовое покрытие при изготовлении', max_length=100, null=True, blank=True)
     task = models.ForeignKey(Tasks, related_name='profile_records', on_delete=models.CASCADE)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     amount = models.IntegerField('Количество изготовленного профиля', default=0)

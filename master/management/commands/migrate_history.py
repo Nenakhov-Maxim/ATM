@@ -29,6 +29,7 @@ class Command(BaseCommand):
                         amount=hr.amount,
                         profile_sum=hr.profile_sum,
                         created_at=hr.created_at,
+                        defaults={'coating_thickness': hr.coating_thickness},
                     )
                     if created:
                         total_profiles += 1

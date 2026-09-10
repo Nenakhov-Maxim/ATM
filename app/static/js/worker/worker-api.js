@@ -25,8 +25,8 @@ function build_request_error_message(source, fallbackMessage) {
 function start_working(e) {
   let elem = e.closest(".task-card-item")  
   let task_id = elem.dataset.itemid
-  let link = 'start_working/'
-  let data = {'id_task':task_id}
+  let link = '/worker/start_working/'
+  let data = {'id_task':task_id, 'revision': Number(elem.dataset.coatingRevision || 0)}
   let type_request = 'POST'
   const start_time_from_data = document.querySelectorAll('.task-card-item[data-category="Выполняется"]')
   if (start_time_from_data.length > 0)  {
@@ -44,7 +44,7 @@ function start_working(e) {
 function start_settingUp(e){
   let task = e.closest(".task-card-item");    
   let id_task = task.dataset.itemid;
-  let link = 'setting-up/'
+  let link = '/worker/setting-up/'
   let data = {'id_task': id_task}
   let type_request = 'POST'  
   ajax_request(link, type_request, data)
@@ -72,32 +72,12 @@ function paused_task(e) {
 
 // Завершение выпонения задания
 function complete_task(e) {
-  let task = e.closest(".task-card-item")
-  let id_task = task.dataset.itemid;
-  let main_block_task = $(`.task-card-item[data-itemid=${id_task}]`)[0]    
-  let plan_profile_amount = main_block_task.querySelector('.right-side__required-quantity__amount').innerText
-  let fact_profile_amount = main_block_task.querySelector('.right-side__current-quantity__amount').value
-  let link = 'complete_task/'
-  let data = {'id_task': id_task}
-  let type_request = 'POST'
-  clearInterval(interval);  
-  if (Number(plan_profile_amount) !== Number(fact_profile_amount)) {
-    let isUserReady = confirm("Вы уверены, что хотите завершить задачу? Плановое и фактическое количество профиля не совпадают");
-    if (isUserReady) {ajax_request(link, type_request, data)}
-  } else {ajax_request(link, type_request, data)}
+  window.openProductionCompletion(e);
 }
 
 //Пересменка
 function shiftChange(e) {
-  let task = e.closest(".task-card-item")
-  let id_task = task.dataset.itemid;
-  let main_block_task = $(`.task-card-item[data-itemid=${id_task}]`)[0]
-  let fact_profile_amount = main_block_task.querySelector('.right-side__current-quantity__amount').value
-  let link = 'shiftChange/'
-  let data = {'id_task': id_task, 'profile_amount': Number(fact_profile_amount)}
-  let type_request = 'POST'
-  clearInterval(interval);
-  ajax_request(link, type_request, data)
+  window.openProductionHandover(e);
 }
 
 // ===== Shared AJAX =====
@@ -119,7 +99,7 @@ function getCookie(name) {
 
 function ajax_request(url, type, data) {
   const csrftoken = getCookie('csrftoken');
-  fetch(url, {
+  return fetch(url, {
     method: type,
     headers: {
       'Content-Type': 'application/json',
@@ -133,7 +113,7 @@ function ajax_request(url, type, data) {
       let parsed = null;
       try { parsed = JSON.parse(text); } catch(e) { parsed = text }
       alert(build_request_error_message(parsed, 'Ошибка запроса к серверу.'))
-      return;
+      return false;
     }
     // success
     if (url.indexOf('pause_task') !== -1 || url.indexOf('deny_task') !== -1 || url.indexOf('edit-profile-amount-value') !== -1) {
@@ -141,7 +121,9 @@ function ajax_request(url, type, data) {
     } else {
       location.reload()
     }
+    return true;
   }).catch((err) => {
     alert(build_request_error_message(err, 'Ошибка запроса к серверу.'))
+    return false;
   });
 }

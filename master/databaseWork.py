@@ -1,6 +1,9 @@
 from .models import *
 from worker.models import *
 from .shifts import planned_shift_label
+from .production import record_total, set_coating, begin_task, hand_over_task, ProductionConflict
+from django.db import transaction
+from django.db.models import Sum
 import datetime
 from datetime import timezone, timedelta
 import pytz
@@ -26,6 +29,7 @@ class DatabaseWork:
         task_profile_type_id = self.data['task_profile_type'].id,
         task_workplace_id = self.data['task_workplace'].id,
         task_profile_amount = self.data['task_profile_amount'],
+        allow_stock = self.data.get('allow_stock', False),
         task_comments = self.data['task_comments'],
         task_status_id = 1,
         task_user_created = user_name,
@@ -100,8 +104,10 @@ class DatabaseWork:
       return f'Ошибка получения данных по задаче: {e}'
   
   # Изменить задачу (Мастер)
+  @transaction.atomic
   def edit_data_from_task(self, id_task, user): 
-    task = Tasks.objects.get(id=id_task)
+    task = Tasks.objects.select_for_update().get(id=id_task)
+    set_coating(task, self.data.get('task_coating_thickness') or '')
     history_message = (
       f"Задача изменена пользователем {user.last_name} {user.first_name}. "
       f"Заказ № {self.data.get('task_order_number', '')}. "
@@ -123,8 +129,9 @@ class DatabaseWork:
       task_profile_type_id = self.data['task_profile_type'].id,
       task_workplace_id = self.data['task_workplace'].id,
       task_profile_amount = self.data['task_profile_amount'],
+      allow_stock = self.data.get('allow_stock', False) and not task.stock_source_id,
       task_profile_length = self.data['task_profile_length'],
-      task_order_number = self.data.get('task_order_number', ''),
+      task_order_number = 'На склад' if task.stock_source_id else self.data.get('task_order_number', ''),
       task_profile_material = self.data.get('task_profile_material'),
       task_coating_type = self.data.get('task_coating_type'),
       task_coating_area = self.data.get('task_coating_area'),
@@ -133,25 +140,18 @@ class DatabaseWork:
     )
       return  True
     except Exception as e:
+      transaction.set_rollback(True)
       return f'Ошибка изменения статуса задачи: {e}'
   
   # Старт выполнения работы рабочим  
-  def start_working(self, id_task, user):
-    task = Tasks.objects.get(id=id_task)
-    new_history = task.history_event_messages.create(user=user, type_event=TypeEvent.objects.get(id=3),
-                                       message=f"Задача принята рабочим {user.last_name} {user.first_name}. Старт изготовления продукции.")
+  @transaction.atomic
+  def start_working(self, id_task, user, revision=None):
     try:
-      TaskEvent.objects.create(task=task, user=user, type_event=TypeEvent.objects.get(id=3), message=f"Задача принята рабочим {user.last_name} {user.first_name}. Старт изготовления продукции.")
-    except Exception:
-      pass
-    try:
-      number = Tasks.objects.filter(id=id_task).update(        
-      task_timedate_start_fact = self.now,
-      task_status_id = 3,     
-    )
-      return  True
-    except Exception as e:
-      return f'Ошибка изменения статуса задачи: {e}'
+      task = Tasks.objects.get(pk=id_task)
+      begin_task(task.pk, task.task_workplace_id, user, revision)
+      return True
+    except (Tasks.DoesNotExist, ProductionConflict) as error:
+      return str(error)
     
   # Отмена выполнения работы рабочим  
   def deny_task(self, id_task, user):
@@ -197,8 +197,12 @@ class DatabaseWork:
       return f'Ошибка завершения задачи: {e}'
     
   # Старт переналадки
+  @transaction.atomic
   def start_settingUp(self, id_task, user):
     task = Tasks.objects.get(id=id_task)
+    Workplace.objects.select_for_update().get(pk=task.task_workplace_id)
+    if Tasks.objects.filter(task_workplace_id=task.task_workplace_id, task_status_id__in=[3, 7]).exclude(pk=task.pk).exists():
+      return 'Ошибка: на линии уже выполняется другое задание.'
     new_history = task.history_event_messages.create(user=user, type_event=TypeEvent.objects.get(id=6),
                                        message=f"Рабочий {user.last_name} {user.first_name}' приступил к выполнению пусконалодчных работ.")    
     try:
@@ -229,7 +233,7 @@ class DatabaseWork:
     else:
       date_end_work = date_end_work.replace(tzinfo=None)
     time_settingUp = round((date_start_work - date_start_settingUp).seconds/60/60, 2)
-    profile_amount = task.task_profile_amount
+    profile_amount = task.history_profile_records.filter(user_id=user_id).aggregate(total=Sum('amount'))['total'] or 0
     work_time = round((date_end_work - date_start_work).seconds/60/60, 2)
 
     month = self.now.month
@@ -256,39 +260,19 @@ class DatabaseWork:
       print(f'Ошибка сохранения аналитики: {e}')
  
   # Изменение профиля
-  def change_profile_amount(self, id_task, value, user):
-    task = Tasks.objects.get(id=id_task)
+  def change_profile_amount(self, id_task, value, user, revision=0):
     try:
-      last_row_records = task.history_profile_records.latest()
-    except Exception as e:
-      last_row_records= None  
-    try:
-      if last_row_records:
-        diff = int(value) - last_row_records.profile_sum
-        new_rec = task.history_profile_records.create(user=user, amount=diff, profile_sum=int(value))
-      else:
-        new_rec = task.history_profile_records.create(user=user, amount=int(value), profile_sum=int(value))  
-      try:
-        TaskProfileRecord.objects.create(task=task, user=user, amount=new_rec.amount, profile_sum=new_rec.profile_sum)
-      except Exception:
-        pass
-      task.profile_amount_now = int(value)
-      task.last_update = self.now  
-      task.save(update_fields=['profile_amount_now', 'last_update'])
+      with transaction.atomic():
+        task = Tasks.objects.select_for_update().get(id=id_task)
+        if task.task_status_id not in (3, 7) or task.coating_revision != int(revision):
+          return False
+        record_total(task, value, user)
       return True
-    except Exception as e:
-      print(f'Ошибка изменения текущего количества профиля в задаче: {e}') 
-      return False 
+    except (ValueError, Tasks.DoesNotExist):
+      return False
  
  # Пересменка
-  def shiftChange(self, id_task, user):
-    task = Tasks.objects.get(id= id_task)       
-    task.history_event_messages.create(user=user, type_event=TypeEvent.objects.get(id=7),
-                                       message=f"Рабочий {user.last_name} {user.first_name} приступил к пересменке. Текущее количество изготовленной продукции: {task.profile_amount_now} ед.")
-    try:
-      task.task_status_id = 8
-      task.save(update_fields=['task_status_id'])
-      return True
-    except Exception as e:
-      print(f'Ошибка при выполнении пересменки: {e}') 
-      return False
+  def shiftChange(self, id_task, user, total, expected_total, revision):
+    task = Tasks.objects.get(pk=id_task)
+    hand_over_task(task.pk, task.task_workplace_id, user, total, expected_total, revision)
+    return True

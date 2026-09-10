@@ -1,6 +1,9 @@
 // ===== Task Card Rendering =====
 // ver
 function ws_add_new_task(data){
+  const coatingText = document.createElement('span');
+  coatingText.textContent = data['task_coating_thickness'] || '';
+  const coatingHtml = coatingText.innerHTML;
   const existingCard = document.querySelector(`.task-card-item[data-itemid="${data['id']}"]`);
   if (existingCard) {
     existingCard.remove();
@@ -50,6 +53,8 @@ function ws_add_new_task(data){
   div_main.setAttribute('data-category', data['task_status'])
   div_main.setAttribute('data-category-id', data['task_status_id'])
   div_main.setAttribute('data-video', data['is_accepted_video'])
+  div_main.dataset.coatingRevision = data['coating_revision'] || 0
+  div_main.dataset.stock = Boolean(data['is_stock'])
   // task-card-item__wrapper
   let div_wrapper = document.createElement('div');
   div_wrapper.className = "task-card-item__wrapper"
@@ -65,7 +70,7 @@ function ws_add_new_task(data){
     <br><span class="card-item__title">Номер заказа: ${data['task_order_number'] || ''}</span>
     ${data['task_profile_material'] ? `<br><span class="card-item__title">Толщина материала: ${data['task_profile_material']}</span>` : ''}
     ${data['task_coating_type'] ? `<br><span class="card-item__title">Покрытие: ${data['task_coating_type']}</span>` : ''}
-    ${data['task_coating_thickness'] ? `<br><span class="card-item__title">Толщина покрытия: ${data['task_coating_thickness']}</span>` : ''}
+    ${data['task_coating_thickness'] ? `<br><span class="card-item__title">Базовое покрытие: ${coatingHtml}</span>` : ''}
     ${data['task_coating_area'] ? `<br><span class="card-item__title">Площадь покрытия: ${data['task_coating_area']}</span>` : ''}
     <div class="worplace-name__equipment"></div>
   </div>
@@ -76,7 +81,7 @@ function ws_add_new_task(data){
       <span class="card-item__title">Время на работу: ${date_to_time}</span><br>                
   </div>
   <div class="card-item__position-quantity">
-    <span class="card-item__title">${data['task_profile_amount']}</span>
+    <span class="card-item__title">${data['is_stock'] ? 'До окончания остатка' : data['task_profile_amount']}</span>
   </div>
 
   `
@@ -230,7 +235,7 @@ function ws_add_new_task(data){
   `
   <div class="task-information__right-side__required-quantity">
     <span class="right-side__required-quantity__text">Необходимое количество</span>
-    <span class="right-side__required-quantity__amount">${data['task_profile_amount']}</span>
+    <span class="right-side__required-quantity__amount">${data['is_stock'] ? 'До окончания остатка' : data['task_profile_amount']}</span>
   </div>
   <div class="task-information__right-side__required-length">
     <span class="right-side__required-length__text">Длина профиля</span>
@@ -242,7 +247,8 @@ function ws_add_new_task(data){
   </div>
   <div class="task-information__right-side__current-quantity">
     <span class="right-side__current-quantity__text">Текущее количество</span>
-    <input class="right-side__current-quantity__amount" type="number" value="${[3, 7].includes(data['task_status_id']) ? data['profile_amount_now'] : 0}"></input>
+    <input class="right-side__current-quantity__amount" type="number" value="${[3, 7, 8].includes(data['task_status_id']) ? data['profile_amount_now'] : 0}"></input>
+    ${data['task_status_id'] === 3 ? `<button type="button" class="change-coating-button" data-task-id="${data['id']}">Изменить базовое покрытие</button>` : ''}
   </div>
   
   `
@@ -504,10 +510,10 @@ $(document).ready(function(){
       if (Number.isNaN(Number(value))) {
         alert('Неверное значение количества профиля. Допустимы числа и операция сложения')
       } else {
-        let link = 'edit-profile-amount-value/'
-        let data = {'id_task': id_task, 'value':Number(value)}
+        let link = '/worker/edit-profile-amount-value/'
+        let data = {'id_task': id_task, 'value':Number(value), 'revision': Number(card_element.dataset.coatingRevision || 0)}
         let type_request = 'POST'         
-        ajax_request(link, type_request, data)
+        window.pendingProductionCount = ajax_request(link, type_request, data)
         e.target.value = value    
       }
           

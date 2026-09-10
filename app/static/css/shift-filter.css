@@ -1,0 +1,80 @@
+.shift-filter {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 0;
+  font-size: 14px;
+}
+.shift-filter label { display: grid; gap: 6px; }
+.shift-filter input, .shift-filter select, .shift-filter button {
+  box-sizing: border-box;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #999;
+  border-radius: 4px;
+  background: #fff;
+  color: #222;
+  font: inherit;
+}
+.shift-filter button { cursor: pointer; }
+.shift-filter a { padding: 10px 0; text-decoration: underline; }
+.shift-tabs { display: flex; gap: 4px; }
+.shift-tabs button { min-width: 88px; }
+.shift-tabs .selected { background: #c21500; border-color: #c21500; color: #fff; }
+.shift-section-title { margin: 0; padding: 14px 12px; font-size: 16px; background: #eee; border-top: 1px solid #ccc; }
+.shift-empty { padding: 20px 12px; font-size: 14px; }
+.master-shift-filter {
+  gap: 12px 16px;
+  padding: 20px 0;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #eee;
+}
+.master-shift-filter label { gap: 10px; color: #555; font-weight: bold; }
+.master-shift-filter input, .master-shift-filter select {
+  width: 210px;
+  max-width: 100%;
+  min-height: 42px;
+  border-color: #ddd;
+  border-radius: 5px;
+  font-weight: normal;
+}
+.master-shift-filter input:focus, .master-shift-filter select:focus {
+  outline: none;
+  border-color: #c21500;
+  box-shadow: 0 0 5px rgba(194, 21, 0, .3);
+}
+.master-shift-filter button {
+  min-height: 42px;
+  padding: 10px 20px;
+  border-color: #c21500;
+  border-radius: 5px;
+  background: #c21500;
+  color: #fff;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+.master-shift-filter button:hover { background: #a01800; border-color: #a01800; }
+.master-shift-filter a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 42px;
+  padding: 10px 16px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  color: #555;
+  text-decoration: none;
+}
+.master-shift-filter a:hover { color: #a01800; border-color: #c21500; background: #fafafa; }
+.master-shift-filter button:focus-visible, .master-shift-filter a:focus-visible { outline: 2px solid #c21500; outline-offset: 3px; }
+@media (max-width: 600px) {
+  .shift-filter { align-items: stretch; }
+  .shift-filter label { max-width: 100%; }
+  .shift-tabs { width: 100%; }
+  .shift-tabs button { flex: 1; min-width: 0; padding: 8px; }
+  .master-shift-filter { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .master-shift-filter label { grid-column: 1 / -1; min-width: 0; }
+  .master-shift-filter input, .master-shift-filter select { width: 100%; }
+}

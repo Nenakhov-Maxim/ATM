@@ -1050,6 +1050,126 @@ input[name="cansel-popup"] {
   border-bottom: 2px dotted rgba(48, 47, 47, 0.3);
 }
 
+.new-task-popup .new-task-popup-wrapper {
+  width: min(1000px, calc(100% - 24px));
+  max-height: calc(100vh - 24px);
+  position: relative;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.new-task-popup .new-task-popup__content-block {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  padding-top: 16px;
+  text-align: left;
+}
+
+.new-task-popup .new-task-popup__content-block > div,
+.new-task-popup .profile-variant-row > div {
+  min-width: 0;
+}
+
+.new-task-popup .new-task-popup__content-block input,
+.new-task-popup .new-task-popup__content-block select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.new-task-popup .profile-variant-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: end;
+  gap: 16px;
+  border-top: 2px solid #d5d8dc;
+  padding: 16px 12px;
+  background: #f5f6f7;
+}
+
+.new-task-popup .profile-variant-heading {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.new-task-popup .profile-variant-title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.new-task-popup .profile-variant-row label {
+  margin-bottom: 8px;
+  overflow-wrap: anywhere;
+}
+
+.new-task-popup .popup-content-close-line {
+  margin: 0;
+  padding: 0;
+  color: #a7190b;
+}
+
+.new-task-popup .add-profile-length {
+  margin: 0;
+  padding: 12px 15px 16px;
+  font-size: 14px;
+}
+
+.new-task-popup .task-stock-option,
+.edit-task-popup .task-stock-option {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.new-task-popup .task-stock-option input,
+.edit-task-popup .task-stock-option input {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  accent-color: #c21500;
+}
+
+.new-task-popup .new-task-popup-comments__input {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (max-width: 1000px) {
+  .new-task-popup .new-task-popup__content-block,
+  .new-task-popup .profile-variant-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .new-task-popup .new-task-popup__content-block,
+  .new-task-popup .profile-variant-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .new-task-popup .popup-content-block__footer {
+    grid-template-columns: minmax(0, 1fr);
+    text-align: left;
+  }
+
+  .new-task-popup .popup-button {
+    max-width: 100%;
+  }
+}
+
 .new-task-popup .popup-button:hover:before {
   width: 79%;  
 }

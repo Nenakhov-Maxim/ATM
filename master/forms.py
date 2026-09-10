@@ -13,6 +13,7 @@ REPORT_TIME_ZONE = ZoneInfo('Asia/Yekaterinburg')
 
 
 class TaskScheduleForm(forms.Form):
+    allow_stock = forms.BooleanField(label='Разрешить изготовление на склад', required=False)
     task_shift_date = forms.DateField(
         label='Дата производственных суток',
         widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
@@ -32,6 +33,7 @@ class TaskScheduleForm(forms.Form):
 
 
 class NewTaskForm(TaskScheduleForm):
+    allow_stock = forms.BooleanField(label='Разрешить изготовление на склад', required=False, initial=True)
     
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
@@ -67,7 +69,7 @@ class EditTaskForm(TaskScheduleForm):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
-        for name in ('task_shift_date', 'task_shift'):
+        for name in ('task_shift_date', 'task_shift', 'allow_stock'):
             self.fields[name].widget.attrs['id'] = f'id_edit_{name}'
 
         queryset = Workplace.objects.none()

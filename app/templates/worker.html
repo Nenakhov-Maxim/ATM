@@ -24,27 +24,7 @@
         </div>
         <div class="header-menu-wrapper">
           <ul class="header-menu-list">
-            {%if filter == 'all'%}
-            <li class="header-menu-item active"><a href="/worker">Мой поток</a></li>
-            <li class="header-menu-item"><a href="/worker/now">Сегодня</a></li>
-            <li class="header-menu-item"><a href="/worker/week">На этой неделе</a></li>
-            <li class="header-menu-item"><a href="/worker/month">В этом месяце</a></li>
-            {%elif filter == 'now'%}
-            <li class="header-menu-item"><a href="/worker">Мой поток</a></li>
-            <li class="header-menu-item active"><a href="/worker/now">Сегодня</a></li>
-            <li class="header-menu-item"><a href="/worker/week">На этой неделе</a></li>
-            <li class="header-menu-item"><a href="/worker/month">В этом месяце</a></li>
-            {%elif filter == 'week'%}
-            <li class="header-menu-item"><a href="/worker">Мой поток</a></li>
-            <li class="header-menu-item"><a href="/worker/now">Сегодня</a></li>
-            <li class="header-menu-item active"><a href="/worker/week">На этой неделе</a></li>
-            <li class="header-menu-item"><a href="/worker/month">В этом месяце</a></li>
-            {%elif filter == 'month'%}
-            <li class="header-menu-item"><a href="/worker">Мой поток</a></li>
-            <li class="header-menu-item"><a href="/worker/now">Сегодня</a></li>
-            <li class="header-menu-item"><a href="/worker/week">На этой неделе</a></li>
-            <li class="header-menu-item active"><a href="/worker/month">В этом месяце</a></li>
-            {%endif%}
+            <li class="header-menu-item active"><a href="/worker/">Задания линии</a></li>
           </ul>          
         </div>
       </div>
@@ -71,6 +51,14 @@
 </header> 
 <section class="main">
   <div class="wrapper">
+    <form class="shift-filter worker-shift-filter" method="get" action="/worker/" data-shift="{{ selected_shift }}" data-production-date="{{ selected_day|date:'Y-m-d' }}">
+      <label>Производственные сутки <input type="date" name="production_date" value="{{ selected_day|date:'Y-m-d' }}" required></label>
+      <div class="shift-tabs" aria-label="Смена">
+        <button name="shift" value="1" type="submit" aria-pressed="{% if selected_shift == 1 %}true{% else %}false{% endif %}" {% if selected_shift == 1 %}class="selected"{% endif %}>1 смена</button>
+        <button name="shift" value="2" type="submit" aria-pressed="{% if selected_shift == 2 %}true{% else %}false{% endif %}" {% if selected_shift == 2 %}class="selected"{% endif %}>2 смена</button>
+        <button name="shift" value="3" type="submit" aria-pressed="{% if selected_shift == 3 %}true{% else %}false{% endif %}" {% if selected_shift == 3 %}class="selected"{% endif %}>3 смена</button>
+      </div>
+    </form>
     <div class="toolbars">
       <div class="toolbars__search">
         <input class="search-item" type="search" placeholder="Поиск наименованию, дате, статусу...">
@@ -97,9 +85,19 @@
           <span class="task-headers__title">Операции с задачей</span>
         </div>
       </div>
-      <div class="task-cards-list">        
+      {% if pending_stock %}
+      <div class="pending-stock">
+        {% for source in pending_stock %}
+        <button type="button" data-stock-source="{{ source.id }}">Доработка на склад: задание № {{ source.id }}, {{ source.task_profile_type }}</button>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <div class="task-cards-list">
         {% for el in tasks %}
-        <div class="task-card-item" data-itemId={{el.id}} data-category={{el.task_status}} data-category-id={{el.task_status_id}} data-video={{el.is_accepted_video}}>
+        {% ifchanged el.shift_priority %}
+        <h2 class="shift-section-title">{% if el.shift_priority == 0 %}Незавершённые задания{% else %}Задания выбранной смены{% endif %}</h2>
+        {% endifchanged %}
+        <div class="task-card-item" data-itemId={{el.id}} data-category={{el.task_status}} data-category-id={{el.task_status_id}} data-video={{el.is_accepted_video}} data-coating-revision="{{ el.coating_revision }}" data-stock="{{ el.stock_source_id|yesno:'true,false' }}">
           <div class="task-card-item__wrapper">
             <div class="card-item__toolbar">              
               <div class="toolbar-item__history" onclick="more_information_click(this)"><img class="toolbar-item__history__svg" src="{% static "img/Master.svg" %}" alt="Развернуть"></div>
@@ -110,7 +108,7 @@
               <br>
               <span class="card-item__title">Длина профиля: {{ el.task_profile_length }}</span>
               <br>
-              <span class="card-item__title">Номер заказа: {{ el.task_order_number }}</span>
+              <span class="card-item__title">Заказ: {{ el.order_label }}</span>
               {% if el.task_profile_material %}
               <br>
               <span class="card-item__title">Толщина материала: {{ el.task_profile_material }}</span>
@@ -118,14 +116,14 @@
               {% if el.task_coating_type %}
               <br>
               <span class="card-item__title">Покрытие: {{ el.task_coating_type }}</span>
+              {% endif %}
               {% if el.task_coating_thickness %}
               <br>
-              <span class="card-item__title">Толщина покрытия: {{ el.task_coating_thickness }}</span>
+              <span class="card-item__title">Базовое покрытие: {{ el.task_coating_thickness }}</span>
               {% endif %}
               {% if el.task_coating_area %}
               <br>
               <span class="card-item__title">Площадь покрытия: {{ el.task_coating_area }}</span>
-              {% endif %}
               {% endif %}
               <div class="worplace-name__equipment">
               </div>
@@ -139,7 +137,7 @@
                 <span class="card-item__title">Время на работу: {% dates_to_time el.task_timedate_start el.task_timedate_end %}</span><br>                
             </div>
             <div class="card-item__position-quantity">
-              <span class="card-item__title">{{ el.task_profile_amount }}</span>
+              <span class="card-item__title">{% if el.stock_source_id %}До окончания остатка{% else %}{{ el.task_profile_amount }}{% endif %}</span>
             </div>
             {% if el.task_status_id == 1 %}
             <div class="card-item__task-status">
@@ -250,6 +248,9 @@
                         <label for="automatic-vision-checkbox-{{el.id}}">Включить автоматическое распознование</label>
                       </div>
                       <button id="shtrips-offs-btn" type="button">Списать штрипс</button>
+                      {% if el.task_status_id == 3 %}
+                      <button type="button" class="change-coating-button" data-task-id="{{ el.id }}">Изменить базовое покрытие</button>
+                      {% endif %}
                       <h3 class="history-shtrips-offs-title">История списания штрипсов</h3>
                       <div class="history-shtrips-offs-wrapper">
                         <div class="history-shtrips-offs-item-labels">
@@ -276,7 +277,7 @@
                     </div>
                     <div class="task-information__right-side__required-quantity">
                       <span class="right-side__required-quantity__text">Необходимое количество</span>
-                      <span class="right-side__required-quantity__amount">{{ el.task_profile_amount }}</span>
+                      <span class="right-side__required-quantity__amount">{% if el.stock_source_id %}До окончания остатка{% else %}{{ el.task_profile_amount }}{% endif %}</span>
                     </div>
                     <div class="task-information__right-side__shtrips-type">
                       <span class="right-side__shtrips-type__text">Штрипс</span>
@@ -334,7 +335,9 @@
             </div>            
           </div>  
         </div>
-        {% endfor %}        
+        {% empty %}
+        <p class="shift-empty">Нет заданий для выбранной смены.</p>
+        {% endfor %}
       </div>
     </div>
     </div>
@@ -432,10 +435,14 @@
     </div>
   </div>
 </footer>
+{% include 'worker-production-dialogs.html' %}
+<link rel="stylesheet" href="{% static 'css/worker-production.css' %}">
+<link rel="stylesheet" href="{% static 'css/shift-filter.css' %}">
 <script src="{% static "/js/loader.js" %}"></script>
 <script src="{% static "/js/jquery/jquery-3.7.1.min.js" %}"></script>
 <script src="{% static "/js/moment.min.js" %}"></script>  
 <script src="{% static "/js/worker/worker-api.js" %}"></script>
+<script src="{% static 'js/worker/worker-production.js' %}"></script>
 <script src="{% static "/js/worker/worker-ui.js" %}"></script>
 <script src="{% static "/js/worker/worker-websocket.js" %}"></script>
 <script src="{% static "/js/worker/worker.js" %}"></script> 

@@ -135,7 +135,7 @@ AUTH_USER_MODEL = 'login.User'
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATIC_VERSION = os.environ.get("STATIC_VERSION", "20260528-1")
+STATIC_VERSION = os.environ.get("STATIC_VERSION", "20260910-shift-styles")
 AUTOMATIC_VISION_API_TOKEN = os.environ.get("AUTOMATIC_VISION_API_TOKEN", "")
 
 STATICFILES_DIRS = [

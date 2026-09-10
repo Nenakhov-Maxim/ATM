@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta, timezone
 from django.test import RequestFactory, SimpleTestCase, TestCase
 
 from login.models import ProductionArea, User, Workplace
-from .forms import TaskScheduleForm
+from .forms import TaskScheduleForm, NewTaskForm, EditTaskForm
 from .models import CoatingType, ProfileType, Tasks, TaskStatus, TypeEvent, WorkerAnalyticsRecord
 from .profiling_invoice_report import _build_report_rows, _get_completed_tasks, SHIFT_1, SHIFT_2
 from .shifts import PRODUCTION_TIME_ZONE, production_shift_at, shift_bounds
@@ -12,6 +12,14 @@ from .views import edit_task, new_task
 
 
 class ShiftScheduleTests(SimpleTestCase):
+    def test_stock_is_checked_only_for_new_unbound_form(self):
+        self.assertTrue(NewTaskForm()['allow_stock'].value())
+        self.assertFalse(NewTaskForm(data={})['allow_stock'].value())
+        self.assertFalse(NewTaskForm(initial={'allow_stock': False})['allow_stock'].value())
+        self.assertFalse(EditTaskForm(initial={'allow_stock': False})['allow_stock'].value())
+        self.assertTrue(EditTaskForm(initial={'allow_stock': True})['allow_stock'].value())
+        self.assertNotEqual(NewTaskForm()['allow_stock'].id_for_label, EditTaskForm()['allow_stock'].id_for_label)
+
     def test_all_shifts_and_midnight_belong_to_same_production_day(self):
         day = date(2026, 9, 10)
         expected = {
