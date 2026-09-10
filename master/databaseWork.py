@@ -1,5 +1,6 @@
 from .models import *
 from worker.models import *
+from .shifts import planned_shift_label
 import datetime
 from datetime import timezone, timedelta
 import pytz
@@ -20,6 +21,8 @@ class DatabaseWork:
         task_name = self.data['task_name'],
         task_timedate_start = self.data['task_timedate_start'],
         task_timedate_end = self.data['task_timedate_end'],
+        task_shift_date = self.data['task_shift_date'],
+        task_shift = self.data['task_shift'],
         task_profile_type_id = self.data['task_profile_type'].id,
         task_workplace_id = self.data['task_workplace'].id,
         task_profile_amount = self.data['task_profile_amount'],
@@ -36,7 +39,10 @@ class DatabaseWork:
         )
       
       # legacy M2M history (backwards-compatible)
-      history_message = f"Заказ № {new_task.task_order_number}. {new_task.task_comments}".strip()
+      history_message = (
+        f"Заказ № {new_task.task_order_number}. Плановая смена: {new_task.planned_shift_label}. "
+        f"{new_task.task_comments or ''}"
+      ).strip()
       new_history = new_task.history_event_messages.create(user=user, type_event=TypeEvent.objects.get(id=1), message=history_message)
       # normalized event
       try:
@@ -98,7 +104,9 @@ class DatabaseWork:
     task = Tasks.objects.get(id=id_task)
     history_message = (
       f"Задача изменена пользователем {user.last_name} {user.first_name}. "
-      f"Заказ № {self.data.get('task_order_number', '')}"
+      f"Заказ № {self.data.get('task_order_number', '')}. "
+      f"Плановая смена: {task.planned_shift_label or 'не указана'} -> "
+      f"{planned_shift_label(self.data['task_shift_date'], self.data['task_shift'])}"
     )
     new_history = task.history_event_messages.create(user=user, type_event=TypeEvent.objects.get(id=9), message=history_message)
     try:
@@ -110,6 +118,8 @@ class DatabaseWork:
       task_name = self.data['task_name'],
       task_timedate_start = self.data['task_timedate_start'],
       task_timedate_end = self.data['task_timedate_end'],
+      task_shift_date = self.data['task_shift_date'],
+      task_shift = self.data['task_shift'],
       task_profile_type_id = self.data['task_profile_type'].id,
       task_workplace_id = self.data['task_workplace'].id,
       task_profile_amount = self.data['task_profile_amount'],
@@ -120,7 +130,6 @@ class DatabaseWork:
       task_coating_area = self.data.get('task_coating_area'),
       task_coating_thickness = self.data.get('task_coating_thickness'),
       task_comments = self.data['task_comments'],
-      task_timedate_start_fact = None     
     )
       return  True
     except Exception as e:

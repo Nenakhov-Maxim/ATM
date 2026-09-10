@@ -3,10 +3,35 @@ from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.forms.widgets import DateTimeInput, TextInput, Select
 from django.db.models import Q
-from datetime import datetime
+from zoneinfo import ZoneInfo
+
+from django.utils import timezone
+from .shifts import SHIFT_CHOICES, current_production_date, shift_bounds
 
 
-class NewTaskForm(forms.Form):  
+REPORT_TIME_ZONE = ZoneInfo('Asia/Yekaterinburg')
+
+
+class TaskScheduleForm(forms.Form):
+    task_shift_date = forms.DateField(
+        label='Дата производственных суток',
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+        initial=current_production_date,
+    )
+    task_shift = forms.TypedChoiceField(
+        label='Плановая смена', choices=(('', 'Выберите смену'),) + SHIFT_CHOICES, coerce=int,
+    )
+
+    def clean(self):
+        data = super().clean()
+        if data.get('task_shift_date') and data.get('task_shift'):
+            data['task_timedate_start'], data['task_timedate_end'] = shift_bounds(
+                data['task_shift_date'], data['task_shift'],
+            )
+        return data
+
+
+class NewTaskForm(TaskScheduleForm):
     
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
@@ -21,14 +46,6 @@ class NewTaskForm(forms.Form):
 
 
     task_name = forms.CharField(max_length=150, widget=TextInput(attrs={"class":"popup-content-block__task-title__input"}), initial='Изготовить профиль')
-    task_timedate_start = forms.DateTimeField(label="Время начала", required=True,   widget=DateTimeInput(format="%Y-%m-%d %H:%M", 
-                                                                                                          attrs={'type': 'datetime-local',
-                                                                                                                 "class":"popup-content-block__time-to-start__input"}),
-                                              input_formats=["%Y-%m-%d %H:%m"], initial=datetime.now) 
-    task_timedate_end = forms.DateTimeField(label="Время окончания", required=True,   widget=DateTimeInput(format="%Y-%m-%d %H:%M",
-                                                                                                           attrs={'type': 'datetime-local',
-                                                                                                                  "class":"popup-content-block__time-to-end__input"}),
-        input_formats=["%Y-%m-%d %H:%m"])
     task_profile_type = forms.ModelChoiceField(queryset=ProfileType.objects.all())
     task_workplace =  forms.ModelChoiceField(queryset=Workplace.objects.none())
     task_profile_amount = forms.IntegerField()
@@ -43,11 +60,15 @@ class NewTaskForm(forms.Form):
     class Meta:
         model = Tasks
         
-class EditTaskForm(forms.Form):  
+class EditTaskForm(TaskScheduleForm):
+    id_task = forms.IntegerField(widget=forms.HiddenInput)
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
+
+        for name in ('task_shift_date', 'task_shift'):
+            self.fields[name].widget.attrs['id'] = f'id_edit_{name}'
 
         queryset = Workplace.objects.none()
         if user and user.production_area_id:
@@ -73,14 +94,6 @@ class EditTaskForm(forms.Form):
 
 
     task_name = forms.CharField(max_length=150, widget=TextInput(attrs={"class":"popup-content-block__task-title__input"}))
-    task_timedate_start = forms.DateTimeField(label="Время начала", required=True,   widget=DateTimeInput(format="%Y-%m-%d %H:%M", 
-                                                                                                          attrs={'type': 'datetime-local',
-                                                                                                                 "class":"popup-content-block__time-to-start__input"}),
-                                              input_formats=["%Y-%m-%d %H:%m"]) 
-    task_timedate_end = forms.DateTimeField(label="Время окончания", required=True,   widget=DateTimeInput(format="%Y-%m-%d %H:%M",
-                                                                                                           attrs={'type': 'datetime-local',
-                                                                                                                  "class":"popup-content-block__time-to-end__input"}),
-        input_formats=["%Y-%m-%d %H:%m"])
     task_profile_type = forms.ModelChoiceField(queryset=ProfileType.objects.all())
     task_workplace =  forms.ModelChoiceField(queryset=Workplace.objects.none())
     task_profile_amount = forms.IntegerField()
@@ -109,3 +122,21 @@ class ReportForm(forms.Form):
     date_end = forms.DateTimeField(widget=DateTimeInput(format="%Y-%m-%d %H:%M",
                                                       attrs={'type': 'datetime-local',
                                                             "class":"popup-content-block__time-to-end__input"}))
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        # datetime-local не передает часовой пояс. Пользователь вводит местное
+        # время предприятия, поэтому сохраняем компоненты времени и назначаем UTC+5.
+        for field_name in ('date_start', 'date_end'):
+            value = cleaned_data.get(field_name)
+            if value is not None:
+                naive_value = value.replace(tzinfo=None)
+                cleaned_data[field_name] = timezone.make_aware(naive_value, REPORT_TIME_ZONE)
+
+        date_start = cleaned_data.get('date_start')
+        date_end = cleaned_data.get('date_end')
+        if date_start and date_end and date_end <= date_start:
+            self.add_error('date_end', 'Окончание периода должно быть позже начала.')
+
+        return cleaned_data

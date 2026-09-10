@@ -70,6 +70,7 @@ function ws_add_new_task(data){
     <div class="worplace-name__equipment"></div>
   </div>
   <div class="card-item__task-name">
+      ${data['planned_shift_label'] ? `<span class="card-item__title">Плановая смена: ${data['planned_shift_label']}</span><br>` : ''}
       <span class="card-item__title">Время начала: ${new Date(data['task_timedate_start']).toLocaleString("ru", date_options)}</span><br>
       <span class="card-item__title">Время окончания: ${new Date(data['task_timedate_end']).toLocaleString("ru", date_options)}</span><br>
       <span class="card-item__title">Время на работу: ${date_to_time}</span><br>                

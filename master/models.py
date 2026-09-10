@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.postgres.fields import HStoreField
 from datetime import datetime, timezone
 from login.models import User, Workplace, ProductionArea
+from .shifts import SHIFT_CHOICES, planned_shift_label
 
 
 class AccessApp(models.Model):
@@ -163,6 +164,8 @@ class Tasks(models.Model):
     task_name = models.CharField('Наименование', max_length=250)
     task_timedate_start = models.DateTimeField('Дата и время начала', null=True, blank=True)
     task_timedate_end = models.DateTimeField('Дата и время окончания', null=True, blank=True)
+    task_shift_date = models.DateField('Дата производственных суток', null=True, blank=True)
+    task_shift = models.PositiveSmallIntegerField('Плановая смена', choices=SHIFT_CHOICES, null=True, blank=True)
     task_profile_type = models.ForeignKey('ProfileType', null=True, on_delete=models.SET_NULL, verbose_name='Тип профиля')
     task_workplace = models.ForeignKey(Workplace, null=True, on_delete=models.SET_NULL, verbose_name='Рабочее место')
     task_profile_amount = models.BigIntegerField('Количество')
@@ -203,6 +206,10 @@ class Tasks(models.Model):
     def is_accepted_video(self):
         """Проверяет, поддерживается ли видеораспознавание для данного типа профиля"""
         return self.task_profile_type.is_accepted_video
+
+    @property
+    def planned_shift_label(self):
+        return planned_shift_label(self.task_shift_date, self.task_shift)
 
     def get_all_history_shtrips(self):
         return self.history_offs_shtrips.all()

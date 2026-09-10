@@ -105,6 +105,9 @@
             </div>
             <div class="card-item__task-name">
               <span class="card-item__title">{{el.task_name}} <br> (Тип продукции: {{el.task_profile_type}})</span>
+              {% if el.planned_shift_label %}
+              <br><span class="card-item__title">Плановая смена: {{ el.planned_shift_label }}</span>
+              {% endif %}
               {% if el.task_coating_type %}
               <span class="card-item__title">Покрытие: {{el.task_coating_type}}{% if el.task_coating_thickness %}, {{el.task_coating_thickness}}{% endif %}{% if el.task_coating_area %}, площадь {{el.task_coating_area}}{% endif %}</span>
               {% endif %}
@@ -327,12 +330,12 @@
             </div>
           </div>
           <div class="popup-content-block__time-to-start">
-            <span class="popup-content-block__time-to-start__text">Время начала</span>
-            {{ new_task_form.task_timedate_start }}           
+            <label for="{{ new_task_form.task_shift_date.id_for_label }}">Дата производственных суток</label>
+            {{ new_task_form.task_shift_date }}
           </div> 
           <div class="popup-content-block__time-to-end">
-            <span class="popup-content-block__time-to-end__text">Время окончания</span>
-            {{ new_task_form.task_timedate_end }}            
+            <label for="{{ new_task_form.task_shift.id_for_label }}">Плановая смена</label>
+            {{ new_task_form.task_shift }}
           </div> 
           <div class="popup-content-block__type-profile">            
             <label for="task_profile_type">Выберете тип продукции</label>
@@ -395,6 +398,7 @@
     <div class="edit-task-popup disable">
       <form class="edit-task-popup-wrapper" method="post" action="/master/edit_task/">
         {% csrf_token %}
+        {{ edit_task_form.id_task }}
         <div class="edit-task-popup__title-block">
           <div class="edit-task-popup__title-text">
             Редактировать задачу            
@@ -409,12 +413,12 @@
             </div>
           </div>
           <div class="popup-content-block__time-to-start">
-            <span class="popup-content-block__time-to-start__text">Время начала</span>
-            {{ edit_task_form.task_timedate_start }}           
+            <label for="{{ edit_task_form.task_shift_date.id_for_label }}">Дата производственных суток</label>
+            {{ edit_task_form.task_shift_date }}
           </div> 
           <div class="popup-content-block__time-to-end">
-            <span class="popup-content-block__time-to-end__text">Время окончания</span>
-            {{ edit_task_form.task_timedate_end }}            
+            <label for="{{ edit_task_form.task_shift.id_for_label }}">Плановая смена</label>
+            {{ edit_task_form.task_shift }}
           </div> 
           <div class="popup-content-block__type-profile">            
             <label for="task_profile_type">Выберете тип продукции</label>

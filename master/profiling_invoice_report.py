@@ -7,6 +7,7 @@ from django.utils import timezone
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
+from .forms import REPORT_TIME_ZONE
 from .models import HistoryProfileRecords, OffsShtrips, Tasks
 
 
@@ -25,15 +26,25 @@ def create_profiling_invoice_report(start_date, end_date, user, output_filename=
 
     filepath = os.path.join('excel_files', output_filename)
     tasks = _get_completed_tasks(start_date, end_date, user)
-    rows = _build_report_rows(tasks, start_date, end_date)
+    rows = _build_report_rows(tasks)
     _write_workbook(filepath, rows, start_date, end_date)
     return filepath
 
 
 def _get_completed_tasks(start_date, end_date, user):
+    profile_records = HistoryProfileRecords.objects.filter(
+        created_at__gte=start_date,
+        created_at__lt=end_date,
+    ).select_related('user').order_by('created_at', 'id')
+    shtrips_records = OffsShtrips.objects.filter(
+        created_at__gte=start_date,
+        created_at__lt=end_date,
+    ).select_related('type_value_id').order_by('created_at', 'id')
+
     return Tasks.objects.filter(
         Q(task_status_id=2) &
-        Q(task_timedate_end_fact__range=(start_date, end_date)) &
+        Q(task_timedate_end_fact__gte=start_date) &
+        Q(task_timedate_end_fact__lt=end_date) &
         Q(
             Q(production_area=user.production_area_id) |
             Q(task_workplace__production_area_id=user.production_area_id)
@@ -44,32 +55,34 @@ def _get_completed_tasks(start_date, end_date, user):
     ).prefetch_related(
         Prefetch(
             'history_profile_records',
-            queryset=HistoryProfileRecords.objects.select_related('user').order_by('created_at', 'id'),
+            queryset=profile_records,
+            to_attr='invoice_profile_records',
         ),
         Prefetch(
             'history_offs_shtrips',
-            queryset=OffsShtrips.objects.select_related('type_value_id').order_by('created_at', 'id'),
+            queryset=shtrips_records,
+            to_attr='invoice_shtrips_records',
         ),
     ).order_by('task_profile_type__profile_name', 'task_profile_length', 'id')
 
 
-def _build_report_rows(tasks, start_date, end_date):
+def _build_report_rows(tasks):
     profile_groups = OrderedDict()
     for task in tasks:
+        profile_amounts = _profile_amounts_by_shift(task)
+        if not any(profile_amounts.values()):
+            continue
+
         profile_key = _profile_group_key(task)
         profile_group = profile_groups.setdefault(profile_key, _empty_profile_group(task))
         detail_key = _task_group_key(task)
         detail_row = profile_group['details'].setdefault(detail_key, _empty_detail_row(task))
 
-        profile_amounts = _profile_amounts_by_shift(task, start_date, end_date)
-        if not any(profile_amounts.values()):
-            profile_amounts[_shift_key(task.task_timedate_end_fact)] += task.profile_amount_now or task.task_profile_amount
-
         for shift_key, amount in profile_amounts.items():
             detail_row['profile_by_shift'][shift_key] += amount
             profile_group['profile_by_shift'][shift_key] += amount
 
-        shtrips_by_shift = _shtrips_by_shift(task, start_date, end_date)
+        shtrips_by_shift = _shtrips_by_shift(task)
         for shift_key, weight in shtrips_by_shift.items():
             detail_row['shtrips_by_shift'][shift_key] += weight
             profile_group['shtrips_by_shift'][shift_key] += weight
@@ -155,23 +168,16 @@ def _format_number(value):
     return str(value).replace('.', ',')
 
 
-def _profile_amounts_by_shift(task, start_date, end_date):
+def _profile_amounts_by_shift(task):
     amounts = defaultdict(float)
-    for record in task.history_profile_records.all():
-        if start_date <= record.created_at <= end_date:
-            amounts[_shift_key(record.created_at)] += record.amount
+    for record in task.invoice_profile_records:
+        amounts[_shift_key(record.created_at)] += record.amount
     return amounts
 
 
-def _shtrips_by_shift(task, start_date, end_date):
+def _shtrips_by_shift(task):
     amounts = defaultdict(float)
-    shtrips_items = list(task.history_offs_shtrips.all())
-    in_period_items = [
-        shtrips for shtrips in shtrips_items
-        if start_date <= shtrips.created_at <= end_date
-    ]
-
-    for shtrips in in_period_items or shtrips_items:
+    for shtrips in task.invoice_shtrips_records:
         amounts[_shift_key(shtrips.created_at)] += _shtrips_weight_kg(shtrips)
     return amounts
 
@@ -181,7 +187,7 @@ def _shtrips_weight_kg(shtrips):
 
 
 def _shift_key(value):
-    local_value = timezone.localtime(value) if timezone.is_aware(value) else value
+    local_value = timezone.localtime(value, REPORT_TIME_ZONE) if timezone.is_aware(value) else value
     current_time = local_value.time()
 
     if time(8, 0) <= current_time < time(17, 0):

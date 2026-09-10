@@ -3,6 +3,7 @@ from .models import HistoryEvent, OffsShtrips, Tasks
 from .forms import NewTaskForm, EditTaskForm, PauseTaskForm, ReportForm
 from .databaseWork import DatabaseWork
 from .history_utils import profile_record_user_display_name
+from .shifts import production_shift_at
 from django.http import HttpResponse, JsonResponse, FileResponse
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required, permission_required
@@ -121,27 +122,17 @@ def new_task(request):
     ):
       return HttpResponse('Ошибка: некорректно заполнены варианты длины продукции', status=400)
 
-    amount_date_period = len(profile_length_array)
-    date_start = datetime.strptime(request.POST.get('task_timedate_start'), "%Y-%m-%dT%H:%M") 
-    date_end = datetime.strptime(request.POST.get('task_timedate_end'), "%Y-%m-%dT%H:%M")
-    total_hour = ((date_end - date_start).total_seconds()) / 3600
-    time_for_sector = total_hour / amount_date_period
-    start_position = date_start
     common_data = request.POST.dict()
     task_forms = []
 
     for index, profile_length in enumerate(profile_length_array):
-      end_position = start_position + timedelta(hours=time_for_sector)
       task_data = common_data.copy()
       task_data.update({
         'task_profile_length': profile_length,
         'task_profile_amount': profile_amount_array[index],
         'task_order_number': order_number_array[index],
         'task_coating_type': coating_type_array[index],
-        'task_timedate_start': start_position,
-        'task_timedate_end': end_position,
       })
-      start_position = end_position
 
       new_task_form = NewTaskForm(task_data, user=request.user)
       if new_task_form.is_valid():
@@ -179,12 +170,16 @@ def delete_task(request):
 @login_required
 @permission_required(perm='master.change_tasks', raise_exception=True)  
 def edit_task(request):
-  global id_task  
   if request.method == 'GET':
-      id_task = request.GET.get('id_task')
       data_task = DatabaseWork({'id_task':request.GET.get('id_task')})
-      data = data_task.get_data_from_tasks()      
+      data = data_task.get_data_from_tasks()
+      if not isinstance(data, Tasks):
+        return JsonResponse({'error': 'Задание не найдено'}, status=404)
+      shift_date, shift = data.task_shift_date, data.task_shift
+      if shift_date is None and data.task_timedate_start:
+        shift_date, shift = production_shift_at(data.task_timedate_start)
       return JsonResponse({'task_name': data.task_name, 'task_timedate_start':data.task_timedate_start,
+                          'id_task': data.id, 'task_shift_date': shift_date, 'task_shift': shift,
                           'task_timedate_end': data.task_timedate_end, 'task_profile_type': data.task_profile_type_id, 
                           'task_workplace': data.task_workplace_id, 'task_profile_amount': data.task_profile_amount,
                           'task_profile_length': data.task_profile_length, 'task_comments': data.task_comments,
@@ -196,14 +191,14 @@ def edit_task(request):
     edit_task_form = EditTaskForm(request.POST, user=request.user)    
     if edit_task_form.is_valid():      
       new_data_file = DatabaseWork(edit_task_form.cleaned_data)    
-      new_task_file = new_data_file.edit_data_from_task(id_task, request.user)        
+      new_task_file = new_data_file.edit_data_from_task(edit_task_form.cleaned_data['id_task'], request.user)
       if  new_task_file == True:
         return redirect('/master', permanent=True)
       else:
         return HttpResponse(f'Ошибка: {new_task_file}')
-      
+    return HttpResponse(f'Ошибка заполнения формы: {edit_task_form.errors}', status=400)
   else:
-    new_task_form = EditTaskForm(user=request.user) 
+    return HttpResponse('Только GET или POST', status=405)
     
 @login_required
 @permission_required(perm='master.change_tasks', raise_exception=True)  

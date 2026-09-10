@@ -121,10 +121,9 @@ $(document).ready(function() {
     if (task.id === "edit") {
       master_ajax_request('edit_task/', {'id_task': id_task}, function(data) {
         edit_task_popup.querySelector('#id_task_name').value = data['task_name']
-        let date_start = new Date(Date.parse(data['task_timedate_start'])).toISOString().slice(0,16)
-        let date_end = new Date(Date.parse(data['task_timedate_end'])).toISOString().slice(0,16);
-        edit_task_popup.querySelector('#id_task_timedate_start').value = date_start
-        edit_task_popup.querySelector('#id_task_timedate_end').value = date_end
+        edit_task_popup.querySelector('[name="id_task"]').value = data['id_task']
+        edit_task_popup.querySelector('[name="task_shift_date"]').value = data['task_shift_date'] || ''
+        edit_task_popup.querySelector('[name="task_shift"]').value = data['task_shift'] || ''
         edit_task_popup.querySelector('#id_task_profile_type').value = data['task_profile_type']
         edit_task_popup.querySelector('#id_task_workplace').value = data['task_workplace']
         edit_task_popup.querySelector('#id_task_profile_amount').value = data['task_profile_amount']

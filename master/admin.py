@@ -14,6 +14,8 @@ class TasksAdmin(admin.ModelAdmin):
         'task_status',
         'task_workplace',
         'task_order_number',
+        'task_shift_date',
+        'task_shift',
         'task_coating_type',
         'task_coating_thickness',
         'created_at',
@@ -28,7 +30,7 @@ class TasksAdmin(admin.ModelAdmin):
         'task_user_created_by__last_name',
     )
     autocomplete_fields = ('task_user_created_by',)
-    readonly_fields = ('task_user_created',)
+    readonly_fields = ('task_user_created', 'task_shift_date', 'task_shift')
 
 
 admin.site.register(Workplace)

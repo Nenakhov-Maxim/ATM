@@ -524,6 +524,7 @@ class TaskTransferConsumer(AsyncWebsocketConsumer):
             'task_profile_length': task.task_profile_length,
             'task_order_number': task.task_order_number,
             'task_profile_material': task.task_profile_material,
+            'planned_shift_label': task.planned_shift_label,
             'task_coating_type': str(task.task_coating_type) if task.task_coating_type else '',
             'task_coating_area': task.task_coating_area,
             'task_coating_thickness': task.task_coating_thickness,

@@ -131,6 +131,9 @@
               </div>
             </div>
             <div class="card-item__task-name">
+                {% if el.planned_shift_label %}
+                <span class="card-item__title">Плановая смена: {{ el.planned_shift_label }}</span><br>
+                {% endif %}
                 <span class="card-item__title">Время начала: {{ el.task_timedate_start | date_to_chel}}</span><br>
                 <span class="card-item__title">Время окончания: {{ el.task_timedate_end | date_to_chel}}</span><br>
                 <span class="card-item__title">Время на работу: {% dates_to_time el.task_timedate_start el.task_timedate_end %}</span><br>                
