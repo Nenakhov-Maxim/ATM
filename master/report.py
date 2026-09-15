@@ -2,6 +2,7 @@ import os
 import pandas as pd
 from openpyxl import Workbook
 from openpyxl.styles import NamedStyle, Font, Border, Side, Alignment, PatternFill
+from openpyxl.utils import get_column_letter
 
 
 def profile_name_with_length_group(profile_name, profile_length):
@@ -27,7 +28,7 @@ def create_empty_excel(columns: list, filename: str, sheet_name: str = 'Акта
 
     return filepath
   
-def create_excel_from_dict_list(header_list: list, dict_list, output_filename: str, sheet_name='Sheet1'):
+def create_excel_from_dict_list(header_list: list, dict_list, output_filename: str, sheet_name='Sheet1', period_label=None):
     # Создаем директорию, если она не существует
     if not os.path.exists('excel_files'):
         os.makedirs('excel_files')
@@ -38,8 +39,16 @@ def create_excel_from_dict_list(header_list: list, dict_list, output_filename: s
     wb = Workbook()
     ws = wb.active
     ws.title = sheet_name
+    if period_label:
+        ws.oddHeader.center.text = period_label
+        wb.properties.description = period_label
     
     ws.append(['Дата', '__________', '', 'Профильная линия', '', '', 'Смена', '___________' ])
+    if period_label:
+        ws['A1'] = 'Период'
+        ws['B1'] = period_label
+        ws.merge_cells('B1:H1')
+        ws.row_dimensions[1].height = 32
     ws.append([])
 
     # Записываем данные из списка словарей в Excel
@@ -73,8 +82,10 @@ def create_excel_from_dict_list(header_list: list, dict_list, output_filename: s
         cell.style = header_style
     
     for cell in ws[1]:
-      if cell.col_idx != 5:
+      if cell.column != 5:
         cell.style = top_style
+    if period_label:
+        ws['B1'].alignment = Alignment(horizontal='left', vertical='center', wrap_text=True)
 
     for row in ws.iter_rows(min_row=4, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
         for cell in row:
@@ -85,8 +96,10 @@ def create_excel_from_dict_list(header_list: list, dict_list, output_filename: s
     # Автоматическое изменение ширины столбцов
     for col in ws.columns:
         max_length = 0
-        column = col[0].column_letter
+        column = get_column_letter(col[0].column)
         for cell in col:
+            if period_label and cell.row == 1:
+                continue
             try:
                 if len(str(cell.value)) > max_length:
                     max_length = len(cell.value)

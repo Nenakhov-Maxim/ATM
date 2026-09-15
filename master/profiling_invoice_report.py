@@ -10,6 +10,7 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
 from .forms import REPORT_TIME_ZONE
 from .models import HistoryProfileRecords, OffsShtrips, Tasks
+from .report_periods import period_query
 
 
 SHIFT_1 = 'shift_1'
@@ -18,7 +19,7 @@ SHIFT_3 = 'shift_3'
 SHIFT_KEYS = (SHIFT_1, SHIFT_2, SHIFT_3)
 
 
-def create_profiling_invoice_report(start_date, end_date, user, output_filename=None):
+def create_profiling_invoice_report(start_date, end_date, user, output_filename=None, periods=None, period_label=None):
     if not os.path.exists('excel_files'):
         os.makedirs('excel_files')
 
@@ -26,26 +27,24 @@ def create_profiling_invoice_report(start_date, end_date, user, output_filename=
         output_filename = f'Накладная на линию профилирования от {datetime.now().date()}.xlsx'
 
     filepath = os.path.join('excel_files', output_filename)
-    tasks = _get_completed_tasks(start_date, end_date, user)
+    tasks = _get_completed_tasks(start_date, end_date, user, periods=periods)
     rows = _build_report_rows(tasks)
-    _write_workbook(filepath, rows, start_date, end_date)
+    _write_workbook(filepath, rows, start_date, end_date, period_label=period_label)
     return filepath
 
 
-def _get_completed_tasks(start_date, end_date, user):
+def _get_completed_tasks(start_date, end_date, user, periods=None):
+    periods = [(start_date, end_date)] if periods is None else periods
     profile_records = HistoryProfileRecords.objects.filter(
-        created_at__gte=start_date,
-        created_at__lt=end_date,
+        period_query(periods),
     ).select_related('user').order_by('created_at', 'id')
     shtrips_records = OffsShtrips.objects.filter(
-        created_at__gte=start_date,
-        created_at__lt=end_date,
+        period_query(periods),
     ).select_related('type_value_id').order_by('created_at', 'id')
 
     return Tasks.objects.filter(
         Q(task_status_id=2) &
-        Q(task_timedate_end_fact__gte=start_date) &
-        Q(task_timedate_end_fact__lt=end_date) &
+        period_query(periods, 'task_timedate_end_fact') &
         Q(
             Q(production_area=user.production_area_id) |
             Q(task_workplace__production_area_id=user.production_area_id)
@@ -213,10 +212,13 @@ def _shift_key(value):
     return SHIFT_3
 
 
-def _write_workbook(filepath, rows, start_date, end_date):
+def _write_workbook(filepath, rows, start_date, end_date, period_label=None):
     wb = Workbook()
     ws = wb.active
     ws.title = 'Накладная'
+    if period_label:
+        ws.oddHeader.center.text = period_label
+        wb.properties.description = period_label
 
     header_font = Font(bold=True, size=10)
     profile_font = Font(bold=True, size=10)
@@ -240,6 +242,9 @@ def _write_workbook(filepath, rows, start_date, end_date):
             current_row += 1
 
     _write_total_row(ws, current_row, rows, border, center)
+    if period_label:
+        ws.merge_cells(start_row=current_row + 2, start_column=1, end_row=current_row + 2, end_column=25)
+        ws.cell(current_row + 2, 1, period_label)
     wb.save(filepath)
 
 

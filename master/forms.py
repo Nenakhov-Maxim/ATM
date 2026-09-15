@@ -1,15 +1,11 @@
 from .models import *
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
-from django.forms.widgets import DateTimeInput, TextInput, Select
+from django.forms.widgets import TextInput, Select
 from django.db.models import Q
-from zoneinfo import ZoneInfo
 
-from django.utils import timezone
 from .shifts import SHIFT_CHOICES, current_production_date, shift_bounds
-
-
-REPORT_TIME_ZONE = ZoneInfo('Asia/Yekaterinburg')
+from .report_periods import ReportForm, REPORT_TIME_ZONE
 
 
 class TaskScheduleForm(forms.Form):
@@ -116,29 +112,3 @@ class PauseTaskForm(forms.Form):
     
 class LoginForm(AuthenticationForm):
     pass
-
-class ReportForm(forms.Form):
-    date_start = forms.DateTimeField(widget=DateTimeInput(format="%Y-%m-%d %H:%M",
-                                                      attrs={'type': 'datetime-local',
-                                                            "class":"popup-content-block__time-to-end__input"}))
-    date_end = forms.DateTimeField(widget=DateTimeInput(format="%Y-%m-%d %H:%M",
-                                                      attrs={'type': 'datetime-local',
-                                                            "class":"popup-content-block__time-to-end__input"}))
-
-    def clean(self):
-        cleaned_data = super().clean()
-
-        # datetime-local не передает часовой пояс. Пользователь вводит местное
-        # время предприятия, поэтому сохраняем компоненты времени и назначаем UTC+5.
-        for field_name in ('date_start', 'date_end'):
-            value = cleaned_data.get(field_name)
-            if value is not None:
-                naive_value = value.replace(tzinfo=None)
-                cleaned_data[field_name] = timezone.make_aware(naive_value, REPORT_TIME_ZONE)
-
-        date_start = cleaned_data.get('date_start')
-        date_end = cleaned_data.get('date_end')
-        if date_start and date_end and date_end <= date_start:
-            self.add_error('date_end', 'Окончание периода должно быть позже начала.')
-
-        return cleaned_data

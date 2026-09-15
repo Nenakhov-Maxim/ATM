@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="{% static "css/master.css" %}">
   <link rel="stylesheet" href="{% static "css/media-master.css" %}">
   <link rel="stylesheet" href="{% static 'css/shift-filter.css' %}">
+  <link rel="stylesheet" href="{% static 'css/report-selection.css' %}">
   <title>AT-Manager (Мастер)</title>
 </head>
 <body>
@@ -72,7 +73,7 @@
       </div>
       <div class="toolbars__sub_tasks">
         <a href="{% url 'analytics:analytics-home' %}"><img src="{% static "img/analytics.svg" %}" alt="Аналитика"><span>Аналитика</span></a>
-        <a href="#" class="completed-work-report-link"><img src="{% static "img/report.svg" %}" alt="Сформировать акт выполненных работ" onclick="action_report_popup(this)"><span>АКТ</span></a>
+        <a href="#" class="completed-work-report-link"><img src="{% static "img/report.svg" %}" alt="Сформировать акт выполненных работ"><span>АКТ</span></a>
         <a href="#" class="profiling-invoice-report-link"><img src="{% static "img/doc.svg" %}" alt="Сформировать накладную на линию профилирования"><span>НАКЛАДНАЯ</span></a>
       </div>
       <div class="toolbars__new-task">
@@ -508,22 +509,36 @@
       </form>
     <div class="overlay"></div>
   </div>
-  <div class="new_report_popup disable">      
+  <div class="new_report_popup disable" role="dialog" aria-modal="true" aria-labelledby="report-dialog-title">
     <form class="new_report_form" method="POST" action="/master/new_report/">
       {% csrf_token %}          
-      <h3 class="new_report_form__title">AT-Manager</h3>
-      <div class="new_report__catproblem_block">
-        <span class="new_report__cat-problem__title">Выберете начало периода отчета</span>
-        {{ report_form.date_start }}          
+      <div class="report-dialog-header">
+        <h3 id="report-dialog-title" class="new_report_form__title">Акт выполненных работ</h3>
+        <button type="button" class="report-dialog-close" aria-label="Закрыть окно" title="Закрыть окно">&times;</button>
       </div>
-      <div class="new_report__catproblem_block">
-        <span class="new_report__cat-problem__title">Выберете окончание периода отчета</span>
-        {{ report_form.date_end }}          
-      </div>       
-      <div class="new_report__button_block">
-        <button class="new_report_accept-button" type="submit" name="new_report_button_accept">Отправить</button>
-        <button class="new_report_cansel-button" type="button" name="new_report_button_cansel">Отменить</button>
-      </div>        
+      <div class="report-dialog-body">
+        <fieldset class="report-modes" aria-label="Период отчёта">
+          {% for mode in report_form.report_mode %}<label>{{ mode.tag }}<span>{{ mode.choice_label }}</span></label>{% endfor %}
+        </fieldset>
+        <fieldset class="report-period-fields">
+          <label for="{{ report_form.date_start.id_for_label }}">Начало периода</label>
+          {{ report_form.date_start }}
+          <label for="{{ report_form.date_end.id_for_label }}">Окончание периода</label>
+          {{ report_form.date_end }}
+        </fieldset>
+        <fieldset class="report-shift-fields" hidden disabled>
+          <label for="{{ report_form.production_date.id_for_label }}">Производственные сутки</label>
+          {{ report_form.production_date }}
+          <div class="report-shift-options" role="group" aria-label="Смены для выгрузки">
+            {% for shift in report_form.report_shifts %}<label>{{ shift.tag }}<span>{{ shift.choice_label }}</span></label>{% endfor %}
+          </div>
+        </fieldset>
+        <p class="report-selection-error" role="alert"></p>
+        <div class="new_report__button_block">
+          <button class="new_report_accept-button" type="submit" name="new_report_button_accept">Скачать Excel</button>
+          <button class="new_report_cansel-button" type="button" name="new_report_button_cansel">Отмена</button>
+        </div>
+      </div>
     </form>
   <div class="overlay"></div>
 </div>       

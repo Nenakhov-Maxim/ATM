@@ -324,26 +324,3 @@ window.addEventListener("resize", (event) => {
     headerMenuList.style.display = 'flex'
   }
 });
-
-// ===== Report Modal =====
-// Открытие и закрытие модального окна нового отчета
-function action_report_popup(e) {
-  const reportPopup = document.querySelector('.new_report_popup')
-  const cancelButton = document.querySelector('.new_report_cansel-button')
-  const acceptButton = document.querySelector('.new_report_accept-button')
-  if (!reportPopup) {
-    return;
-  }
-
-  reportPopup.classList.toggle('disable')
-  if (cancelButton) {
-    cancelButton.addEventListener('click', ()=> {
-      reportPopup.classList.add('disable')
-    })
-  }
-  if (acceptButton) {
-    acceptButton.addEventListener('click', ()=> {
-      reportPopup.classList.add('disable')
-    })
-  }
-}

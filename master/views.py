@@ -2,7 +2,6 @@ from django.shortcuts import render
 from .models import HistoryEvent, OffsShtrips, Tasks
 from .forms import NewTaskForm, EditTaskForm, PauseTaskForm, ReportForm
 from .databaseWork import DatabaseWork
-from .history_utils import profile_record_user_display_name
 from .shifts import production_shift_at
 from .shift_selection import with_effective_shift
 from datetime import date
@@ -14,10 +13,11 @@ from django.urls import reverse_lazy
 from django.db import transaction
 from django.db.models import Prefetch, Q
 from django.views.decorators.http import require_POST
-from .report import create_excel_from_dict_list, profile_name_with_length_group
 from .profiling_invoice_report import create_profiling_invoice_report
+from .completed_work_report import create_completed_work_report
+from .report_periods import report_filename
 import math, os
-from datetime import timedelta, datetime
+from datetime import datetime
 import json
 
 
@@ -237,86 +237,31 @@ def hide_task(request):
 
 @login_required
 @permission_required(perm='master.change_tasks', raise_exception=True)
+@require_POST
 def new_report(request):
-  if request.method == 'POST':
-    report_form = ReportForm(request.POST)
-    if report_form.is_valid():
-      data = report_form.cleaned_data
-      start_date = data['date_start']
-      end_date = data['date_end'] 
-      
-      tasks = Tasks.objects.all().filter(
-        Q(last_update__range=(start_date, end_date)) & 
-        Q(
-          Q(production_area=request.user.production_area_id) | 
-          Q(task_workplace__production_area_id=request.user.production_area_id)
-        ))
-      dict_list = {}
-      for task in tasks:
-        id_task = task.id
-        label_task = f'Задача ID № {id_task} от {task.created_at + timedelta(hours=5)}. Списаны штрипсы: '
-        # Обрабатываем штрипсы
-        shtrips_list_str = ""
-        for shtrips in task.get_all_history_shtrips():
-          if shtrips.type_value_id.id == 1:
-            shtrips_list_str = shtrips_list_str + str(shtrips.value) + '; '
-          else:
-              shtrips_list_str = shtrips_list_str + str(shtrips.value) + "(п.м.); "
-        
-        # Дописываем какие штрипсы были списаны по задаче
-        label_task = label_task + shtrips_list_str    
-        # Обрабатываем записи по каждому событию изготовления профиля
-        # Объединяем по именю
-        data_lib = {}
-        all_records = task.history_profile_records.select_related('user').all()
-
-        for record in all_records:
-          if record.created_at >= start_date and record.created_at <= end_date:
-            user = profile_record_user_display_name(record, task)
-            profile_amount = record.amount
-            if user in data_lib.keys():
-              old_value = data_lib[user]
-              data_lib[user] = old_value + profile_amount
-            else:
-              data_lib[user] = profile_amount
-              
-        dict_list[id_task] = {'label':label_task, 'data':[]} 
-        
-        # Наполняем данными
-        for key in data_lib.keys():    
-          new_row = [key, task.task_workplace_id, profile_name_with_length_group(
-                       task.task_profile_type.profile_name,
-                       task.task_profile_length,
-                     ),
-                     data_lib[key] * task.task_profile_length, "8", '0', 'Да', '']
-          dict_list[id_task]['data'].append(new_row)
-        
-      header_list = ['Ф.И.О', 'Номер линии', 'Марка изделия', 'Общее кол-во п/м', 'Отработанные часы', 'Ср. зд.', 'Хоз. работы', 'Подпись работника']
-      answer = create_excel_from_dict_list(header_list, dict_list, f'Акт от {datetime.date(datetime.now())}.xlsx')
-      link = f'/app/{answer}'
-      link = link.replace('\\', '/')      
-      return FileResponse(open(os.path.join(answer), "rb"))
-    else:
-      return redirect('/master', permanent=True)
-  else:
-    return HttpResponse('Только GET-запрос')  
+  form = ReportForm(request.POST)
+  if not form.is_valid():
+    return JsonResponse({'message': 'Проверьте параметры отчёта.', 'errors': form.errors}, status=400)
+  data = form.cleaned_data
+  filename = report_filename('Акт', data)
+  answer = create_completed_work_report(data['periods'], request.user, filename, data['period_label'])
+  return FileResponse(open(answer, 'rb'), as_attachment=True, filename=filename)
 
 
 @login_required
 @permission_required(perm='master.change_tasks', raise_exception=True)
+@require_POST
 def profiling_invoice_report(request):
-  if request.method == 'POST':
-    report_form = ReportForm(request.POST)
-    if report_form.is_valid():
-      data = report_form.cleaned_data
-      answer = create_profiling_invoice_report(
-        data['date_start'],
-        data['date_end'],
-        request.user,
-      )
-      return FileResponse(open(os.path.join(answer), "rb"))
-    return redirect('/master', permanent=True)
-  return HttpResponse('Только POST-запрос')
+  form = ReportForm(request.POST)
+  if not form.is_valid():
+    return JsonResponse({'message': 'Проверьте параметры отчёта.', 'errors': form.errors}, status=400)
+  data = form.cleaned_data
+  filename = report_filename('Накладная', data)
+  answer = create_profiling_invoice_report(
+    data['date_start'], data['date_end'], request.user, output_filename=filename,
+    periods=data['periods'], period_label=data['period_label'],
+  )
+  return FileResponse(open(answer, 'rb'), as_attachment=True, filename=filename)
 
 
 def dates_to_time(date1, date2):
