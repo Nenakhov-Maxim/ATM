@@ -27,13 +27,13 @@ def create_profiling_invoice_report(start_date, end_date, user, output_filename=
         output_filename = f'Накладная на линию профилирования от {datetime.now().date()}.xlsx'
 
     filepath = os.path.join('excel_files', output_filename)
-    tasks = _get_completed_tasks(start_date, end_date, user, periods=periods)
+    tasks = _get_tasks_with_output(start_date, end_date, user, periods=periods)
     rows = _build_report_rows(tasks)
     _write_workbook(filepath, rows, start_date, end_date, period_label=period_label)
     return filepath
 
 
-def _get_completed_tasks(start_date, end_date, user, periods=None):
+def _get_tasks_with_output(start_date, end_date, user, periods=None):
     periods = [(start_date, end_date)] if periods is None else periods
     profile_records = HistoryProfileRecords.objects.filter(
         period_query(periods),
@@ -43,13 +43,13 @@ def _get_completed_tasks(start_date, end_date, user, periods=None):
     ).select_related('type_value_id').order_by('created_at', 'id')
 
     return Tasks.objects.filter(
-        Q(task_status_id=2) &
-        period_query(periods, 'task_timedate_end_fact') &
         Q(
             Q(production_area=user.production_area_id) |
             Q(task_workplace__production_area_id=user.production_area_id)
-        )
-    ).select_related(
+        ),
+        # Output remains reportable after handover, regardless of task completion.
+        history_profile_records__in=profile_records.exclude(amount=0),
+    ).distinct().select_related(
         'task_profile_type',
         'task_coating_type',
     ).prefetch_related(

@@ -1,19 +1,24 @@
 import asyncio
 import json
 from datetime import date, timedelta
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import AsyncMock, patch
 
 from asgiref.sync import async_to_sync
 from django.contrib.auth.signals import user_logged_in
 from django.test import RequestFactory, TestCase
+from openpyxl import load_workbook
 
 from login.models import ProductionArea, User, Workplace
 from worker.production_views import handover_production
 from worker.task_feed import ShiftTaskFeedConsumer
 from .databaseWork import DatabaseWork
+from .forms import ReportForm
 from .history_utils import infer_profile_record_user
 from .models import Tasks, TaskStatus, TypeEvent, ProfileType
-from .production import begin_task, hand_over_task, ProductionConflict, record_total
+from .production import begin_task, finish_task, hand_over_task, ProductionConflict, record_total
+from .profiling_invoice_report import _get_tasks_with_output, _build_report_rows, create_profiling_invoice_report
 from .shift_selection import login_shift, worker_selection, worker_shift_tasks, with_effective_shift
 from .shifts import shift_bounds
 from .views import master_home
@@ -128,6 +133,45 @@ class ShiftWorkflowTests(TestCase):
         with self.assertRaises(ProductionConflict):
             begin_task(task.pk, self.line.pk, self.other)
         self.assertEqual(task.events.filter(type_event_id=3).count(), 1)
+
+    def test_invoice_keeps_1356_after_handover_resume_and_later_completion(self):
+        day = date(2026, 9, 15)
+        task = self.task(shift=2, day=day, task_profile_amount=2000)
+        start = shift_bounds(day, 2)[0]
+        with patch('master.production.timezone.now', return_value=start):
+            task = begin_task(task.pk, self.line.pk, self.user)
+        with patch('master.production.timezone.now', return_value=start + timedelta(hours=7)):
+            task = hand_over_task(task.pk, self.line.pk, self.user, 1356, 0, task.coating_revision)
+        form = ReportForm({'date_start': '2026-09-15T07:55', 'date_end': '2026-09-16T07:55'})
+        self.assertTrue(form.is_valid(), form.errors)
+        start_date, end_date = form.cleaned_data['periods'][0]
+        periods = [shift_bounds(day, 2)]
+
+        def assert_first_workers_output():
+            for selection in (None, periods):
+                groups = _build_report_rows(_get_tasks_with_output(start_date, end_date, self.user, periods=selection))
+                self.assertEqual(len(groups), 1)
+                self.assertEqual(dict(groups[0]['profile_by_shift']), {'shift_2': 1356})
+
+        assert_first_workers_output()
+        next_day_start = shift_bounds(day + timedelta(days=1), 1)[0]
+        with patch('master.production.timezone.now', return_value=next_day_start + timedelta(hours=1)):
+            task = begin_task(task.pk, self.line.pk, self.other)
+            record_total(task, 1500, self.other)
+        assert_first_workers_output()
+        with TemporaryDirectory() as folder:
+            path = create_profiling_invoice_report(start_date, end_date, self.user, str(Path(folder) / 'invoice.xlsx'))
+            book = load_workbook(path)
+            self.assertEqual(book.active['H4'].value, 1356)
+            self.assertEqual(book.active['L4'].value, 1356)
+            book.close()
+        with patch('master.production.timezone.now', return_value=next_day_start + timedelta(hours=2)):
+            finish_task(task.pk, self.line.pk, self.other, 2000, 1500, task.coating_revision)
+        assert_first_workers_output()
+        next_groups = _build_report_rows(_get_tasks_with_output(next_day_start, next_day_start + timedelta(hours=9), self.user))
+        self.assertEqual(dict(next_groups[0]['profile_by_shift']), {'shift_1': 644})
+        self.assertEqual(list(task.history_profile_records.order_by('id').values_list('amount', 'user_id')),
+                         [(1356, self.user.pk), (144, self.other.pk), (500, self.other.pk)])
 
     def test_legacy_operator_is_respected_without_normalized_events(self):
         task = self.task(task_status_id=3)

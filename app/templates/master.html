@@ -307,7 +307,12 @@
             <div class="more-information__event">
               <div class="more-information__event__date">{{event.created_at | date_to_chel}}</div>
               <div class="more-information__event__details">{{event.type_event.type_name}}</div>
-              <div class="more-information__event__text-message">{{event.message}}</div>
+              <div class="more-information__event__text-message">
+                {% if event.type_event_id == 3 or event.type_event_id == 7 %}
+                  <strong>{{ event.user|user_display_name }}</strong><br>
+                {% endif %}
+                {{event.message}}
+              </div>
             </div>                            
             {% endfor %}
             <div class="more-information__head-names">

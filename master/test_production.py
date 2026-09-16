@@ -14,7 +14,7 @@ from worker.production_views import update_coating, complete_production, stock_d
 from .databaseWork import DatabaseWork
 from .models import Tasks, TaskStatus, TypeEvent, ProfileType, CoatingType, ShtripsValueType, WorkerAnalyticsRecord
 from .production import change_coating, finish_task, decide_stock, record_total, ProductionConflict
-from .profiling_invoice_report import _get_completed_tasks, _build_report_rows, _write_workbook, SHIFT_1, SHIFT_2
+from .profiling_invoice_report import _get_tasks_with_output, _build_report_rows, _write_workbook, SHIFT_1, SHIFT_2
 from .shifts import shift_bounds
 
 
@@ -62,7 +62,7 @@ class ProductionWorkflowTests(TestCase):
         self.assertEqual(rows, [(100, self.user.pk, 'z275'), (20, self.user.pk, 'z275'), (80, self.second.pk, 'z140')])
         self.assertEqual(list(task.profile_records.order_by('id').values_list('amount', 'user_id', 'coating_thickness')), rows)
         start, end = timezone.now() - timedelta(days=1), timezone.now() + timedelta(days=1)
-        groups = _build_report_rows(_get_completed_tasks(start, end, self.user))
+        groups = _build_report_rows(_get_tasks_with_output(start, end, self.user))
         self.assertEqual(len(groups), 2)
         self.assertEqual([sum(g['profile_by_shift'].values()) for g in groups], [120, 80])
         self.assertEqual([sum(g['shtrips_by_shift'].values()) for g in groups], [500, 600])
@@ -94,7 +94,7 @@ class ProductionWorkflowTests(TestCase):
             task = change_coating(task.pk, self.line.pk, self.user, 'z140', 120, 0, 0)
         with patch('master.production.timezone.now', return_value=boundary + timedelta(hours=1)):
             finish_task(task.pk, self.line.pk, self.second, 200, 120, 1)
-        groups = _build_report_rows(_get_completed_tasks(start, start + timedelta(days=1), self.user))
+        groups = _build_report_rows(_get_tasks_with_output(start, start + timedelta(days=1), self.user))
         self.assertEqual(dict(groups[0]['profile_by_shift']), {SHIFT_1: 120})
         self.assertEqual(dict(groups[1]['profile_by_shift']), {SHIFT_2: 80})
 
@@ -158,7 +158,7 @@ class ProductionWorkflowTests(TestCase):
         DatabaseWork({}).add_data_to_user_analytics(self.second.pk, child.pk)
         self.assertEqual(WorkerAnalyticsRecord.objects.get(task=child, user=self.second).profile_amount, 25)
         start, end = timezone.now() - timedelta(days=1), timezone.now() + timedelta(days=1)
-        groups = _build_report_rows(_get_completed_tasks(start, end, self.user))
+        groups = _build_report_rows(_get_tasks_with_output(start, end, self.user))
         stock_groups = [g for g in groups if g['order_number'] == 'На склад']
         self.assertEqual(sum(stock_groups[0]['profile_by_shift'].values()), 25)
         self.assertEqual(sum(sum(g['shtrips_by_shift'].values()) for g in groups), 500)

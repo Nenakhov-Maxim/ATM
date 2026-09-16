@@ -6,7 +6,7 @@ from django.test import RequestFactory, SimpleTestCase, TestCase
 from login.models import ProductionArea, User, Workplace
 from .forms import TaskScheduleForm, NewTaskForm, EditTaskForm
 from .models import CoatingType, ProfileType, Tasks, TaskStatus, TypeEvent, WorkerAnalyticsRecord
-from .profiling_invoice_report import _build_report_rows, _get_completed_tasks, SHIFT_1, SHIFT_2
+from .profiling_invoice_report import _build_report_rows, _get_tasks_with_output, SHIFT_1, SHIFT_2
 from .shifts import PRODUCTION_TIME_ZONE, production_shift_at, shift_bounds
 from .views import edit_task, new_task
 
@@ -137,7 +137,7 @@ class TaskShiftWorkflowTests(TestCase):
         self.assertIn('3 смена', task.events.get(type_event_id=9).message)
 
         start = datetime(2026, 9, 10, 8, tzinfo=PRODUCTION_TIME_ZONE)
-        rows = _build_report_rows(_get_completed_tasks(start, start + timedelta(days=1), self.master))
+        rows = _build_report_rows(_get_tasks_with_output(start, start + timedelta(days=1), self.master))
         self.assertEqual(len(rows), 1)
         self.assertEqual(dict(rows[0]['profile_by_shift']), {SHIFT_1: 10, SHIFT_2: 20})
 

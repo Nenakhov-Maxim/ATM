@@ -10,7 +10,7 @@ from login.models import ProductionArea, User, Workplace
 from .completed_work_report import completed_work_rows, create_completed_work_report
 from .forms import ReportForm
 from .models import ProfileType, ShtripsValueType, Tasks, TaskStatus
-from .profiling_invoice_report import _build_report_rows, _get_completed_tasks, create_profiling_invoice_report
+from .profiling_invoice_report import _build_report_rows, _get_tasks_with_output, create_profiling_invoice_report
 from .report_periods import report_filename
 from .shifts import shift_bounds
 from .views import new_report, profiling_invoice_report
@@ -78,19 +78,25 @@ class ReportSelectionDataTests(TestCase):
         task = self.task(task_shift=2, task_shift_date=self.day)
         self.seed_records(task)
         with self.assertNumQueries(3):
-            rows = _build_report_rows(_get_completed_tasks(self.periods[0][0], self.periods[-1][1], self.master, self.periods))
+            rows = _build_report_rows(_get_tasks_with_output(self.periods[0][0], self.periods[-1][1], self.master, self.periods))
         self.assertEqual(dict(rows[0]['profile_by_shift']), {'shift_1': 10, 'shift_3': 30})
         self.assertEqual(dict(rows[0]['shtrips_by_shift']), {'shift_1': 100, 'shift_3': 300})
 
-    def test_invoice_preserves_completed_task_window_and_area_rules(self):
-        included = self.task()
-        self.task(task_status_id=1)
-        self.task(task_timedate_end_fact=self.periods[0][1])
-        self.task(task_timedate_end_fact=self.periods[1][1])
+    def test_invoice_selects_output_in_period_independent_of_completion_and_respects_area(self):
+        included = [self.task(), self.task(task_status_id=1, task_timedate_end_fact=None),
+                    self.task(task_timedate_end_fact=self.periods[0][1]),
+                    self.task(task_timedate_end_fact=self.periods[1][1])]
+        for task in included:
+            self.seed_records(task)
+        self.task()  # No production records.
+        zero_output = self.task()
+        zero_output.history_profile_records.create(amount=0, created_at=self.periods[0][0])
+        outside_period = self.task()
+        outside_period.history_profile_records.create(amount=100, created_at=self.periods[0][1])
         other_area = ProductionArea.objects.create(production_area_name='Other')
-        self.task(task_workplace=None, production_area=other_area)
-        selected = _get_completed_tasks(self.periods[0][0], self.periods[-1][1], self.master, self.periods)
-        self.assertEqual(list(selected.values_list('id', flat=True)), [included.pk])
+        self.seed_records(self.task(task_workplace=None, production_area=other_area))
+        selected = _get_tasks_with_output(self.periods[0][0], self.periods[-1][1], self.master, self.periods)
+        self.assertEqual(list(selected.values_list('id', flat=True)), [task.pk for task in included])
 
     def test_act_uses_actual_output_not_task_last_update_or_planned_shift(self):
         task = self.task(task_status_id=1, task_shift=2, task_shift_date=self.day)
@@ -116,7 +122,7 @@ class ReportSelectionDataTests(TestCase):
     def test_empty_selection_returns_no_rows(self):
         self.seed_records(self.task())
         self.assertEqual(completed_work_rows([], self.master), {})
-        self.assertFalse(_get_completed_tasks(self.periods[0][0], self.periods[-1][1], self.master, []).exists())
+        self.assertFalse(_get_tasks_with_output(self.periods[0][0], self.periods[-1][1], self.master, []).exists())
 
     def test_all_shifts_match_full_day_and_single_second_shift_is_isolated(self):
         task = self.task()
@@ -124,8 +130,8 @@ class ReportSelectionDataTests(TestCase):
         shifts = [shift_bounds(self.day, i) for i in (1, 2, 3)]
         full_day = [(shifts[0][0], shifts[-1][1])]
         self.assertEqual(completed_work_rows(shifts, self.master), completed_work_rows(full_day, self.master))
-        selected = _build_report_rows(_get_completed_tasks(shifts[0][0], shifts[-1][1], self.master, shifts))
-        legacy = _build_report_rows(_get_completed_tasks(shifts[0][0], shifts[-1][1], self.master))
+        selected = _build_report_rows(_get_tasks_with_output(shifts[0][0], shifts[-1][1], self.master, shifts))
+        legacy = _build_report_rows(_get_tasks_with_output(shifts[0][0], shifts[-1][1], self.master))
         self.assertEqual(selected, legacy)
         second_shift = completed_work_rows([shifts[1]], self.master)
         self.assertEqual(second_shift[task.pk]['data'][0][3], 60)

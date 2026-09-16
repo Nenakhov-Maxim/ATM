@@ -54,7 +54,7 @@ def master_home(request):
     ).prefetch_related(
       Prefetch(
         'history_event_messages',
-        queryset=HistoryEvent.objects.select_related('type_event').order_by('created_at', 'id'),
+        queryset=HistoryEvent.objects.select_related('type_event', 'user').order_by('created_at', 'id'),
       ),
       Prefetch(
         'history_offs_shtrips',

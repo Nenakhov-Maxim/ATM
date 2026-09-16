@@ -1,7 +1,9 @@
 from django import template
+from master.history_utils import user_display_name
 import math
 
 register = template.Library()
+register.filter('user_display_name', user_display_name)
 
 
 @register.filter(name='split')
