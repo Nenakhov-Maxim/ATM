@@ -125,6 +125,9 @@
               {% if el.task_coating_type %}
               <span class="card-item__title">Покрытие: {{el.task_coating_type}}{% if el.task_coating_thickness %}, {{el.task_coating_thickness}}{% endif %}{% if el.task_coating_area %}, площадь {{el.task_coating_area}}{% endif %}</span>
               {% endif %}
+              {% if el.task_profile_length %}
+              <span class="card-item__title">Длина профиля: {{el.task_profile_length}}
+              {% endif %}
             </div>
             {% if el.task_status_id == 1 %}
             <div class="card-item__task-status">
