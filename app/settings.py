@@ -15,17 +15,26 @@ from pathlib import Path
 
 # Построение путей внутри проекта: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+import environ
+
+env = environ.Env()
+
+environ.Env.read_env(
+    BASE_DIR / ".env",
+    overwrite=False,
+)
 
 # Настройки для быстрого старта разработки - не подходят для продакшена
 # См. https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # ПРЕДУПРЕЖДЕНИЕ БЕЗОПАСНОСТИ: держите секретный ключ в секрете в продакшене!
-SECRET_KEY = 'django-insecure-&xb#$lmx#$a)a97dw==jw)$j(emz5nguc0ml(=k5j3-y9_)g4a'
+SECRET_KEY = env("DJANGO_SECRET_KEY")
 
 # ПРЕДУПРЕЖДЕНИЕ БЕЗОПАСНОСТИ: не запускайте с включенным debug в продакшене!
 DEBUG = True
+                                                       
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS")
 
-ALLOWED_HOSTS = ['192.168.0.6', '127.0.0.1', '192.168.195.168']
 
 # Определение приложений
 INSTALLED_APPS = [
@@ -91,11 +100,11 @@ ASGI_APPLICATION = 'app.asgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'atmanager',
-        'USER': 'postgres',
-        'PASSWORD': '7510897575',
-        'HOST': '127.0.0.1',
-        'PORT': '5432',
+        'NAME': env("DB_NAME"),
+        'USER': "DB_USER",
+        'PASSWORD': "DB_PASSWORD",
+        'HOST': "DB_HOST",
+        'PORT': "DB_PORT",
     }
 }
 
@@ -134,9 +143,8 @@ AUTH_USER_MODEL = 'login.User'
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / "staticfiles"
-STATIC_VERSION = os.environ.get("STATIC_VERSION", "20260915-report-shifts")
-AUTOMATIC_VISION_API_TOKEN = os.environ.get("AUTOMATIC_VISION_API_TOKEN", "")
+STATIC_ROOT = BASE_DIR / "../static"
+STATIC_VERSION = os.environ.get("STATIC_VERSION", "20260527-1")
 
 STATICFILES_DIRS = [
     BASE_DIR / "app/static",    

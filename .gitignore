@@ -1,17 +1,50 @@
-app/settings.py
-app/asgi.py
-app/wsgi.py
-manage.py
-analytics/__pycache__
-app/__pycache__
-login/__pycache__
-master/__pycache__
-worker/__pycache__
-worker/migrations/__pycache__
-master/migrations/__pycache__
-master/templatetags/__pycache__
-login/migrations/__pycache__
-analytics/migrations/__pycache__
-excel_files/
+# Виртуальное окружение uv (обычно .venv)
+.venv/
+
+# Lock-файл uv — фиксирует точные версии, не нужен в репо (воспроизводится на любой машине)
+uv.lock
 requirements.txt
-venv.nosync/
+
+# Кэш uv (может быть в ~/.cache/uv, но если у тебя локальный кэш рядом — тоже лучше игнорировать)
+.uv-cache/
+
+# Стандартные Python-артефакты
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Файлы переменных окружения (секреты, ключи)
+.env
+.env.local
+.env.*
+
+# Локальные конфиги, которые не должны улетать в репо
+local_settings.py
+
+# Медиа и статика, если они генерируются/загружаются на сервере
+/media/
+/static/
+
+# Логи и временные файлы
+*.log
+*.tmp
+*.temp
+tmp/
+.DS_Store
