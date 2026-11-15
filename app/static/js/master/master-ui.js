@@ -85,9 +85,16 @@ if (![...menu_items].some(item => item.textContent.trim() === selectedTaskFilter
 for (const item of menu_items) {
   item.classList.toggle('active', item.textContent.trim() === selectedTaskFilter)
 }
+syncShiftFilterTab()
+
+function syncShiftFilterTab() {
+  const input = document.querySelector('.master-shift-filter input[name="task_filter"]')
+  if (input) input.value = selectedTaskFilter
+}
 
 function filter_task(filter) {
   selectedTaskFilter = filter
+  syncShiftFilterTab()
   const url = new URL(window.location.href)
   url.searchParams.set('task_filter', filter)
   window.history.replaceState(null, '', url)

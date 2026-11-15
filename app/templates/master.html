@@ -57,6 +57,7 @@
 <section class="main">
   <div class="wrapper">
     <form class="shift-filter master-shift-filter" method="get" action="/master/">
+      <input type="hidden" name="task_filter" value="{{ request.GET.task_filter|default:'Все задачи' }}">
       <label>Производственные сутки <input type="date" name="production_date" value="{{ selected_day|date:'Y-m-d' }}"></label>
       <label>Смена <select name="shift">
         <option value="">Все смены</option>
