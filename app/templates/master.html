@@ -72,6 +72,8 @@
         <input class="search-item" type="search" placeholder="Поиск по имени, наименованию, номеру рабочего места и т.п.">
       </div>
       <div class="toolbars__sub_tasks">
+        <button type="button" class="hide-selected-tasks" hidden disabled>Скрыть выбранные (0)</button>
+        <button type="button" class="delete-selected-tasks" hidden disabled>Удалить выбранные (0)</button>
         <a href="{% url 'analytics:analytics-home' %}"><img src="{% static "img/analytics.svg" %}" alt="Аналитика"><span>Аналитика</span></a>
         <a href="#" class="completed-work-report-link"><img src="{% static "img/report.svg" %}" alt="Сформировать акт выполненных работ"><span>АКТ</span></a>
         <a href="#" class="profiling-invoice-report-link"><img src="{% static "img/doc.svg" %}" alt="Сформировать накладную на линию профилирования"><span>НАКЛАДНАЯ</span></a>
@@ -103,7 +105,7 @@
       </div>
       <div class="task-cards-list">
         {% for el in tasks %}
-        <div class="task-card-item" data-itemId={{el.id}} data-category={{el.task_status}}>
+        <div class="task-card-item" data-itemId={{el.id}} data-status-id="{{el.task_status_id}}" data-category={{el.task_status}}>
           <div class="task-card-item__wrapper">
             <div class="card-item__toolbar">
               <input class="toolbar-item__checkbox" type="checkbox">

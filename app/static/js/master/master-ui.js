@@ -74,26 +74,56 @@ function toggle_menu(menu_item) {
   }
 
   menu_item.classList.add('active')
-  filter_task(menu_item.outerText)
+  filter_task(menu_item.textContent.trim())
 };
 
-//Выбор стартового меню при открытии страницы
-window.onload = () => load_window()
-
-function load_window() {  
-  for (const menu_item of menu_items) {
-    if (menu_item.outerText === 'Все задачи') {
-      menu_item.classList.add('active')
-    }
-  }
-};
-
-// Status and text search share the same pagination state.
-let selectedTaskFilter = 'Все задачи'
+// Keep the selected tab in the URL across task actions and reloads.
+let selectedTaskFilter = new URL(window.location.href).searchParams.get('task_filter') || 'Все задачи'
+if (![...menu_items].some(item => item.textContent.trim() === selectedTaskFilter)) {
+  selectedTaskFilter = 'Все задачи'
+}
+for (const item of menu_items) {
+  item.classList.toggle('active', item.textContent.trim() === selectedTaskFilter)
+}
 
 function filter_task(filter) {
   selectedTaskFilter = filter
+  const url = new URL(window.location.href)
+  url.searchParams.set('task_filter', filter)
+  window.history.replaceState(null, '', url)
+  // Clear selections when changing scope, so hidden tasks cannot be acted on accidentally.
+  document.querySelectorAll('.toolbar-item__checkbox').forEach(input => { input.checked = false })
   change_block_in_page(true)
+  updateBulkTaskSelection()
+}
+
+function selectedTaskIdsForStatus(statusId) {
+  return [...document.querySelectorAll('.task-card-item')]
+    .filter(card => card.dataset.statusId === statusId &&
+      card.querySelector('.toolbar-item__checkbox:checked'))
+    .map(card => card.dataset.itemid)
+}
+
+function selectedWaitingTaskIds() {
+  return selectedTaskIdsForStatus('4')
+}
+
+function selectedCompletedTaskIds() {
+  return selectedTaskIdsForStatus('2')
+}
+
+function updateBulkTaskSelection() {
+  for (const [selector, tab, statusId, label] of [
+    ['.delete-selected-tasks', 'Ожидают старта', '4', 'Удалить выбранные'],
+    ['.hide-selected-tasks', 'Завершенные', '2', 'Скрыть выбранные'],
+  ]) {
+    const button = document.querySelector(selector)
+    if (!button) continue
+    const count = selectedTaskIdsForStatus(statusId).length
+    button.hidden = selectedTaskFilter !== tab
+    button.disabled = count === 0
+    button.textContent = `${label} (${count})`
+  }
 }
 
 // ===== New Task Popup =====
@@ -205,6 +235,10 @@ $(document).ready(function() {
   if (!qualityInput) return
 
   change_block_in_page(true)
+  document.querySelectorAll('.toolbar-item__checkbox').forEach(input => {
+    input.addEventListener('change', updateBulkTaskSelection)
+  })
+  updateBulkTaskSelection()
   if (taskSearch) {
     taskSearch.addEventListener('input', () => change_block_in_page(true))
   }
