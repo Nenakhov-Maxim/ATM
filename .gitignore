@@ -48,3 +48,5 @@ local_settings.py
 *.temp
 tmp/
 .DS_Store
+/excel_files/
+/staticfiles/

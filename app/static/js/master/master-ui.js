@@ -88,72 +88,12 @@ function load_window() {
   }
 };
 
-//Отображение задач при выборе фильтра (надо переделать будет ;))
+// Status and text search share the same pagination state.
+let selectedTaskFilter = 'Все задачи'
 
-function filter_task(filter)  {    
-  let task_item = document.querySelectorAll('.task-card-item')  
-  switch (filter) {
-    case 'Все задачи':      
-      for (const item of task_item) {
-        if (item.classList.contains('disable')) {
-          item.classList.remove('disable')
-        }
-      }
-      break;
-      case 'Выполняются':        
-        for (const item of task_item) {
-          if (item.classList.contains('disable')) {
-            item.classList.remove('disable')
-          }            
-          if (item.dataset.category !== 'Выполняется') {              
-            item.classList.add('disable')
-          }
-        }
-        break;
-      case 'Ожидают старта':        
-      for (const item of task_item) {
-        if (item.classList.contains('disable')) {
-          item.classList.remove('disable')
-        }
-        if (item.dataset.category !== 'Ожидание') {
-          item.classList.add('disable')
-        }
-      }
-      break;
-      case 'Приостановлены':        
-      for (const item of task_item) {
-        if (item.classList.contains('disable')) {
-          item.classList.remove('disable')
-        }
-        if (item.dataset.category !== 'Приостановлена') {
-          item.classList.add('disable')
-        }
-      }
-      break;
-      case 'Завершенные':        
-      for (const item of task_item) {
-        if (item.classList.contains('disable')) {
-          item.classList.remove('disable')
-        }
-        if (item.dataset.category !== 'Выполнено') {
-          item.classList.add('disable')
-        }
-      }
-      break;
-      case 'Созданные':        
-      for (const item of task_item) {
-        if (item.classList.contains('disable')) {
-          item.classList.remove('disable')
-        }
-        if (item.dataset.category !== 'Создана') {
-          item.classList.add('disable')
-        }
-      }
-      break;   
-  
-    default:
-      break;
-  }
+function filter_task(filter) {
+  selectedTaskFilter = filter
+  change_block_in_page(true)
 }
 
 // ===== New Task Popup =====
@@ -230,70 +170,73 @@ function add_profile_length(event) {
 let start_value = 0
 let all_cards = document.querySelectorAll('.task-card-item')
 
+const taskSearch = document.querySelector('.search-item')
+const taskCategories = {
+  'Выполняются': 'Выполняется',
+  'Ожидают старта': 'Ожидание',
+  'Приостановлены': 'Приостановлена',
+  'Завершенные': 'Выполнено',
+  'Созданные': 'Создана',
+}
+
+function normalizeTaskText(text) {
+  return text.toLocaleLowerCase('ru').replace(/ё/g, 'е').replace(/\s+/g, ' ').trim()
+}
+
+function matchingTaskCards() {
+  const query = normalizeTaskText(taskSearch ? taskSearch.value : '')
+  const category = taskCategories[selectedTaskFilter]
+  return Array.from(all_cards).filter(card =>
+    (!category || card.dataset.category === category) &&
+    normalizeTaskText(card.textContent).includes(query)
+  )
+}
+
+function taskPageSize() {
+  const input = document.querySelector('.quality-position__title')
+  const value = Number(input.value)
+  const size = Number.isInteger(value) && value > 0 ? value : 10
+  input.value = size
+  return size
+}
+
 $(document).ready(function() {
   const qualityInput = document.querySelector('.quality-position__title')
-  if (!qualityInput) {
-    return;
+  if (!qualityInput) return
+
+  change_block_in_page(true)
+  if (taskSearch) {
+    taskSearch.addEventListener('input', () => change_block_in_page(true))
   }
+  $('.quality-position__title').change(() => change_block_in_page(true))
+  $('.navigation__right').click(() => right_in_page())
+  $('.navigation__left').click(() => left_in_page())
+})
 
-  qualityInput.value = 10
-  change_block_in_page()
-
-
-  $('.quality-position__title').change(() => change_block_in_page(true));
-  $('.navigation__right').click(() => right_in_page());
-  $('.navigation__left').click(() => left_in_page());
-});
-
-// Изменение количества отображаемых задач на странице
-function change_block_in_page(pos)  {
-
-  if (pos === true) {
-    start_value = 0
+function change_block_in_page(reset) {
+  const cards = matchingTaskCards()
+  const size = taskPageSize()
+  if (reset || start_value >= cards.length) start_value = 0
+  const end = Math.min(start_value + size, cards.length)
+  const visible = new Set(cards.slice(start_value, end))
+  for (const card of all_cards) {
+    card.classList.toggle('disable', !visible.has(card))
   }
+  document.querySelector('.all-task-info__range').innerText =
+    `${cards.length ? start_value + 1 : 0}-${end} из ${cards.length}`
+}
 
-  let value_re = document.querySelector('.quality-position__title').value
-  let second_value_for_visible = Number(start_value) + Number(value_re)
-  if  (second_value_for_visible > all_cards.length)  {
-    second_value_for_visible = all_cards.length
-  }
-  document.querySelector('.all-task-info__range').innerText = `${start_value + 1}-${second_value_for_visible} из ${all_cards.length}` 
-  
-  for (let i = 0; i < all_cards.length; i++) {
-    const element = all_cards[i]; 
-
-    if (i >= Number(value_re) + Number(start_value) || i < start_value) {
-      element.classList.add('disable')
-    } else {
-        if (element.classList.contains('disable')){
-          element.classList.remove('disable')
-        }
-    }
-  }  
-} 
-
-// Действие при клике на следующую страницу
 function right_in_page() {
-  let value_res = document.querySelector('.quality-position__title').value
-
-  if (Number(start_value) + Number(value_res) < all_cards.length) {        
-    start_value = start_value + Number(value_res)
-    change_block_in_page(false)
-  } else {    
-    change_block_in_page(true)
-  } 
+  const size = taskPageSize()
+  start_value = start_value + size < matchingTaskCards().length ? start_value + size : 0
+  change_block_in_page(false)
 }
 
 function left_in_page() {
-  let value_res = document.querySelector('.quality-position__title').value
-
-  if (Number(start_value) - Number(value_res) < 0) {      
-    start_value = (all_cards.length - 1) - ((all_cards.length - 1) % value_res)
-    change_block_in_page(false)
-  } else {    
-    start_value = Number(start_value) - Number(value_res)
-    change_block_in_page(false)
-  } 
+  const size = taskPageSize()
+  const count = matchingTaskCards().length
+  start_value = start_value >= size ? start_value - size : Math.max(0, Math.ceil(count / size) - 1) * size
+  change_block_in_page(false)
 }
 
 function menu_click () {
