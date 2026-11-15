@@ -58,6 +58,10 @@
   <div class="wrapper">
     <form class="shift-filter master-shift-filter" method="get" action="/master/">
       <input type="hidden" name="task_filter" value="{{ request.GET.task_filter|default:'Все задачи' }}">
+      <label>Участок <select name="area">
+        <option value="">Все доступные</option>
+        {% for area in available_areas %}<option value="{{ area.pk }}" {% if selected_area_id == area.pk %}selected{% endif %}>{{ area }}</option>{% endfor %}
+      </select></label>
       <label>Производственные сутки <input type="date" name="production_date" value="{{ selected_day|date:'Y-m-d' }}"></label>
       <label>Смена <select name="shift">
         <option value="">Все смены</option>
@@ -114,6 +118,7 @@
             </div>
             <div class="card-item__workplace-name">
               <span class="card-item__title">{{el.task_workplace}}</span>
+              <div>Участок: {% if el.task_workplace %}{{ el.task_workplace.production_area_id|default:"Не указан" }}{% else %}{{ el.production_area|default:"Не указан" }}{% endif %}</div>
               <div class="worplace-name__equipment">
                 <span class="equipment__title">Оборудование:</span>
                 <span class="equipment__name">{{el.task_workplace.type_of_equipment}}</span>
@@ -367,6 +372,10 @@
             {{ new_task_form.task_profile_type }}            
           </div> 
           <div class="popup-content-block__workspace">
+            <label for="{{ new_task_form.task_area.id_for_label }}">Участок</label>
+            {{ new_task_form.task_area }}
+          </div>
+          <div class="popup-content-block__workspace">
             <label for="task_workplace">Выберете рабочее место</label>
             {{ new_task_form.task_workplace }}            
           </div> 
@@ -451,6 +460,10 @@
             {{ edit_task_form.task_profile_type }}            
           </div> 
           <div class="popup-content-block__workspace">
+            <label for="{{ edit_task_form.task_area.id_for_label }}">Участок</label>
+            {{ edit_task_form.task_area }}
+          </div>
+          <div class="popup-content-block__workspace">
             <label for="task_workplace">Выберете рабочее место</label>
             {{ edit_task_form.task_workplace }}            
           </div> 
@@ -522,6 +535,8 @@
   </div>
   <div class="new_report_popup disable" role="dialog" aria-modal="true" aria-labelledby="report-dialog-title">
     <form class="new_report_form" method="POST" action="/master/new_report/">
+      <input type="hidden" name="area" value="{{ selected_area_id|default_if_none:'' }}">
+      <p>Участок: {% for area in available_areas %}{% if area.pk == selected_area_id %}{{ area }}{% endif %}{% endfor %}{% if not selected_area_id %}Все доступные{% endif %}</p>
       {% csrf_token %}          
       <div class="report-dialog-header">
         <h3 id="report-dialog-title" class="new_report_form__title">Акт выполненных работ</h3>
@@ -581,6 +596,7 @@
 </footer>
 <script src="{% static "/js/loader.js" %}"></script>
 <script src="{% static "/js/jquery/jquery-3.7.1.min.js" %}"></script> 
+{{ workplace_areas|json_script:"workplace-areas" }}
 <script src="{% static "/js/master/master-ui.js" %}"></script>
 <script src="{% static "/js/master/master-api.js" %}"></script>
 <script src="{% static "/js/master/profiling-invoice-report.js" %}"></script>

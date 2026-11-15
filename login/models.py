@@ -21,6 +21,7 @@ class ProductionArea(models.Model):
   
 
 class User(AbstractUser):
+  available_areas = models.ManyToManyField(ProductionArea, blank=True, related_name="managers", verbose_name="Доступные участки", help_text="Участки для управления задачами. Основной участок также всегда доступен.")
   position_id = models.ForeignKey('UserDepPosition', on_delete=models.SET_NULL, null=True,)
   production_area_id = models.ForeignKey('ProductionArea',  null=True, on_delete=models.SET_NULL, blank=True)
   production_area = models.CharField(max_length=100, verbose_name='Производственный участок')

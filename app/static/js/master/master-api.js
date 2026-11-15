@@ -144,6 +144,8 @@ $(document).ready(function() {
         edit_task_popup.querySelector('[name="task_shift"]').value = data['task_shift'] || ''
         edit_task_popup.querySelector('[name="allow_stock"]').checked = Boolean(data['allow_stock'])
         edit_task_popup.querySelector('#id_task_profile_type').value = data['task_profile_type']
+        edit_task_popup.querySelector('[name="task_area"]').value = data['task_area'] || ''
+        updateTaskWorkplaces(edit_task_popup)
         edit_task_popup.querySelector('#id_task_workplace').value = data['task_workplace']
         edit_task_popup.querySelector('#id_task_profile_amount').value = data['task_profile_amount']
         edit_task_popup.querySelector('#id_task_profile_length').value = data['task_profile_length']
