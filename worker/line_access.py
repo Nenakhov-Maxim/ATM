@@ -2,9 +2,11 @@ from django.core.exceptions import PermissionDenied
 from login.models import Workplace
 
 
+LINE_ADDRESSES = {f'192.168.211.{10 + i}': i + 1 for i in range(10)}
+
+
 def worker_line_id(request):
-    addresses = {f'192.168.211.{10 + i}': i + 1 for i in range(6)}
-    return addresses.get(request.META.get('REMOTE_ADDR'), 1)
+    return LINE_ADDRESSES.get(request.META.get('REMOTE_ADDR'), 1)
 
 
 def authorized_line_id(request):

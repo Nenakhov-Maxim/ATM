@@ -10,7 +10,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_POST
 from app.telegramAPI import TelegramBot
-from .line_access import worker_line_id, authorized_line_id
+from .line_access import LINE_ADDRESSES, worker_line_id, authorized_line_id
 from django.db import transaction
 from master.shift_selection import worker_selection, login_shift, worker_shift_tasks
 import json
@@ -32,7 +32,7 @@ def request_param(request, key):
 def worker_home(request, filter='all'):
   new_paused_form = PauseTaskForm()
   new_deny_form = DenyTaskForm()  
-  adr_lib = {'192.168.211.10': 1, '192.168.211.11': 2, '192.168.211.12': 3, '192.168.211.13': 4, '192.168.211.14': 5, '192.168.211.15': 6}
+  adr_lib = LINE_ADDRESSES
   if request.META['REMOTE_ADDR'] in adr_lib.keys():
     area_id = adr_lib[request.META['REMOTE_ADDR']]
     user_prd_ar = f'Производственная линия № {str(area_id)}'
@@ -124,7 +124,7 @@ def task_month(request):
 @permission_required(perm='worker.change_workertypeproblem', raise_exception=True) 
 def pause_task(request):    
   if request.method == 'POST':
-    adr_lib = {'192.168.211.10': 1, '192.168.211.11': 2, '192.168.211.12': 3, '192.168.211.13': 4, '192.168.211.14': 5, '192.168.211.15': 6}
+    adr_lib = LINE_ADDRESSES
     new_paused_form = PauseTaskForm(request.POST)
     if new_paused_form.is_valid():
       new_data_file = DatabaseWork(new_paused_form.cleaned_data)        
@@ -151,7 +151,7 @@ def pause_task(request):
 @permission_required(perm='worker.change_workertypeproblem', raise_exception=True)     
 def deny_task(request):   
   if request.method == 'POST':
-    adr_lib = {'192.168.211.10': 1, '192.168.211.11': 2, '192.168.211.12': 3, '192.168.211.13': 4, '192.168.211.14': 5, '192.168.211.15': 6}    
+    adr_lib = LINE_ADDRESSES
     new_deny_form = DenyTaskForm(request.POST)    
     if new_deny_form.is_valid():      
       new_data_file = DatabaseWork(new_deny_form.cleaned_data)         

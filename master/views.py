@@ -10,6 +10,7 @@ from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required, permission_required
 from django.views.generic import UpdateView
 from django.urls import reverse_lazy
+from django.db.models.deletion import ProtectedError
 from django.db import transaction
 from django.db.models import Prefetch, Q
 from django.views.decorators.http import require_POST
@@ -179,6 +180,27 @@ def delete_task(request):
   # POST only
   if request.method != 'POST':
     return JsonResponse({'success': False, 'message': 'Только POST-запрос'}, status=405)
+  ids = request_param(request, 'id_tasks')
+  if ids is not None:
+    if not isinstance(ids, list) or not ids or any(
+        isinstance(value, bool) or not str(value).isdigit() for value in ids):
+      return JsonResponse({'message': 'Выберите задачи для удаления'}, status=400)
+    if request.user.production_area_id is None:
+      return JsonResponse({'message': 'Пользователю не назначен участок'}, status=403)
+    ids = set(map(int, ids))
+    try:
+      with transaction.atomic():
+        tasks = Tasks.objects.select_for_update(of=('self',)).filter(
+          Q(production_area=request.user.production_area_id) |
+          Q(task_workplace__production_area_id=request.user.production_area_id),
+          pk__in=ids, task_status_id=4,
+        )
+        if len(list(tasks)) != len(ids):
+          return JsonResponse({'message': 'Можно удалить только ожидающие старта задачи своего участка'}, status=400)
+        tasks.delete()
+    except ProtectedError:
+      return JsonResponse({'message': 'Задачи связаны с другими записями и не могут быть удалены'}, status=400)
+    return JsonResponse({'success': True, 'message': 'Задачи удалены', 'count': len(ids)})
   data_task = DatabaseWork({'id_task':request_param(request, 'id_task')})
   task = data_task.delete_task()
   if task == True:
@@ -227,6 +249,24 @@ def hide_task(request):
   # POST only
   if request.method != 'POST':
     return JsonResponse({'success': False, 'message': 'Только POST-запрос'}, status=405)
+  ids = request_param(request, 'id_tasks')
+  if ids is not None:
+    if not isinstance(ids, list) or not ids or any(
+        isinstance(value, bool) or not str(value).isdigit() for value in ids):
+      return JsonResponse({'message': 'Выберите задачи для скрытия'}, status=400)
+    if request.user.production_area_id is None:
+      return JsonResponse({'message': 'Пользователю не назначен участок'}, status=403)
+    ids = set(map(int, ids))
+    with transaction.atomic():
+      tasks = Tasks.objects.select_for_update(of=('self',)).filter(
+        Q(production_area=request.user.production_area_id) |
+        Q(task_workplace__production_area_id=request.user.production_area_id),
+        pk__in=ids, task_status_id=2,
+      )
+      if len(list(tasks)) != len(ids):
+        return JsonResponse({'message': 'Можно скрыть только завершённые задачи своего участка'}, status=400)
+      tasks.update(task_is_vision=False)
+    return JsonResponse({'success': True, 'message': 'Задачи скрыты', 'count': len(ids)})
   data_task = DatabaseWork({'id_task':request_param(request, 'id_task')})
   task = data_task.hide_task()
   if task == True:

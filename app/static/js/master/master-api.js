@@ -49,6 +49,7 @@ function master_ajax_request(url, data, onSuccess, method='POST') {
       }
     },
     error: function(xhr, textStatus, errorThrown) {
+      updateBulkTaskSelection();
       alert(build_request_error_message(
         xhr || errorThrown || textStatus,
         'Ошибка запроса к серверу.'
@@ -87,7 +88,8 @@ $(document).ready(function() {
 
   // ===== Task Delete =====
   // Удаление задачи
-  $('.more-info-popup__delete-task').click(function(){
+  $('.more-info-popup__delete-task').click(function(event){
+    event.preventDefault();
     let task = this;
     let id_task = task.dataset.itemid;
     if (task.id === "delete") {
@@ -98,9 +100,25 @@ $(document).ready(function() {
     }
   });
 
+  // Удаление выбранных задач, ожидающих старта
+  $('.delete-selected-tasks').click(function() {
+    const ids = selectedWaitingTaskIds();
+    if (!ids.length || !confirm(`Удалить выбранные задачи, ожидающие старта (${ids.length})? Восстановление будет невозможно.`)) return;
+    this.disabled = true;
+    master_ajax_request('delete_task/', {id_tasks: ids});
+  });
+
+  $('.hide-selected-tasks').click(function() {
+    const ids = selectedCompletedTaskIds();
+    if (!ids.length || !confirm(`Скрыть выбранные завершённые задачи (${ids.length})? Данные сохранятся для отчётов.`)) return;
+    this.disabled = true;
+    master_ajax_request('hide_task/', {id_tasks: ids});
+  });
+
   // ===== Task Hide =====
   // Cкрыть задачу
-  $('.more-info-popup__hide-task').click(function(){
+  $('.more-info-popup__hide-task').click(function(event){
+    event.preventDefault();
     let task = this;
     let id_task = task.dataset.itemid;
     if (task.id === "hide") {

@@ -44,7 +44,7 @@ class NewTaskForm(TaskScheduleForm):
 
 
     task_name = forms.CharField(max_length=150, widget=TextInput(attrs={"class":"popup-content-block__task-title__input"}), initial='Изготовить профиль')
-    task_profile_type = forms.ModelChoiceField(queryset=ProfileType.objects.all())
+    task_profile_type = forms.ModelChoiceField(queryset=ProfileType.objects.order_by('profile_name', 'pk'))
     task_workplace =  forms.ModelChoiceField(queryset=Workplace.objects.none())
     task_profile_amount = forms.IntegerField()
     task_profile_length = forms.FloatField()
@@ -92,7 +92,7 @@ class EditTaskForm(TaskScheduleForm):
 
 
     task_name = forms.CharField(max_length=150, widget=TextInput(attrs={"class":"popup-content-block__task-title__input"}))
-    task_profile_type = forms.ModelChoiceField(queryset=ProfileType.objects.all())
+    task_profile_type = forms.ModelChoiceField(queryset=ProfileType.objects.order_by('profile_name', 'pk'))
     task_workplace =  forms.ModelChoiceField(queryset=Workplace.objects.none())
     task_profile_amount = forms.IntegerField()
     task_profile_length = forms.FloatField()
