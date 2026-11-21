@@ -50,3 +50,7 @@ tmp/
 .DS_Store
 /excel_files/
 /staticfiles/
+
+# Бэкапы БД с сервера
+/local-backups/
+*.dump
