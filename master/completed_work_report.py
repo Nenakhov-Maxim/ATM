@@ -1,4 +1,5 @@
-from django.db.models import Prefetch, Q
+from django.db.models import Prefetch
+from .access import task_area_query
 from django.utils import timezone
 
 from .history_utils import profile_record_user_display_name
@@ -7,11 +8,11 @@ from .report import create_excel_from_dict_list, profile_name_with_length_group
 from .report_periods import REPORT_TIME_ZONE, period_query
 
 
-def completed_work_rows(periods, user):
+def completed_work_rows(periods, user, area_id=None):
     records = HistoryProfileRecords.objects.filter(period_query(periods)).select_related('user').order_by('created_at', 'id')
     strips = OffsShtrips.objects.filter(period_query(periods)).select_related('type_value_id').order_by('created_at', 'id')
     tasks = Tasks.objects.filter(
-        Q(production_area=user.production_area_id) | Q(task_workplace__production_area_id=user.production_area_id),
+        task_area_query(user, area_id),
         history_profile_records__in=records,
     ).distinct().select_related('task_profile_type').prefetch_related(
         Prefetch('history_profile_records', queryset=records, to_attr='report_records'),
@@ -34,6 +35,6 @@ def completed_work_rows(periods, user):
     return result
 
 
-def create_completed_work_report(periods, user, output_filename, period_label=None):
+def create_completed_work_report(periods, user, output_filename, period_label=None, area_id=None):
     headers = ['Ф.И.О', 'Номер линии', 'Марка изделия', 'Общее кол-во п/м', 'Отработанные часы', 'Ср. зд.', 'Хоз. работы', 'Подпись работника']
-    return create_excel_from_dict_list(headers, completed_work_rows(periods, user), output_filename, period_label=period_label)
+    return create_excel_from_dict_list(headers, completed_work_rows(periods, user, area_id), output_filename, period_label=period_label)

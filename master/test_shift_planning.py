@@ -143,7 +143,7 @@ class TaskShiftWorkflowTests(TestCase):
 
     def test_legacy_night_task_suggests_previous_production_date_without_modifying_it(self):
         start = datetime(2026, 9, 11, 2, tzinfo=PRODUCTION_TIME_ZONE)
-        task = Tasks.objects.create(task_name='Legacy', task_profile_amount=10, task_timedate_start=start)
+        task = Tasks.objects.create(task_name='Legacy', task_profile_amount=10, task_timedate_start=start, production_area=self.area)
         response = edit_task(self.request('get', {'id_task': task.pk}))
         data = json.loads(response.content)
         self.assertEqual((data['task_shift_date'], data['task_shift']), ('2026-09-10', 3))

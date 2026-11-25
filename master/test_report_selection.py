@@ -174,4 +174,19 @@ class ReportSelectionDataTests(TestCase):
                     self.assertEqual(response.status_code, 200)
                     self.assertIn('attachment;', response['Content-Disposition'])
                     self.assertEqual(generate.call_args.args[0] if view == new_report else generate.call_args.kwargs['periods'], self.periods)
-                    response.close()
+                    # Direct view calls must not emit request_finished inside TestCase transactions.
+                    response.file_to_stream.close()
+
+    def test_reports_include_both_areas_and_respect_selected_area(self):
+        second = ProductionArea.objects.create(production_area_name='Second')
+        foreign = ProductionArea.objects.create(production_area_name='Foreign')
+        self.master.available_areas.add(second)
+        first_task = self.task()
+        second_task = self.task(task_workplace=None, production_area=second)
+        foreign_task = self.task(task_workplace=None, production_area=foreign)
+        for task in (first_task, second_task, foreign_task):
+            self.seed_records(task)
+        for area_id, expected in [(None, {first_task.pk, second_task.pk}), (second.pk, {second_task.pk})]:
+            self.assertEqual(set(completed_work_rows(self.periods, self.master, area_id)), expected)
+            tasks = _get_tasks_with_output(self.periods[0][0], self.periods[-1][1], self.master, periods=self.periods, area_id=area_id)
+            self.assertEqual(set(tasks.values_list('pk', flat=True)), expected)

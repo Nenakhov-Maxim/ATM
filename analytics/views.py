@@ -1,3 +1,4 @@
+from master.access import task_area_query, available_workplaces
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from master.models import Tasks
@@ -9,13 +10,14 @@ import datetime
 
 @login_required()
 @permission_required(perm='master.change_tasks', raise_exception=True)
-def get_home_page(request):  
+def get_home_page(request):
+  user = request.user
   work_task_lib = {}
   flow_task_lib = {}
   koef_success_lib = {}
-  tasks_in_work = Tasks.objects.all().filter(task_status_id__in=[3, 7]).order_by('task_status_id')
-  tasks_in_flow = Tasks.objects.all().filter(task_status_id=4).order_by('task_timedate_start')[:5]
-  workplace_lib = Workplace.objects.all()
+  tasks_in_work = Tasks.objects.filter(task_area_query(user)).filter(task_status_id__in=[3, 7]).order_by('task_status_id')
+  tasks_in_flow = Tasks.objects.filter(task_area_query(user)).filter(task_status_id=4).order_by('task_timedate_start')[:5]
+  workplace_lib = available_workplaces(request.user)
   for workplace in workplace_lib:
     work_task_lib[workplace.id] = []
   for task in tasks_in_work:
@@ -54,37 +56,37 @@ def get_home_page(request):
 def update_chart(request, type_chart, filter):       
   if request.method == 'GET':
     if type_chart == 'current_profile':
-      data = update_current_profile(filter)
+      data = update_current_profile(filter, user=request.user)
       return JsonResponse({'answer':data})
   
     elif type_chart == 'current_performance':
-      data = update_current_performance()
+      data = update_current_performance(user=request.user)
       return JsonResponse({'answer':data})
     
     elif type_chart == 'setup_speed':
-      data = update_setup_speed(int(filter))
+      data = update_setup_speed(int(filter), user=request.user)
       return JsonResponse({'answer':data})
     
     elif type_chart == 'profile_amount':
-      data = update_profile_amount(int(filter))
+      data = update_profile_amount(int(filter), user=request.user)
       return JsonResponse({'answer':data})  
       
     elif type_chart == 'hours_worked':
-      data = update_hours_worked(int(filter))
+      data = update_hours_worked(int(filter), user=request.user)
       return JsonResponse({'answer':data})
     
     elif type_chart == 'effectiveness':
-      data = update_effectiveness(int(filter))
+      data = update_effectiveness(int(filter), user=request.user)
       return JsonResponse({'answer':data})  
       
   else:
     return HttpResponse('Только GET-запрос')
   
 # Обновление графика по изготовленному количеству изготовленного профиля рабочим
-def update_current_profile(param):
+def update_current_profile(param, user=None):
   if param == 1:
     data = {}    
-    tasks_in_work = Tasks.objects.all().filter(task_status_id__in=[3]).order_by('task_status_id')
+    tasks_in_work = Tasks.objects.filter(task_area_query(user)).filter(task_status_id__in=[3]).order_by('task_status_id')
     for task in tasks_in_work:
       profile_making_list = task.history_profile_records.all()
       for record in profile_making_list:
@@ -96,7 +98,7 @@ def update_current_profile(param):
           data[user_key] = record.amount       
   if param == 3:
     data = {}    
-    tasks_in_work = Tasks.objects.all().filter(task_status_id__in=[3]).order_by('task_status_id')
+    tasks_in_work = Tasks.objects.filter(task_area_query(user)).filter(task_status_id__in=[3]).order_by('task_status_id')
     for task in tasks_in_work:
       profile_amount = task.profile_amount_now
       workplace = str(task.task_workplace_id) + ' линия'        
@@ -108,7 +110,7 @@ def update_current_profile(param):
   
   if param == 2:
     data = {}    
-    tasks_in_work = Tasks.objects.all().filter(task_status_id__in=[3]).order_by('task_status_id')
+    tasks_in_work = Tasks.objects.filter(task_area_query(user)).filter(task_status_id__in=[3]).order_by('task_status_id')
     for task in tasks_in_work:
       profile_amount = task.profile_amount_now
       profile_type = task.task_profile_type       
@@ -121,12 +123,12 @@ def update_current_profile(param):
   return data
 
 #Обновление графика производительность линии в час
-def update_current_performance():
+def update_current_performance(user=None):
   date_end = datetime.datetime.now()  + datetime.timedelta(days=1) 
   date_start = date_end - datetime.timedelta(weeks=4)
   data = {}    
-  tasks_in_work = Tasks.objects.all().filter(task_timedate_end_fact__isnull = False) & Tasks.objects.all().filter(task_timedate_end_fact__range = [date_start, date_end])
-  workplace_lib = Workplace.objects.all()
+  tasks_in_work = Tasks.objects.filter(task_area_query(user)).filter(task_timedate_end_fact__isnull = False) & Tasks.objects.filter(task_area_query(user)).filter(task_timedate_end_fact__range = [date_start, date_end])
+  workplace_lib = available_workplaces(request.user)
   for workplace in workplace_lib:
     data[workplace.id] = []
   for task in tasks_in_work:
@@ -144,7 +146,7 @@ def update_current_performance():
   return data
 
 #Обновление графика переналадки оборудования
-def update_setup_speed(param):  
+def update_setup_speed(param, user=None):
   data = {}
   date_end = datetime.datetime.now().date() + datetime.timedelta(days=1) 
   if param == 1:
@@ -159,7 +161,7 @@ def update_setup_speed(param):
     date_start = date_end - datetime.timedelta(weeks=48)
   else: 
     date_start = date_end - datetime.timedelta(weeks=4800)    
-  tasks_in_work = Tasks.objects.all().filter(task_time_settingUp__isnull = False) & Tasks.objects.all().filter(task_time_settingUp__range = [date_start, date_end])
+  tasks_in_work = Tasks.objects.filter(task_area_query(user)).filter(task_time_settingUp__isnull = False) & Tasks.objects.filter(task_area_query(user)).filter(task_time_settingUp__range = [date_start, date_end])
   
   for task in tasks_in_work:
     profile_making_list = task.history_profile_records.first()
@@ -178,7 +180,7 @@ def update_setup_speed(param):
   return data
 
 #Обновление графика количества изготовленного профиля
-def update_profile_amount(param):
+def update_profile_amount(param, user=None):
   data = {}
   date_end = datetime.datetime.now().date() + datetime.timedelta(days=1)   
   if param == 1:
@@ -194,7 +196,7 @@ def update_profile_amount(param):
   else: 
     date_start = date_end - datetime.timedelta(weeks=4800) 
         
-  tasks_in_work = Tasks.objects.all().filter(task_timedate_end_fact__isnull = False) & Tasks.objects.all().filter(task_timedate_end_fact__range = [date_start, date_end])
+  tasks_in_work = Tasks.objects.filter(task_area_query(user)).filter(task_timedate_end_fact__isnull = False) & Tasks.objects.filter(task_area_query(user)).filter(task_timedate_end_fact__range = [date_start, date_end])
   
   for task in tasks_in_work:
     profile_making_list = task.history_profile_records.all()
@@ -207,7 +209,7 @@ def update_profile_amount(param):
         data[user_key] = record.amount   
   return data
 
-def update_hours_worked(param):
+def update_hours_worked(param, user=None):
   data = {}
   date_end = datetime.datetime.now().date() + datetime.timedelta(days=1)  
   if param == 1:
@@ -223,9 +225,9 @@ def update_hours_worked(param):
   else: 
     date_start = date_end - datetime.timedelta(weeks=4800) 
         
-  tasks_in_work = Tasks.objects.all().filter(task_timedate_end_fact__isnull = False) & \
-                  Tasks.objects.all().filter(task_timedate_end_fact__range = [date_start, date_end]) & \
-                  Tasks.objects.all().filter(task_time_settingUp__isnull = False)
+  tasks_in_work = Tasks.objects.filter(task_area_query(user)).filter(task_timedate_end_fact__isnull = False) & \
+                  Tasks.objects.filter(task_area_query(user)).filter(task_timedate_end_fact__range = [date_start, date_end]) & \
+                  Tasks.objects.filter(task_area_query(user)).filter(task_time_settingUp__isnull = False)
 
   for task in tasks_in_work:
     profile_making_list = task.history_profile_records.first()
@@ -245,7 +247,7 @@ def update_hours_worked(param):
   return data
 
 # Обновление графика эффективности  
-def update_effectiveness(param):
+def update_effectiveness(param, user=None):
   data = {}
   date_end = datetime.datetime.now().date() + datetime.timedelta(days=1)  
   if param == 1:
@@ -261,8 +263,8 @@ def update_effectiveness(param):
   else: 
     date_start = date_end - datetime.timedelta(weeks=4800) 
         
-  tasks_in_work = Tasks.objects.all().filter(task_timedate_end_fact__isnull = False) & \
-                  Tasks.objects.all().filter(task_timedate_end_fact__range = [date_start, date_end])
+  tasks_in_work = Tasks.objects.filter(task_area_query(user)).filter(task_timedate_end_fact__isnull = False) & \
+                  Tasks.objects.filter(task_area_query(user)).filter(task_timedate_end_fact__range = [date_start, date_end])
                 
   for task in tasks_in_work:
     timedate_start = task.task_timedate_start_fact

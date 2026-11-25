@@ -308,3 +308,28 @@ window.addEventListener("resize", (event) => {
     headerMenuList.style.display = 'flex'
   }
 });
+
+// Limit each task form's workplaces to its selected area.
+const workplaceAreaData = document.getElementById('workplace-areas')
+const workplaceAreas = workplaceAreaData ? JSON.parse(workplaceAreaData.textContent) : {}
+
+function updateTaskWorkplaces(form) {
+  const area = form.querySelector('[name="task_area"]')
+  const workplace = form.querySelector('[name="task_workplace"]')
+  if (!area || !workplace) return
+  for (const option of workplace.options) {
+    const unavailable = Boolean(option.value && area.value && String(workplaceAreas[option.value]) !== area.value)
+    option.hidden = unavailable
+    option.disabled = unavailable
+    if (unavailable && option.selected) workplace.value = ''
+  }
+}
+
+for (const form of document.querySelectorAll('.new-task-popup-wrapper, .edit-task-popup-wrapper')) {
+  const area = form.querySelector('[name="task_area"]')
+  if (!area) continue
+  area.value = new URL(window.location.href).searchParams.get('area') || ''
+  if (!area.value && area.options.length === 2) area.selectedIndex = 1
+  updateTaskWorkplaces(form)
+  area.addEventListener('change', () => updateTaskWorkplaces(form))
+}
