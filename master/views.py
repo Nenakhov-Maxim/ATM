@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from .models import HistoryEvent, OffsShtrips, Tasks
+from .access import available_areas, available_workplaces, selected_area, task_area_query, accessible_task
 from .forms import NewTaskForm, EditTaskForm, PauseTaskForm, ReportForm
 from .databaseWork import DatabaseWork
 from .shifts import production_shift_at
@@ -38,18 +39,17 @@ def request_param(request, key):
 @login_required
 @permission_required(perm='master.view_tasks', raise_exception=True)
 def master_home(request):
+  area_id = selected_area(request.user, request.GET.get("area"))
   new_task_form = NewTaskForm(user=request.user)
   edit_task_form = EditTaskForm(user=request.user)
   new_paused_form = PauseTaskForm()
   report_form = ReportForm()
   tasks = Tasks.objects.filter(
     Q(task_is_vision=True) & 
-    Q(
-      Q(production_area=request.user.production_area_id) | 
-      Q(task_workplace__production_area_id=request.user.production_area_id)
-    )).select_related(
+    task_area_query(request.user, area_id)).select_related(
       'task_status',
-      'task_workplace',
+      'task_workplace__production_area_id',
+      'production_area',
       'task_profile_type',
       'task_coating_type',
     ).prefetch_related(
@@ -66,10 +66,7 @@ def master_home(request):
   tasks_stat_all = tasks.count()
   tasks_stat_complited = Tasks.objects.filter(
     Q(task_status=2) & Q(task_is_vision=True) & 
-    Q(
-      Q(production_area=request.user.production_area_id) | 
-      Q(task_workplace__production_area_id=request.user.production_area_id)
-    )).count()  
+    task_area_query(request.user, area_id)).count()
   selected_day = None
   selected_shift = None
   try:
@@ -97,7 +94,9 @@ def master_home(request):
   return render(request, 'master.html', {'load_data': load_data, 'new_task_form':new_task_form,
                                          'edit_task_form': edit_task_form, 'new_paused_form':new_paused_form,
                                          'tasks': tasks, 'report_form': report_form, 'user_info': user_info,
-                                         'selected_day': selected_day, 'selected_shift': selected_shift})
+                                         'selected_day': selected_day, 'selected_shift': selected_shift,
+                                         'available_areas': available_areas(request.user), 'selected_area_id': area_id,
+                                         'workplace_areas': {str(w.pk): w.production_area_id_id for w in available_workplaces(request.user)}})
 
 @login_required()
 @permission_required(perm='master.change_tasks', raise_exception=True)
@@ -106,6 +105,7 @@ def start_task(request):
   id_task = request_param(request, 'id_task')
   if not id_task:
     return JsonResponse({'success': False, 'message': 'missing id_task'}, status=400)
+  accessible_task(request.user, id_task)
   data_task = DatabaseWork({'id_task':id_task})
   task = data_task.push_to_workers(request.user)
   if task == True:
@@ -116,7 +116,8 @@ def start_task(request):
 # Приостановка выполнения задания 
 @login_required 
 @permission_required(perm='master.change_tasks', raise_exception=True)
-def pause_task(request, id_task):   
+def pause_task(request, id_task):
+  accessible_task(request.user, id_task)
   if request.method == 'POST':    
     new_paused_form = PauseTaskForm(request.POST)    
     if new_paused_form.is_valid():      
@@ -185,14 +186,11 @@ def delete_task(request):
     if not isinstance(ids, list) or not ids or any(
         isinstance(value, bool) or not str(value).isdigit() for value in ids):
       return JsonResponse({'message': 'Выберите задачи для удаления'}, status=400)
-    if request.user.production_area_id is None:
-      return JsonResponse({'message': 'Пользователю не назначен участок'}, status=403)
     ids = set(map(int, ids))
     try:
       with transaction.atomic():
         tasks = Tasks.objects.select_for_update(of=('self',)).filter(
-          Q(production_area=request.user.production_area_id) |
-          Q(task_workplace__production_area_id=request.user.production_area_id),
+          task_area_query(request.user),
           pk__in=ids, task_status_id=4,
         )
         if len(list(tasks)) != len(ids):
@@ -201,6 +199,7 @@ def delete_task(request):
     except ProtectedError:
       return JsonResponse({'message': 'Задачи связаны с другими записями и не могут быть удалены'}, status=400)
     return JsonResponse({'success': True, 'message': 'Задачи удалены', 'count': len(ids)})
+  accessible_task(request.user, request_param(request, 'id_task'))
   data_task = DatabaseWork({'id_task':request_param(request, 'id_task')})
   task = data_task.delete_task()
   if task == True:
@@ -213,8 +212,7 @@ def delete_task(request):
 @permission_required(perm='master.change_tasks', raise_exception=True)  
 def edit_task(request):
   if request.method == 'GET':
-      data_task = DatabaseWork({'id_task':request.GET.get('id_task')})
-      data = data_task.get_data_from_tasks()
+      data = accessible_task(request.user, request.GET.get('id_task'))
       if not isinstance(data, Tasks):
         return JsonResponse({'error': 'Задание не найдено'}, status=404)
       shift_date, shift = data.task_shift_date, data.task_shift
@@ -224,13 +222,14 @@ def edit_task(request):
                           'id_task': data.id, 'task_shift_date': shift_date, 'task_shift': shift,
                           'allow_stock': data.allow_stock,
                           'task_timedate_end': data.task_timedate_end, 'task_profile_type': data.task_profile_type_id, 
-                          'task_workplace': data.task_workplace_id, 'task_profile_amount': data.task_profile_amount,
+                          'task_workplace': data.task_workplace_id, 'task_area': data.task_workplace.production_area_id_id if data.task_workplace_id else data.production_area_id, 'task_profile_amount': data.task_profile_amount,
                           'task_profile_length': data.task_profile_length, 'task_comments': data.task_comments,
                           'task_order_number': data.task_order_number,
                           'task_profile_material': data.task_profile_material,
                           'task_coating_type': data.task_coating_type_id, 'task_coating_area': data.task_coating_area,
                           'task_coating_thickness': data.task_coating_thickness})
   elif request.method == 'POST':    
+    accessible_task(request.user, request.POST.get('id_task'))
     edit_task_form = EditTaskForm(request.POST, user=request.user)    
     if edit_task_form.is_valid():      
       new_data_file = DatabaseWork(edit_task_form.cleaned_data)    
@@ -254,19 +253,17 @@ def hide_task(request):
     if not isinstance(ids, list) or not ids or any(
         isinstance(value, bool) or not str(value).isdigit() for value in ids):
       return JsonResponse({'message': 'Выберите задачи для скрытия'}, status=400)
-    if request.user.production_area_id is None:
-      return JsonResponse({'message': 'Пользователю не назначен участок'}, status=403)
     ids = set(map(int, ids))
     with transaction.atomic():
       tasks = Tasks.objects.select_for_update(of=('self',)).filter(
-        Q(production_area=request.user.production_area_id) |
-        Q(task_workplace__production_area_id=request.user.production_area_id),
+        task_area_query(request.user),
         pk__in=ids, task_status_id=2,
       )
       if len(list(tasks)) != len(ids):
         return JsonResponse({'message': 'Можно скрыть только завершённые задачи своего участка'}, status=400)
       tasks.update(task_is_vision=False)
     return JsonResponse({'success': True, 'message': 'Задачи скрыты', 'count': len(ids)})
+  accessible_task(request.user, request_param(request, 'id_task'))
   data_task = DatabaseWork({'id_task':request_param(request, 'id_task')})
   task = data_task.hide_task()
   if task == True:
@@ -283,8 +280,9 @@ def new_report(request):
   if not form.is_valid():
     return JsonResponse({'message': 'Проверьте параметры отчёта.', 'errors': form.errors}, status=400)
   data = form.cleaned_data
+  area_id = selected_area(request.user, request.POST.get('area'))
   filename = report_filename('Акт', data)
-  answer = create_completed_work_report(data['periods'], request.user, filename, data['period_label'])
+  answer = create_completed_work_report(data['periods'], request.user, filename, data['period_label'], area_id=area_id)
   return FileResponse(open(answer, 'rb'), as_attachment=True, filename=filename)
 
 
@@ -296,10 +294,11 @@ def profiling_invoice_report(request):
   if not form.is_valid():
     return JsonResponse({'message': 'Проверьте параметры отчёта.', 'errors': form.errors}, status=400)
   data = form.cleaned_data
+  area_id = selected_area(request.user, request.POST.get('area'))
   filename = report_filename('Накладная', data)
   answer = create_profiling_invoice_report(
     data['date_start'], data['date_end'], request.user, output_filename=filename,
-    periods=data['periods'], period_label=data['period_label'],
+    periods=data['periods'], period_label=data['period_label'], area_id=area_id,
   )
   return FileResponse(open(answer, 'rb'), as_attachment=True, filename=filename)
 

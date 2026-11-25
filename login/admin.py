@@ -16,7 +16,7 @@ class AuthorAdmin(OrigUserAdmin):
     
     fieldsets = (
         (None, {
-            'fields': ('username', 'first_name', 'last_name', 'email', 'position_id', 'production_area_id', 'qr_code', 'password', 'groups', 'user_permissions', )
+            'fields': ('username', 'first_name', 'last_name', 'email', 'position_id', 'production_area_id', 'available_areas', 'qr_code', 'password', 'groups', 'user_permissions', )
         }),
         # ('Advanced options', {
         #     'classes': ('collapse',),
@@ -24,7 +24,7 @@ class AuthorAdmin(OrigUserAdmin):
         # }),
     )
     list_filter = ('email', 'is_staff', 'is_active',)
-    filter_horizontal = ('groups', 'user_permissions',)
+    filter_horizontal = ('groups', 'user_permissions', 'available_areas',)
     search_fields = ('username', 'first_name', 'last_name', 'email', 'qr_code')
  
 admin.site.register(User, AuthorAdmin)

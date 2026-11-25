@@ -1,3 +1,4 @@
+from .access import task_area_query
 import os
 from copy import copy
 from collections import OrderedDict, defaultdict
@@ -19,7 +20,7 @@ SHIFT_3 = 'shift_3'
 SHIFT_KEYS = (SHIFT_1, SHIFT_2, SHIFT_3)
 
 
-def create_profiling_invoice_report(start_date, end_date, user, output_filename=None, periods=None, period_label=None):
+def create_profiling_invoice_report(start_date, end_date, user, output_filename=None, periods=None, period_label=None, area_id=None):
     if not os.path.exists('excel_files'):
         os.makedirs('excel_files')
 
@@ -27,13 +28,13 @@ def create_profiling_invoice_report(start_date, end_date, user, output_filename=
         output_filename = f'Накладная на линию профилирования от {datetime.now().date()}.xlsx'
 
     filepath = os.path.join('excel_files', output_filename)
-    tasks = _get_tasks_with_output(start_date, end_date, user, periods=periods)
+    tasks = _get_tasks_with_output(start_date, end_date, user, periods=periods, area_id=area_id)
     rows = _build_report_rows(tasks)
     _write_workbook(filepath, rows, start_date, end_date, period_label=period_label)
     return filepath
 
 
-def _get_tasks_with_output(start_date, end_date, user, periods=None):
+def _get_tasks_with_output(start_date, end_date, user, periods=None, area_id=None):
     periods = [(start_date, end_date)] if periods is None else periods
     profile_records = HistoryProfileRecords.objects.filter(
         period_query(periods),
@@ -43,10 +44,7 @@ def _get_tasks_with_output(start_date, end_date, user, periods=None):
     ).select_related('type_value_id').order_by('created_at', 'id')
 
     return Tasks.objects.filter(
-        Q(
-            Q(production_area=user.production_area_id) |
-            Q(task_workplace__production_area_id=user.production_area_id)
-        ),
+        task_area_query(user, area_id),
         # Output remains reportable after handover, regardless of task completion.
         history_profile_records__in=profile_records.exclude(amount=0),
     ).distinct().select_related(

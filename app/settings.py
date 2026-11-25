@@ -31,7 +31,7 @@ environ.Env.read_env(
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 
 # ПРЕДУПРЕЖДЕНИЕ БЕЗОПАСНОСТИ: не запускайте с включенным debug в продакшене!
-DEBUG = True
+DEBUG = env.bool("DJANGO_DEBUG", default=False)
                                                        
 ALLOWED_HOSTS = ['cntrl-ai.alt.ural', '192.168.0.6', '127.0.0.1', '192.168.195.168', '192.168.211.1', '192.168.209.215']
 
